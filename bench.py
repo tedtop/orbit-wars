@@ -1,10 +1,15 @@
 """
-Win-rate benchmark: run N games vs each baseline across different seeds.
+Win-rate benchmark: run N games of a chosen bot vs each baseline across seeds.
 
 Usage:
-    .venv/bin/python bench.py [--games N] [--seed-offset K]
+    .venv/bin/python bench.py [--bot NAME] [--games N] [--seed-offset K]
+
+--bot selects which bot to benchmark (same names/aliases as arena.py): a file
+in agents/ (e.g. comet_wraith_v3, or the alias v3), the generated submission
+file (main), or a builtin (random/starter). Defaults to main.
 """
 import argparse
+import glob
 import logging
 import os
 import sys
@@ -26,7 +31,33 @@ finally:
     _devnull.close()
     logging.disable(logging.NOTSET)
 
-AGENT = os.path.join(os.path.dirname(__file__), "main.py")
+ROOT = os.path.dirname(os.path.abspath(__file__))
+AGENTS_DIR = os.path.join(ROOT, "agents")
+BUILTINS = ["random", "starter"]
+
+
+def discover_bots():
+    """{name: spec} — agents/*.py and main.py map to file paths; builtins to
+    their engine name. Mirrors arena.py so names/aliases are consistent."""
+    bots = {}
+    for path in sorted(glob.glob(os.path.join(AGENTS_DIR, "*.py"))):
+        name = os.path.splitext(os.path.basename(path))[0]
+        if name != "__init__":
+            bots[name] = path
+    bots["main"] = os.path.join(ROOT, "main.py")
+    for b in BUILTINS:
+        bots[b] = b
+    return bots
+
+
+def resolve(name, bots):
+    """(resolved_name, spec) for an exact name or a unique suffix alias."""
+    if name in bots:
+        return name, bots[name]
+    matches = [n for n in bots if n.endswith(name) or n.endswith("_" + name)]
+    if len(matches) == 1:
+        return matches[0], bots[matches[0]]
+    raise SystemExit(f"Unknown bot '{name}'. Available: {', '.join(bots)}")
 
 
 def play_one(agents, seed):
@@ -37,11 +68,19 @@ def play_one(agents, seed):
         print(f"  [ERROR seed={seed}] {exc}", file=sys.stderr)
         return None
     rewards = [s.reward for s in env.steps[-1]]
+    # A None reward means an agent errored or timed out (kaggle-environments
+    # leaves reward unset). Treat the whole game as a skipped/errored seed so
+    # callers — which all guard `if rewards is None` — don't choke on None.
+    if any(r is None for r in rewards):
+        statuses = [s.status for s in env.steps[-1]]
+        print(f"  [SKIP seed={seed}] non-terminal rewards={rewards} "
+              f"statuses={statuses}", file=sys.stderr)
+        return None
     return rewards
 
 
-def bench_vs(opponent_name, num_games, seed_offset=0, verbose=True):
-    """Return (wins, draws, losses) for our agent playing both sides."""
+def bench_vs(agent_spec, opponent_name, num_games, seed_offset=0, verbose=True):
+    """Return (wins, draws, losses) for `agent_spec` playing both sides."""
     wins = draws = losses = 0
     for i in range(num_games):
         seed = seed_offset + i
@@ -49,7 +88,7 @@ def bench_vs(opponent_name, num_games, seed_offset=0, verbose=True):
         # Play both sides to cancel first-mover bias
         for our_pos in (0, 1):
             agents = [None, None]
-            agents[our_pos] = AGENT
+            agents[our_pos] = agent_spec
             agents[1 - our_pos] = opponent_name
 
             rewards = play_one(agents, seed)
@@ -75,18 +114,27 @@ def bench_vs(opponent_name, num_games, seed_offset=0, verbose=True):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--bot", default="main",
+                        help="bot to benchmark (agents/ name or alias, 'main', "
+                             "or a builtin). Default: main")
     parser.add_argument("--games", type=int, default=30,
                         help="Number of seeds to test (each seed plays 2 games, one per side)")
     parser.add_argument("--seed-offset", type=int, default=0)
     args = parser.parse_args()
 
+    bots = discover_bots()
+    bot_name, agent_spec = resolve(args.bot, bots)
+
     baselines = ["random", "starter"]
-    print(f"Benchmarking {args.games} seeds × 2 sides per seed per baseline\n")
+    print(f"Benchmarking bot: {bot_name}")
+    print(f"  ({agent_spec})")
+    print(f"{args.games} seeds × 2 sides per seed per baseline\n")
 
     all_ok = True
     for opp in baselines:
-        print(f"--- vs {opp} ---")
-        wins, draws, losses = bench_vs(opp, args.games, args.seed_offset)
+        print(f"--- {bot_name} vs {opp} ---")
+        wins, draws, losses = bench_vs(agent_spec, opp, args.games,
+                                       args.seed_offset)
         total = wins + draws + losses
         win_rate = wins / total * 100 if total else 0
         print(f"  FINAL  W/D/L = {wins}/{draws}/{losses} / {total}  "
@@ -96,13 +144,40 @@ def main():
             all_ok = False
         print()
 
+    # Self-play: closest proxy for Kaggle evaluation (bot vs itself).
+    # Expected ~50% wins since both sides are equal; tracks position bias and
+    # confirms no crashes or deadlocks in symmetric play.
+    print(f"--- {bot_name} self-play (vs itself) ---")
+    sp_p0 = sp_p1 = sp_draw = 0
+    for i in range(args.games):
+        seed = args.seed_offset + i
+        rewards = play_one([agent_spec, agent_spec], seed)
+        if rewards is None:
+            continue
+        if rewards[0] > rewards[1]:
+            sp_p0 += 1
+        elif rewards[1] > rewards[0]:
+            sp_p1 += 1
+        else:
+            sp_draw += 1
+        if (i + 1) % 5 == 0:
+            total = sp_p0 + sp_p1 + sp_draw
+            print(f"  self-play: {i+1}/{args.games} games — "
+                  f"P0 wins={sp_p0}  P1 wins={sp_p1}  draws={sp_draw}")
+    sp_total = sp_p0 + sp_p1 + sp_draw
+    bias = abs(sp_p0 - sp_p1) / sp_total * 100 if sp_total else 0
+    print(f"  FINAL  P0={sp_p0}  P1={sp_p1}  draws={sp_draw} / {sp_total}  "
+          f"position bias={bias:.0f}%")
+    print()
+
     if all_ok:
-        print("All targets met -- agent is ready.")
+        print(f"All targets met -- {bot_name} is ready.")
         print()
-        print("Next: iterate on main.py to improve win-rate, then re-run this benchmark.")
-        print("When ready to submit: kaggle competitions submit orbit-wars -f main.py -m 'v1'")
+        print("Next: add a new bot in agents/, compare with arena.py --players vN,vN-1,")
+        print("then promote the winner:  .venv/bin/python arena.py --promote <bot>")
+        print("Submit:  kaggle competitions submit orbit-wars -f main.py -m '<bot>'")
     else:
-        print("Some targets not met -- see warnings above.")
+        print(f"Some targets not met for {bot_name} -- see warnings above.")
         sys.exit(1)
 
 
