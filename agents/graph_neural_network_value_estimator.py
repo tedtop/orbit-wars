@@ -58,7 +58,7 @@ _b2 = 0.0
 
 
 # ---------------------------------------------------------------------------
-# Helpers (copied from comet_wraith_v3)
+# Helpers (copied from coordinated_strike_interceptor)
 # ---------------------------------------------------------------------------
 
 def _get(obj, key, default=None):
@@ -261,7 +261,7 @@ def _decide(obs, config):
     planets = {p[0]: p for p in planets_raw}
     init_by_id = {p[0]: p for p in init_raw}
 
-    # Rotation-sign inference (per player, from comet_wraith_v3)
+    # Rotation-sign inference (per player, from coordinated_strike_interceptor)
     cur_angles = {}
     for pid, p in planets.items():
         if pid in comet_pids:
@@ -398,7 +398,7 @@ def _decide(obs, config):
 
     candidates.sort(key=lambda c: -c[0])
 
-    # Greedy assignment (cumulative, matching comet_wraith_v3)
+    # Greedy assignment (cumulative, matching coordinated_strike_interceptor)
     used = {mp[0]: 0 for mp in my_planets}
     committed = {}
     moves = []

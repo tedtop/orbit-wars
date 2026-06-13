@@ -14,7 +14,7 @@
 # regularity, not a speed target.  Continuous dispatch beats irregular bursts
 # because each wave arrives before the opponent finishes building a big one.
 #
-# Capture scoring reuses comet_wraith_v3's proven prod/cost ROI formula.
+# Capture scoring reuses coordinated_strike_interceptor's proven prod/cost ROI formula.
 # =============================================================================
 
 import math
@@ -33,7 +33,7 @@ FRONT_RATIO = 0.35   # fraction of owned planets treated as frontline
 
 
 # ---------------------------------------------------------------------------
-# Helpers (copied from comet_wraith_v3 — do not modify)
+# Helpers (copied from coordinated_strike_interceptor — do not modify)
 # ---------------------------------------------------------------------------
 
 def _get(obj, key, default=None):
@@ -192,7 +192,7 @@ def _decide(obs, config):
     planets = {p[0]: p for p in planets_raw}
     init_by_id = {p[0]: p for p in init_raw}
 
-    # ---- Rotation-sign inference (per player, from comet_wraith_v3) ----
+    # ---- Rotation-sign inference (per player, from coordinated_strike_interceptor) ----
     cur_angles = {}
     for pid, p in planets.items():
         if pid in comet_pids:

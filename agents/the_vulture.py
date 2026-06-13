@@ -5,7 +5,7 @@
 # Every turn:
 #   1. Scan all enemy fleets in flight; infer each fleet's target planet by
 #      smallest angular error between the fleet's heading and the bearing to
-#      each candidate planet (same threat-cone heuristic as comet_wraith_v3).
+#      each candidate planet (same threat-cone heuristic as coordinated_strike_interceptor).
 #   2. Simulate the incoming battle: garrison-at-arrival vs enemy ship count.
 #      If the enemy fleet flips the planet (captures it) or guts its garrison
 #      below a cheap-capture threshold, mark it as a vulture opportunity.
@@ -13,7 +13,7 @@
 #      arrive STRICTLY AFTER the enemy (natural lead-solution ETA > enemy ETA).
 #      Compute the garrison we'll face (post-battle residual + production ×
 #      arrival gap) and dispatch the minimal fleet to beat it by MARGIN=1.
-#   4. Fall back to comet_wraith-style expansion for any ships not committed
+#   4. Fall back to coordinated_strike_interceptor-style expansion for any ships not committed
 #      by the vulture phase — so we keep growing even when no easy pickings exist.
 # =============================================================================
 
@@ -29,7 +29,7 @@ _prev_angles = {}    # player_id → {planet_id → angle}
 _rotation_sign = {}  # player_id → +1 or -1
 
 
-# ---- Helpers (copied from comet_wraith_v3) ----
+# ---- Helpers (copied from coordinated_strike_interceptor) ----
 
 def _get(obj, key, default=None):
     if isinstance(obj, dict):
@@ -372,7 +372,7 @@ def _decide(obs, config):
         used[sid] += s
         committed[tid] = already + s
 
-    # ---- FALLBACK EXPANSION (comet_wraith-style) ----
+    # ---- FALLBACK EXPANSION (coordinated_strike_interceptor-style) ----
     capturable = [p for p in planets.values() if p[1] != player]
 
     # Standings for multi-opponent suppression

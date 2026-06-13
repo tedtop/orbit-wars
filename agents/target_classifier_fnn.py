@@ -14,7 +14,7 @@
 #   3. If P(Attack) > 0.85 for any enemy planet, reinforce our nearest frontier
 #      planet by pulling spare ships from neighbors (lead-solution aiming).
 #      Reinforced planet's reserve is raised to match the threat level.
-#   4. Run normal greedy offensive expansion (comet_wraith_v3-style) from
+#   4. Run normal greedy offensive expansion (coordinated_strike_interceptor-style) from
 #      remaining capacity — ensures the bot always expands and never idles.
 # =============================================================================
 
@@ -332,7 +332,7 @@ def _decide(obs, config):
             used[sid] += s
             remaining_needed -= s
 
-    # ---- Offensive expansion (comet_wraith_v3-style greedy scoring) ----
+    # ---- Offensive expansion (coordinated_strike_interceptor-style greedy scoring) ----
     candidates = []
     for tgt in capturable:
         tid = tgt[0]

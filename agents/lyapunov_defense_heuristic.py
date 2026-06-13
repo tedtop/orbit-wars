@@ -1,7 +1,7 @@
 # =============================================================================
 # Orbit Wars bot: lyapunov_defense_heuristic
 #
-# Strategy: Lyapunov Exponent Defense + comet_wraith_v3 offense
+# Strategy: Lyapunov Exponent Defense + coordinated_strike_interceptor offense
 #
 # For each owned planet, tracks a Volatility Index each turn:
 #   V = (enemy ships within 3*maxSpeed radius) / garrison
@@ -15,7 +15,7 @@
 # dispatch emergency reinforcements via lead_solution so they arrive before
 # the projected attack.
 #
-# Offensive fallback: comet_wraith_v3's ROI scoring + greedy assignment
+# Offensive fallback: coordinated_strike_interceptor's ROI scoring + greedy assignment
 # ensures the bot always expands and never idles.
 #
 # Pure stdlib only. agent() is the last callable, crash-safe.
@@ -38,7 +38,7 @@ _V_CRIT        = 0.7   # V >= this AND rising fast → critical
 _V_PANIC       = 1.5   # V >= this → critical regardless of slope (imminent attack)
 _DV_CRIT       = 0.2   # dV/dt threshold for "exponentially rising"
 _HIST_LEN      = 4     # rolling turns of V to keep
-_MARGIN        = 1     # capture/reserve margin (comet_wraith_v3's lean edge)
+_MARGIN        = 1     # capture/reserve margin (coordinated_strike_interceptor's lean edge)
 _REINFORCE_FRAC = 0.55 # fraction of surplus to send as emergency reinforcement
 
 
@@ -179,7 +179,7 @@ def _decide(obs, config):
     planets    = {p[0]: p for p in planets_raw}
     init_by_id = {p[0]: p for p in init_raw}
 
-    # ---- Rotation-sign inference (per player, copied from comet_wraith_v3) ----
+    # ---- Rotation-sign inference (per player, copied from coordinated_strike_interceptor) ----
     cur_angles = {}
     for pid, p in planets.items():
         if pid in comet_pids:
@@ -324,7 +324,7 @@ def _decide(obs, config):
             used[sid] += ships_to_send
             break  # one reinforcing wave per critical planet per turn
 
-    # ---- Offensive expansion (comet_wraith_v3 ROI scoring) ----
+    # ---- Offensive expansion (coordinated_strike_interceptor ROI scoring) ----
     scores = {}
     for p in planets.values():
         if p[1] != -1:

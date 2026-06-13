@@ -38,7 +38,7 @@ _rotation_sign  = {}   # player_id → +1 or -1
 
 
 # ---------------------------------------------------------------------------
-# Engine helpers — copied verbatim from comet_wraith_v3
+# Engine helpers — copied verbatim from coordinated_strike_interceptor
 # ---------------------------------------------------------------------------
 
 def _get(obj, key, default=None):
@@ -267,7 +267,7 @@ def _decide(obs, config):
     planets    = {p[0]: p for p in planets_raw}
     init_by_id = {p[0]: p for p in init_raw}
 
-    # ---- Rotation-sign inference (identical to comet_wraith_v3) ----
+    # ---- Rotation-sign inference (identical to coordinated_strike_interceptor) ----
     cur_angles = {}
     for pid, p in planets.items():
         if pid in comet_pids:
@@ -302,7 +302,7 @@ def _decide(obs, config):
     # ---- Build 10×10 grid channels (DQN state representation) ----
     ch_ours, ch_enemy, _ch_prod = _build_channels(planets_raw, fleets_raw, player)
 
-    # ---- Defensive reserves: threat cone (mirrors comet_wraith_v3) ----
+    # ---- Defensive reserves: threat cone (mirrors coordinated_strike_interceptor) ----
     MARGIN = 1
     threat = {mp[0]: 0 for mp in my_planets}
     for f in fleets_raw:

@@ -41,7 +41,7 @@ _enemy_aggression = {} # player -> {enemy_id -> float attack-prob prior}
 
 
 # ---------------------------------------------------------------------------
-# Helpers — copied / trimmed from comet_wraith_v3
+# Helpers — copied / trimmed from coordinated_strike_interceptor
 # ---------------------------------------------------------------------------
 
 def _get(obj, key, default=None):
@@ -281,7 +281,7 @@ def _decide(obs, config):
     planets = {p[0]: p for p in planets_raw}
     init_by_id = {p[0]: p for p in init_raw}
 
-    # ---- Rotation-sign inference (per-player, from comet_wraith_v3) ----
+    # ---- Rotation-sign inference (per-player, from coordinated_strike_interceptor) ----
     cur_angles = {}
     for pid, p in planets.items():
         if pid in comet_pids:

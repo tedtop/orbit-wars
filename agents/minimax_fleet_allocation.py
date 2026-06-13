@@ -11,7 +11,7 @@ Instantaneous simplified combat is used inside the game tree (no turn-by-turn
 flight simulation — fast enough for real-time use).
 
 Outside the contested cluster and supplementing remaining planet capacity,
-falls back to greedy expansion (comet_wraith_v3 style with lead solutions).
+falls back to greedy expansion (coordinated_strike_interceptor style with lead solutions).
 Falls back entirely to greedy when no contested cluster is found.
 
 Timing: depth=2, branch=4 → 16 leaf evals; K-Means on ≤40 pts is negligible.
@@ -29,7 +29,7 @@ _prev_angles = {}    # player_id → {planet_id → angle}
 _rotation_sign = {}  # player_id → +1 or -1
 
 
-# ── Core helpers (copied from comet_wraith_v3) ────────────────────────────────
+# ── Core helpers (copied from coordinated_strike_interceptor) ────────────────────────────────
 
 def _get(obj, key, default=None):
     if isinstance(obj, dict):
@@ -232,7 +232,7 @@ def _minimax(state, depth, alpha, beta, is_max, player, enemy,
     return best_val, best_move
 
 
-# ── Greedy expansion (comet_wraith_v3 style) ──────────────────────────────────
+# ── Greedy expansion (coordinated_strike_interceptor style) ──────────────────────────────────
 
 def _greedy(planets, player, init_by_id, comet_pids, step, max_spd,
             ang_vel, rot_sign, turns_left, exclude_srcs=None):
@@ -330,7 +330,7 @@ def _decide(obs, config):
     planets = {p[0]: p for p in planets_raw}
     init_by_id = {p[0]: p for p in init_raw}
 
-    # ── Rotation-sign inference (per player, same method as comet_wraith_v3) ──
+    # ── Rotation-sign inference (per player, same method as coordinated_strike_interceptor) ──
     cur_angles = {}
     for pid, p in planets.items():
         if pid in comet_pids:

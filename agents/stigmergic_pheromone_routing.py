@@ -34,7 +34,7 @@ _prev_angles   = {} # player → {planet_id → float}
 _rotation_sign = {} # player → +1 or -1
 
 
-# ── Geometry helpers (verbatim from comet_wraith_v3) ─────────────────────────
+# ── Geometry helpers (verbatim from coordinated_strike_interceptor) ─────────────────────────
 
 def _get(obj, key, default=None):
     if isinstance(obj, dict):
@@ -237,7 +237,7 @@ def _decide(obs, config):
     planets    = {p[0]: p for p in planets_raw}
     init_by_id = {p[0]: p for p in init_raw}
 
-    # -- Rotation-sign inference (per player, same logic as comet_wraith_v3) --
+    # -- Rotation-sign inference (per player, same logic as coordinated_strike_interceptor) --
     cur_angles = {}
     for pid, p in planets.items():
         if pid in comet_pids:
@@ -300,7 +300,7 @@ def _decide(obs, config):
     for k in [k for k, v in p_pending.items() if step - v[2] > 6]:
         del p_pending[k]
 
-    # -- Threat map → per-planet reserve (same cone heuristic as comet_wraith) --
+    # -- Threat map → per-planet reserve (same cone heuristic as coordinated_strike_interceptor) --
     MARGIN = 1
     threat = {mp[0]: 0 for mp in my_planets}
     for f in fleets_raw:
@@ -403,7 +403,7 @@ def _decide(obs, config):
                 if tprod * (turns_left - eta) * mult <= garrison:
                     continue
 
-            # Base score (comet_wraith_v3 formula)
+            # Base score (coordinated_strike_interceptor formula)
             score = tprod / (required + 0.3 * eta + 1.0)
             if step < 60 and towner == -1:
                 d = math.hypot(tx - sx, ty - sy)
@@ -422,7 +422,7 @@ def _decide(obs, config):
 
     candidates.sort(key=lambda c: -c[0])
 
-    # Greedy fleet assignment (cumulative, same as comet_wraith_v3)
+    # Greedy fleet assignment (cumulative, same as coordinated_strike_interceptor)
     used      = {mp[0]: 0 for mp in my_planets}
     committed = {}
     moves     = []

@@ -12,7 +12,7 @@
 # snap to the highest-APF-aligned capturable target (cosine-weighted value score).
 # Fallback: greedy nearest viable target so ships never idle.
 # Lead-solution aiming, rotation-sign inference, Sun segment-check, and defensive
-# reserve are all copied verbatim from comet_wraith_v3.
+# reserve are all copied verbatim from coordinated_strike_interceptor.
 # =============================================================================
 
 import math
@@ -212,7 +212,7 @@ def _decide(obs, config):
     planets    = {p[0]: p for p in planets_raw}
     init_by_id = {p[0]: p for p in init_raw}
 
-    # ---- Rotation-sign inference (per player) — verbatim from comet_wraith_v3 ----
+    # ---- Rotation-sign inference (per player) — verbatim from coordinated_strike_interceptor ----
     cur_angles = {}
     for pid, p in planets.items():
         if pid in comet_pids:
@@ -244,7 +244,7 @@ def _decide(obs, config):
         return []
     capturable = [p for p in planets.values() if p[1] != player]
 
-    # ---- Threat → defensive reserve (MARGIN=1 from comet_wraith_v3) ----
+    # ---- Threat → defensive reserve (MARGIN=1 from coordinated_strike_interceptor) ----
     MARGIN = 1
     threat = {mp[0]: 0 for mp in my_planets}
     for f in fleets_raw:

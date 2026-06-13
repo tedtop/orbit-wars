@@ -5,7 +5,7 @@ Usage:
     .venv/bin/python bench.py [--bot NAME] [--games N] [--seed-offset K]
 
 --bot selects which bot to benchmark (same names/aliases as arena.py): a file
-in agents/ (e.g. comet_wraith_v3, or the alias v3), the generated submission
+in agents/ (e.g. coordinated_strike_interceptor, or the alias v3), the generated submission
 file (main), or a builtin (random/starter). Defaults to main.
 """
 import argparse

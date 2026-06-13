@@ -34,7 +34,7 @@ _SUN_R = 10.0
 _ROT_LIM = 50.0
 _EPISODE = 500
 
-# Per-player rotation tracking (same pattern as comet_wraith_v3)
+# Per-player rotation tracking (same pattern as coordinated_strike_interceptor)
 _prev_angles   = {}   # player_id → {planet_id → angle}
 _rotation_sign = {}   # player_id → +1 or -1
 
@@ -54,7 +54,7 @@ MARGIN          = 1       # extra ships above garrison_at_arrival needed to capt
 
 
 # ---------------------------------------------------------------------------
-# Helpers (copied from comet_wraith_v3 for correctness)
+# Helpers (copied from coordinated_strike_interceptor for correctness)
 # ---------------------------------------------------------------------------
 
 def _get(obj, key, default=None):
@@ -242,7 +242,7 @@ def _decide(obs, config):
                              for ep in enemy_planets)
             planet_sp[sid] = SP_FRONTLINE if min_e_dist < FRONTLINE_DIST else SP_INTERIOR
 
-    # ---- Threat: incoming enemy fleets (cone check, matches comet_wraith_v3) ----
+    # ---- Threat: incoming enemy fleets (cone check, matches coordinated_strike_interceptor) ----
     threat = {mp[0]: 0 for mp in my_planets}
     for f in fleets_raw:
         if f[1] == player:

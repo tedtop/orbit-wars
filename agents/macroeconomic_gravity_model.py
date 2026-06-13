@@ -19,7 +19,7 @@ Emergent behaviour: high-production nearby enemy planets attract the heaviest
 flows; distant, low-value outposts get starved; friendly planets under serious
 threat draw defensive reinforcement.  Captures use a lead-solution ETA to
 send strictly more ships than garrison-at-arrival.  End-game gate prevents
-wasted launches.  Helpers and rotation-sign inference copied from comet_wraith_v3.
+wasted launches.  Helpers and rotation-sign inference copied from coordinated_strike_interceptor.
 """
 
 import math
@@ -34,7 +34,7 @@ _prev_angles = {}    # player_id → {planet_id → angle}
 _rotation_sign = {}  # player_id → +1 or -1
 
 
-# ── helpers (verbatim from comet_wraith_v3) ───────────────────────────────────
+# ── helpers (verbatim from coordinated_strike_interceptor) ───────────────────────────────────
 
 def _get(obj, key, default=None):
     if isinstance(obj, dict):

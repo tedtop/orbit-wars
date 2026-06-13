@@ -23,7 +23,7 @@
 # guarantee capture (garrison-at-arrival + 1).  Surplus budget is divided by
 # the same weights so high-Sharpe targets receive a larger top-up.
 #
-# Helpers copied verbatim from comet_wraith_v3. Pure stdlib. Crash-safe.
+# Helpers copied verbatim from coordinated_strike_interceptor. Pure stdlib. Crash-safe.
 # =============================================================================
 
 import math
@@ -44,7 +44,7 @@ _rotation_sign = {}  # player_id → +1 or -1
 
 
 # ---------------------------------------------------------------------------
-# Helpers (copied from comet_wraith_v3)
+# Helpers (copied from coordinated_strike_interceptor)
 # ---------------------------------------------------------------------------
 
 def _get(obj, key, default=None):
@@ -181,7 +181,7 @@ def _decide(obs, config):
     planets = {p[0]: p for p in planets_raw}
     init_by_id = {p[0]: p for p in init_raw}
 
-    # ---- Rotation-sign inference (identical to comet_wraith) ----
+    # ---- Rotation-sign inference (identical to coordinated_strike_interceptor) ----
     cur_angles = {}
     for pid, p in planets.items():
         if pid in comet_pids:
@@ -373,7 +373,7 @@ def _decide(obs, config):
 
         mv_score = mu - _LAMBDA * sigma2
 
-        # Early-game proximity boost for neutral planets (matches comet_wraith)
+        # Early-game proximity boost for neutral planets (matches coordinated_strike_interceptor)
         if step < 60 and towner == -1:
             src_p = planets[best_sid]
             d = math.hypot(tx - src_p[2], ty - src_p[3])

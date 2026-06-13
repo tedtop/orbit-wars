@@ -10,7 +10,7 @@
 #      With <3 owned planets every planet is Frontline.
 #   2. Interior: send spare ships (keep max(threat+1, 5) garrison) toward the
 #      nearest Frontline planet via lead_solution aiming.
-#   3. Frontline: run comet_wraith_v3-style capture scoring — score every
+#   3. Frontline: run coordinated_strike_interceptor-style capture scoring — score every
 #      (source, target) pair by production/cost, greedy-assign to best targets.
 #
 # Engine grounding:
@@ -32,7 +32,7 @@ _prev_angles = {}    # player_id → {planet_id → angle}
 _rotation_sign = {}  # player_id → +1 or -1
 
 
-# --- helpers (copied from comet_wraith_v3) -----------------------------------
+# --- helpers (copied from coordinated_strike_interceptor) -----------------------------------
 
 def _get(obj, key, default=None):
     if isinstance(obj, dict):
@@ -201,7 +201,7 @@ def _decide(obs, config):
     planets = {p[0]: p for p in planets_raw}
     init_by_id = {p[0]: p for p in init_raw}
 
-    # ---- Rotation-sign inference (per player, same as comet_wraith_v3) ----
+    # ---- Rotation-sign inference (per player, same as coordinated_strike_interceptor) ----
     cur_angles = {}
     for pid, p in planets.items():
         if pid in comet_pids:

@@ -43,7 +43,7 @@ _rotation_sign = {}   # player_id → +1 or -1
 
 
 # ---------------------------------------------------------------------------
-# Helpers (copied from comet_wraith_v3 — the authoritative reference impl)
+# Helpers (copied from coordinated_strike_interceptor — the authoritative reference impl)
 # ---------------------------------------------------------------------------
 
 def _get(obj, key, default=None):
@@ -221,7 +221,7 @@ def _decide(obs, config):
     planets = {p[0]: p for p in planets_raw}
     init_by_id = {p[0]: p for p in init_raw}
 
-    # ---- Rotation-sign inference (per player, same method as comet_wraith) ----
+    # ---- Rotation-sign inference (per player, same method as coordinated_strike_interceptor) ----
     cur_angles = {}
     for pid, p in planets.items():
         if pid in comet_pids:

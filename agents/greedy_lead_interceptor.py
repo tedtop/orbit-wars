@@ -1,5 +1,5 @@
 # =============================================================================
-# Orbit Wars bot: graceful_sloth_v1
+# Orbit Wars bot: greedy_lead_interceptor
 # Baseline heuristic: sun avoidance, iterative lead targeting, threat reserve, greedy source->target assignment. ~67% vs starter.
 #
 # Self-contained: agent() is the last callable, so kaggle-environments can run
@@ -131,7 +131,9 @@ def lead_solution(src_pos, tgt_pid, init_x, init_y, tgt_radius, is_comet,
 
 def agent(obs, config):
     """
-    Graceful Sloth v1 — ambitious heuristic agent for Orbit Wars.
+    Greedy Lead Interceptor (was graceful_sloth_v1) — the baseline experiment:
+    iterative lead targeting, a threat-cone defensive reserve, and greedy
+    ROI (production/cost) source->target assignment.
     Must be the last callable defined in this file.
     """
     global _prev_angles, _rotation_sign

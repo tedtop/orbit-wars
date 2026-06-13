@@ -10,10 +10,10 @@
 # self-repairing defense-in-depth perimeter.  Cells where A >> B are
 # dominance zones — we attack out from them.  Cells where B encroaches on
 # A signal planets that need reinforcement (covered by the threat-reserve
-# computed from actual enemy fleet cones, same as comet_wraith_v3).
+# computed from actual enemy fleet cones, same as coordinated_strike_interceptor).
 #
 # Per-turn work is bounded: GRID=20x20, ITER=4 RD steps.
-# All helpers copied from comet_wraith_v3 (the reference bot).
+# All helpers copied from coordinated_strike_interceptor (the reference bot).
 # =============================================================================
 
 import math
@@ -39,7 +39,7 @@ _rotation_sign = {} # player → +1 or -1
 
 
 # ---------------------------------------------------------------------------
-# Helpers (copied verbatim from comet_wraith_v3)
+# Helpers (copied verbatim from coordinated_strike_interceptor)
 # ---------------------------------------------------------------------------
 
 def _get(obj, key, default=None):
@@ -217,7 +217,7 @@ def _decide(obs, config):
     planets    = {p[0]: p for p in planets_raw}
     init_by_id = {p[0]: p for p in init_raw}
 
-    # ---- Rotation-sign inference (per player, from comet_wraith_v3) ----
+    # ---- Rotation-sign inference (per player, from coordinated_strike_interceptor) ----
     p_prev_angles    = _prev_angles.get(player, {})
     p_rotation_sign  = _rotation_sign.get(player, 1)
     cur_angles = {}
@@ -293,7 +293,7 @@ def _decide(obs, config):
     _fields[player]['A'] = A
     _fields[player]['B'] = B
 
-    # ---- Threat → defensive reserve (cone heuristic from comet_wraith_v3) ----
+    # ---- Threat → defensive reserve (cone heuristic from coordinated_strike_interceptor) ----
     MARGIN = 1
     threat = {mp[0]: 0 for mp in my_planets}
     for f in fleets_raw:
@@ -394,7 +394,7 @@ def _decide(obs, config):
                 if tprod * (turns_left - eta) * mult <= garrison:
                     continue
 
-            # Base score: production ROI, same formula as comet_wraith_v3
+            # Base score: production ROI, same formula as coordinated_strike_interceptor
             base = tprod / (required + 0.3 * eta + 1.0)
             # RD bonus: reward attacking into cells where our activator dominates
             rd_bonus = max(0.0, target_dominance) * 0.04
@@ -413,7 +413,7 @@ def _decide(obs, config):
 
     candidates.sort(key=lambda c: -c[0])
 
-    # Greedy assignment (same as comet_wraith_v3)
+    # Greedy assignment (same as coordinated_strike_interceptor)
     used      = {mp[0]: 0 for mp in my_planets}
     committed = {}
     moves     = []

@@ -24,7 +24,7 @@
 #     1. Counter-attack the threat source with
 #        max(garrison_at_arrival + 1, predicted_ships + 1) ships.
 #     2. If source is unreachable, reinforce the threatened planet instead.
-#   Sane expansion greedy (comet_wraith_v3 scoring) fills spare capacity so
+#   Sane expansion greedy (coordinated_strike_interceptor scoring) fills spare capacity so
 #   the bot never idles when no threats are predicted.
 #
 # No training data exists — both stages are deterministic forward passes with
@@ -375,7 +375,7 @@ def _decide(obs, config):
             used[sid] += send
             break  # one source per threatened planet is sufficient
 
-    # ---- Expansion fallback (greedy, comet_wraith_v3 scoring) ----
+    # ---- Expansion fallback (greedy, coordinated_strike_interceptor scoring) ----
     MARGIN = 1
     exp_candidates = []
 
