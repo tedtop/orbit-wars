@@ -68,9 +68,15 @@ def get_db() -> sqlite3.Connection:
             name          TEXT,
             status        TEXT DEFAULT 'active',
             submitted_at  TEXT,
-            updated_at    TEXT
+            updated_at    TEXT,
+            public_score  REAL
         )
     """)
+    # Add public_score column to existing DBs that predate this schema
+    try:
+        con.execute("ALTER TABLE submissions ADD COLUMN public_score REAL")
+    except Exception:
+        pass
     con.commit()
     return con
 
@@ -105,13 +111,20 @@ def sync_submissions(con: sqlite3.Connection) -> None:
             continue
         submitted_at = parts[2].strip() if len(parts) > 2 else ""
         name         = parts[3].strip() if len(parts) > 3 else sub_id
+        public_score = None
+        if len(parts) > 5:
+            try:
+                public_score = float(parts[5].strip())
+            except (ValueError, IndexError):
+                pass
         con.execute(
-            """INSERT INTO submissions (submission_id, name, status, submitted_at, updated_at)
-               VALUES (?, ?, 'active', ?, ?)
+            """INSERT INTO submissions (submission_id, name, status, submitted_at, updated_at, public_score)
+               VALUES (?, ?, 'active', ?, ?, ?)
                ON CONFLICT(submission_id) DO UPDATE SET
                    name=excluded.name,
+                   public_score=excluded.public_score,
                    updated_at=excluded.updated_at""",
-            (sub_id, name, submitted_at, now)
+            (sub_id, name, submitted_at, now, public_score)
         )
     con.commit()
     print(f"  Submissions synced.")

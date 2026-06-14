@@ -4,11 +4,10 @@
 # edges it lacks:
 #   1. Coordinated simultaneous-arrival strikes on producing enemy planets —
 #      combat resolves per tick, so split waves let an enemy garrison regrow
-#      between arrivals and fail. it gangs up sources that LAND THE SAME TICK so
+#      between arrivals and fail. It gangs up sources that LAND THE SAME TICK so
 #      their ships combine (and refuses to waste ships on doomed split waves).
 #   2. End-game efficiency gate — near turn 498, ships sitting at home count as
 #      score, so don't launch captures that can't land and repay before the end.
-# agent() is the last callable and can never forfeit.
 # =============================================================================
 
 import math
