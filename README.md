@@ -86,9 +86,10 @@ Games run in parallel across all CPU cores.
 # Throttle parallelism (default: all cores) so you can keep working
 .venv/bin/python arena.py -j 6
 
-# One specific matchup instead of the whole field (2 or 4 players; aliases ok)
-.venv/bin/python arena.py --players v3,starter --games 50
-.venv/bin/python arena.py --players v3,v2,v1,starter --games 20   # 4-player mix
+# One specific matchup instead of the whole field (2 or 4 players; a unique
+# filename suffix works as an alias, e.g. "vulture" -> the_vulture)
+.venv/bin/python arena.py --players coordinated_strike_interceptor,starter --games 50
+.venv/bin/python arena.py --players coordinated_strike_interceptor,path_aware_lead_interceptor,greedy_lead_interceptor,starter --games 20   # 4-player mix
 
 .venv/bin/python arena.py --list          # list discovered bots
 ```
@@ -116,8 +117,8 @@ kaggle competitions submit orbit-wars -f main.py -m 'path_aware_lead_interceptor
 Copy the current champion as a starting point, then iterate:
 
 ```bash
-cp agents/coordinated_strike_interceptor.py agents/coordinated_strike_interceptor_v4.py        # edit the header name + logic
-.venv/bin/python arena.py --players v4,v3 --games 50          # did it beat the champion?
+cp agents/coordinated_strike_interceptor.py agents/coordinated_strike_interceptor_v4.py   # edit the header name + logic
+.venv/bin/python arena.py --players coordinated_strike_interceptor_v4,coordinated_strike_interceptor --games 50   # did it beat the champion?
 .venv/bin/python arena.py                                     # then re-run the full ladder
 ```
 

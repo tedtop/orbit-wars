@@ -8,7 +8,7 @@ the end.
 
     .venv/bin/python arena.py                      # full auto tournament (default)
     .venv/bin/python arena.py --games 100          # more games per pairing
-    .venv/bin/python arena.py --players v3,starter # one specific matchup
+    .venv/bin/python arena.py --players coordinated_strike_interceptor,starter # one matchup
     .venv/bin/python arena.py --list
     .venv/bin/python arena.py --promote coordinated_strike_interceptor   # copy bot -> main.py
 

@@ -5,7 +5,8 @@ Usage:
     .venv/bin/python bench.py [--bot NAME] [--games N] [--seed-offset K]
 
 --bot selects which bot to benchmark (same names/aliases as arena.py): a file
-in agents/ (e.g. coordinated_strike_interceptor, or the alias v3), the generated submission
+in agents/ (e.g. coordinated_strike_interceptor, or a unique suffix alias like
+"vulture" for the_vulture), the generated submission
 file (main), or a builtin (random/starter). Defaults to main.
 """
 import argparse
@@ -173,7 +174,7 @@ def main():
     if all_ok:
         print(f"All targets met -- {bot_name} is ready.")
         print()
-        print("Next: add a new bot in agents/, compare with arena.py --players vN,vN-1,")
+        print("Next: add a new bot in agents/, compare with arena.py --players <new>,<champion>,")
         print("then promote the winner:  .venv/bin/python arena.py --promote <bot>")
         print("Submit:  kaggle competitions submit orbit-wars -f main.py -m '<bot>'")
     else:
