@@ -4,17 +4,10 @@ Orbit Wars monitoring dashboard.
 Run:
     .venv/bin/streamlit run dashboard/app.py
     # or via start.sh which also runs the pipeline loop
-
-Layout:
-  - Compact header: countdown to each deadline + progress bar
-  - Left column: My Position (score, rank, trend charts)
-  - Right column: Public leaderboard top 25 + our row
-  - Below: My Submissions — episode stats split by 2P vs 4P
-  - Below: Submission log with editable notes
-  - Bottom: auto-refresh countdown (60s)
 """
 
 import json
+import re
 import sqlite3
 import time
 from datetime import datetime, timezone
@@ -24,31 +17,38 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
-ROOT       = Path(__file__).resolve().parent.parent
-DB_PATH    = ROOT / "strategy" / "tracking.db"
-LB_DIR     = ROOT / "leaderboards"
-NOTES_PATH = ROOT / "strategy" / "submission_notes.json"
+ROOT    = Path(__file__).resolve().parent.parent
+DB_PATH = ROOT / "strategy" / "tracking.db"
+LB_DIR  = ROOT / "leaderboards"
 
-OUR_NAME   = "Montana Schmeekler"
+OUR_NAME = "Montana Schmeekler"
 
 ENTRY_DEADLINE = datetime(2026, 6, 16, 23, 59, 0, tzinfo=timezone.utc)
 SUB_DEADLINE   = datetime(2026, 6, 23, 23, 59, 0, tzinfo=timezone.utc)
 GAMES_END      = datetime(2026, 7,  8, 23, 59, 0, tzinfo=timezone.utc)
 COMP_START     = datetime(2026, 5,  1,  0,  0, 0, tzinfo=timezone.utc)
 
-SUBMISSION_IDS = {
-    "53676654": "coordinated_strike v1",
-    "53676680": "markowitz v1",
-}
-
 REFRESH_SECS = 60
 
+# Fallback map for when submissions table is empty (bootstrap run)
+SUBMISSION_IDS_FALLBACK = {
+    "53676654": "coordinated_strike_interceptor v1",
+    "53676680": "markowitz_portfolio_optimization v1",
+}
+
+# Map submission name slug → agent source file (for docstring extraction)
+AGENT_FILE_MAP = {
+    "coordinated_strike_interceptor": "agents/coordinated_strike_interceptor.py",
+    "markowitz_portfolio_optimization": "agents/markowitz_portfolio_optimization.py",
+}
+
 st.set_page_config(
-    page_title="Orbit Wars",
+    page_title="Orbit Wars Dashboard",
     page_icon="🪐",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
+
 
 
 # ---------------------------------------------------------------------------
@@ -57,23 +57,18 @@ st.set_page_config(
 
 @st.cache_data(ttl=60)
 def load_latest_leaderboard():
-    """Return (df, snapshot_name, age_str) or (None, None, None)."""
     csvs = sorted(LB_DIR.glob("leaderboard_*.csv"))
     if not csvs:
         return None, None, None
     path = csvs[-1]
     df = pd.read_csv(path, encoding="utf-8-sig")
-    # parse age from filename
     try:
         ts = datetime.strptime(path.stem.replace("leaderboard_", ""), "%Y-%m-%d_%H-%M")
         ts = ts.replace(tzinfo=timezone.utc)
-        age_secs = (datetime.now(timezone.utc) - ts).total_seconds()
-        if age_secs < 3600:
-            age_str = f"{int(age_secs // 60)}m ago"
-        else:
-            age_str = f"{age_secs / 3600:.1f}h ago"
+        age = (datetime.now(timezone.utc) - ts).total_seconds()
+        age_str = f"{int(age // 60)}m ago" if age < 3600 else f"{age/3600:.1f}h ago"
     except ValueError:
-        age_str = "unknown age"
+        age_str = "unknown"
     return df, path.stem, age_str
 
 
@@ -87,47 +82,43 @@ def load_prev_leaderboard():
 
 @st.cache_data(ttl=60)
 def load_rank_history() -> pd.DataFrame:
-    """Parse every leaderboard snapshot to build rank/score over time."""
     records = []
 
-    # New format: leaderboard_YYYY-MM-DD_HH-MM.csv
+    def _add(path, ts):
+        try:
+            df = pd.read_csv(path, encoding="utf-8-sig")
+            our = df[df["TeamName"].str.contains(OUR_NAME, case=False, na=False)]
+            if not our.empty:
+                records.append({
+                    "time":  ts,
+                    "rank":  int(our.iloc[0]["Rank"]),
+                    "score": float(our.iloc[0]["Score"]),
+                })
+        except Exception:
+            pass
+
     for p in sorted(LB_DIR.glob("leaderboard_*.csv")):
         try:
-            ts = datetime.strptime(
-                p.stem.replace("leaderboard_", ""), "%Y-%m-%d_%H-%M"
-            ).replace(tzinfo=timezone.utc)
+            ts = datetime.strptime(p.stem.replace("leaderboard_", ""), "%Y-%m-%d_%H-%M")
+            _add(p, ts.replace(tzinfo=timezone.utc))
         except ValueError:
-            continue
-        _add_our_row(p, ts, records)
+            pass
 
-    # Old format: orbit-wars-publicleaderboard-YYYY-MM-DDTHH:MM:SS.csv
     for p in sorted(LB_DIR.glob("orbit-wars-publicleaderboard-*.csv")):
         try:
-            ts_str = p.stem.replace("orbit-wars-publicleaderboard-", "")
-            ts = datetime.fromisoformat(ts_str).replace(tzinfo=timezone.utc)
+            ts = datetime.fromisoformat(
+                p.stem.replace("orbit-wars-publicleaderboard-", "")
+            ).replace(tzinfo=timezone.utc)
+            _add(p, ts)
         except ValueError:
-            continue
-        _add_our_row(p, ts, records)
+            pass
 
     if not records:
         return pd.DataFrame()
-    df = pd.DataFrame(records).sort_values("time").drop_duplicates("time").reset_index(drop=True)
-    df["time_local"] = df["time"].dt.tz_convert(None)  # for chart display
-    return df
-
-
-def _add_our_row(path: Path, ts: datetime, records: list):
-    try:
-        df = pd.read_csv(path, encoding="utf-8-sig")
-        our = df[df["TeamName"].str.contains(OUR_NAME, case=False, na=False)]
-        if not our.empty:
-            records.append({
-                "time":  ts,
-                "rank":  int(our.iloc[0]["Rank"]),
-                "score": float(our.iloc[0]["Score"]),
-            })
-    except Exception:
-        pass
+    return (pd.DataFrame(records)
+            .sort_values("time")
+            .drop_duplicates("time")
+            .reset_index(drop=True))
 
 
 @st.cache_data(ttl=60)
@@ -140,38 +131,91 @@ def load_episodes() -> pd.DataFrame:
     return df
 
 
-def load_notes() -> dict:
-    return json.loads(NOTES_PATH.read_text()) if NOTES_PATH.exists() else {}
+@st.cache_data(ttl=300)
+def load_submissions() -> pd.DataFrame:
+    if DB_PATH.exists():
+        try:
+            con = sqlite3.connect(DB_PATH)
+            df = pd.read_sql_query(
+                "SELECT * FROM submissions ORDER BY submitted_at DESC", con
+            )
+            con.close()
+            if not df.empty:
+                return df
+        except Exception:
+            pass
+    rows = [{"submission_id": k, "name": v, "status": "active", "submitted_at": ""}
+            for k, v in SUBMISSION_IDS_FALLBACK.items()]
+    return pd.DataFrame(rows)
 
 
-def save_notes(notes: dict):
-    NOTES_PATH.write_text(json.dumps(notes, indent=2))
+@st.cache_data
+def load_replay_planets(episode_id: str) -> pd.DataFrame:
+    paths = list((ROOT / "replays").glob(f"*/{episode_id}.json"))
+    if not paths:
+        return pd.DataFrame()
+    d = json.loads(paths[0].read_text())
+    names = d["info"]["TeamNames"]
+    rows = []
+    for step_num, step in enumerate(d["steps"]):
+        obs = step[0]["observation"]
+        for pid, name in enumerate(names):
+            count = sum(1 for p in obs["planets"] if p[1] == pid)
+            rows.append({"step": step_num, "player": name, "planets": count})
+    return pd.DataFrame(rows)
+
+
+def read_agent_description(sub_name: str) -> str:
+    slug = re.sub(r"\s+v\d+$", "", sub_name).strip().replace(" ", "_").lower()
+    rel  = AGENT_FILE_MAP.get(slug)
+    if not rel:
+        return ""
+    path = ROOT / rel
+    if not path.exists():
+        return ""
+    lines = path.read_text().splitlines()
+    desc_lines = []
+    in_block = False
+    for line in lines[:60]:
+        if line.startswith("# ==="):
+            in_block = not in_block
+            continue
+        if in_block and line.startswith("#"):
+            text = line.lstrip("# ").rstrip()
+            if text:
+                desc_lines.append(text)
+    return " ".join(desc_lines[:4]) if desc_lines else ""
 
 
 # ---------------------------------------------------------------------------
-# Header — compact countdown
+# Header
 # ---------------------------------------------------------------------------
 
-def section_header():
+YOU_COLOR    = "#f58518"   # orange — always used for our line
+OTHER_COLORS = ["#4c78a8", "#72b7b2", "#54a24b", "#e45756", "#b279a2"]
+
+
+def section_header(refresh_slot_ref: list):
     now = datetime.now(timezone.utc)
 
     def countdown(dt):
         d = dt - now
         if d.total_seconds() < 0:
             return "✅ passed"
-        days = d.days
-        hrs  = d.seconds // 3600
-        mins = (d.seconds % 3600) // 60
+        days, rem = divmod(int(d.total_seconds()), 86400)
+        hrs, rem  = divmod(rem, 3600)
+        mins      = rem // 60
         return f"{days}d {hrs}h {mins}m"
 
     def local(dt):
         return dt.astimezone().strftime("%b %-d %-I:%M %p %Z")
 
-    st.markdown("## 🪐 Orbit Wars")
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Entry deadline",   local(ENTRY_DEADLINE),   countdown(ENTRY_DEADLINE),   delta_color="off")
-    c2.metric("Submission lock",  local(SUB_DEADLINE),     countdown(SUB_DEADLINE),     delta_color="off")
-    c3.metric("Games end",        local(GAMES_END),         countdown(GAMES_END),         delta_color="off")
+    h1, h2, h3, h4, h5 = st.columns([3, 2, 2, 2, 1])
+    h1.markdown("## 🪐 Orbit Wars")
+    h2.metric(f"Entry deadline", countdown(ENTRY_DEADLINE), local(ENTRY_DEADLINE), delta_color="off")
+    h3.metric(f"Submission lock", countdown(SUB_DEADLINE),  local(SUB_DEADLINE),   delta_color="off")
+    h4.metric(f"Games end",       countdown(GAMES_END),     local(GAMES_END),       delta_color="off")
+    refresh_slot_ref.append(h5.empty())
 
     total   = (GAMES_END - COMP_START).total_seconds()
     elapsed = (now - COMP_START).total_seconds()
@@ -180,8 +224,53 @@ def section_header():
 
 
 # ---------------------------------------------------------------------------
-# My Position + Leaderboard (two columns)
+# My Position + Leaderboard
 # ---------------------------------------------------------------------------
+
+_TD  = "padding:5px 10px;border:1px solid #333;"
+_TDR = _TD + "text-align:right;"
+_TDN = _TD + "font-variant-numeric:tabular-nums;text-align:right;"
+
+
+def _leaderboard_html(display_rows: list[dict]) -> str:
+    rows_html = ""
+    for r in display_rows:
+        rank  = r["rank"]
+        team  = r["team"]
+        score = r["score"]
+        is_us = OUR_NAME.lower() in team.lower()
+
+        if is_us:
+            row_bg = "background:rgba(99,102,241,0.25);"
+            left   = "border-left:4px solid #6366f1;"
+        elif rank <= 10:
+            row_bg = ""
+            left   = "border-left:4px solid #22c55e;"
+        else:
+            row_bg = ""
+            left   = ""
+
+        team_display = team if len(team) <= 30 else team[:28] + "…"
+        rows_html += (
+            f'<tr style="{row_bg}">'
+            f'<td style="{_TDR}color:#888;{left}">{rank}</td>'
+            f'<td style="{_TD}">{team_display}</td>'
+            f'<td style="{_TDN}">{score:.1f}</td>'
+            f'</tr>'
+        )
+
+    th = "padding:5px 10px;border:1px solid #444;color:#888;font-weight:600;background:rgba(255,255,255,0.04);"
+    return (
+        f'<table style="width:100%;border-collapse:collapse;font-size:0.85rem">'
+        f'<thead><tr>'
+        f'<th style="{th}text-align:right;">#</th>'
+        f'<th style="{th}">Team</th>'
+        f'<th style="{th}text-align:right;">Score</th>'
+        f'</tr></thead>'
+        f'<tbody>{rows_html}</tbody>'
+        f'</table>'
+    )
+
 
 def section_position_and_leaderboard():
     lb_df, snap_name, age_str = load_latest_leaderboard()
@@ -189,20 +278,18 @@ def section_position_and_leaderboard():
     hist    = load_rank_history()
 
     our_row   = lb_df[lb_df["TeamName"].str.contains(OUR_NAME, case=False, na=False)] if lb_df is not None else pd.DataFrame()
-    our_rank  = int(our_row.iloc[0]["Rank"])  if not our_row.empty else None
+    our_rank  = int(our_row.iloc[0]["Rank"])   if not our_row.empty else None
     our_score = float(our_row.iloc[0]["Score"]) if not our_row.empty else None
 
-    # Score/rank delta vs previous snapshot
     score_delta = rank_delta = None
     if prev_df is not None and our_score is not None:
         prev_our = prev_df[prev_df["TeamName"].str.contains(OUR_NAME, case=False, na=False)]
         if not prev_our.empty:
             score_delta = our_score - float(prev_our.iloc[0]["Score"])
-            rank_delta  = int(prev_our.iloc[0]["Rank"]) - our_rank  # positive = improved
+            rank_delta  = int(prev_our.iloc[0]["Rank"]) - our_rank
 
     left, right = st.columns([0.55, 0.45])
 
-    # ── Left: My Position ──────────────────────────────────────────────────
     with left:
         st.subheader("My Position")
         m1, m2 = st.columns(2)
@@ -214,46 +301,32 @@ def section_position_and_leaderboard():
 
         if not hist.empty and len(hist) >= 2:
             st.caption("Score over time")
-            score_chart = (
-                alt.Chart(hist)
-                .mark_line(point=True, color="#4c78a8")
-                .encode(
+            st.altair_chart(
+                alt.Chart(hist).mark_line(point=True, color="#4c78a8").encode(
                     x=alt.X("time:T", title=None, axis=alt.Axis(format="%m/%d %H:%M")),
                     y=alt.Y("score:Q", title="Score", scale=alt.Scale(zero=False)),
-                    tooltip=[
-                        alt.Tooltip("time:T", title="Time", format="%m/%d %H:%M"),
-                        alt.Tooltip("score:Q", title="Score", format=".1f"),
-                        alt.Tooltip("rank:Q",  title="Rank"),
-                    ],
-                )
-                .properties(height=140)
+                    tooltip=[alt.Tooltip("time:T", format="%m/%d %H:%M"),
+                             alt.Tooltip("score:Q", format=".1f"),
+                             alt.Tooltip("rank:Q")],
+                ).properties(height=130),
+                use_container_width=True,
             )
-            st.altair_chart(score_chart, use_container_width=True)
-
             st.caption("Rank over time (lower = better)")
-            rank_chart = (
-                alt.Chart(hist)
-                .mark_line(point=True, color="#f58518")
-                .encode(
+            st.altair_chart(
+                alt.Chart(hist).mark_line(point=True, color="#f58518").encode(
                     x=alt.X("time:T", title=None, axis=alt.Axis(format="%m/%d %H:%M")),
-                    y=alt.Y("rank:Q", title="Rank (#)",
-                            scale=alt.Scale(reverse=True, zero=False)),
-                    tooltip=[
-                        alt.Tooltip("time:T", title="Time", format="%m/%d %H:%M"),
-                        alt.Tooltip("rank:Q",  title="Rank"),
-                        alt.Tooltip("score:Q", title="Score", format=".1f"),
-                    ],
-                )
-                .properties(height=140)
+                    y=alt.Y("rank:Q", title="Rank", scale=alt.Scale(reverse=True, zero=False)),
+                    tooltip=[alt.Tooltip("time:T", format="%m/%d %H:%M"),
+                             alt.Tooltip("rank:Q"),
+                             alt.Tooltip("score:Q", format=".1f")],
+                ).properties(height=130),
+                use_container_width=True,
             )
-            st.altair_chart(rank_chart, use_container_width=True)
         elif not hist.empty:
-            st.caption("Score history will appear after 2+ snapshots")
-            st.dataframe(hist[["time", "rank", "score"]], hide_index=True, use_container_width=True)
+            st.caption("2+ snapshots needed for trend charts")
         else:
-            st.info("No leaderboard history yet. Run the pipeline to fetch snapshots.")
+            st.info("No leaderboard history yet — run the pipeline.")
 
-    # ── Right: Leaderboard ─────────────────────────────────────────────────
     with right:
         if lb_df is None:
             st.warning("No leaderboard snapshot. Run `pipeline/leaderboard_snapshot.py`")
@@ -261,162 +334,134 @@ def section_position_and_leaderboard():
 
         prize_row   = lb_df[lb_df["Rank"] == 10]
         prize_score = float(prize_row.iloc[0]["Score"]) if not prize_row.empty else 1534.0
-        gap_to_prize = prize_score - our_score if our_score else None
+        gap         = prize_score - our_score if our_score else None
 
         st.subheader("Leaderboard")
-        st.caption(f"Snapshot: {age_str}  ·  {len(lb_df):,} teams  ·  Prize cutoff: {prize_score:.0f}")
-
-        # Build display table (top 25 + our row if outside top 25)
-        display = lb_df.head(25).copy()
-        if our_rank and our_rank > 25:
-            display = pd.concat([display, our_row])
-
-        # Score delta column
-        if prev_df is not None:
-            prev_scores = prev_df.set_index("TeamName")["Score"].to_dict()
-            display = display.copy()
-            display["Δ"] = display.apply(
-                lambda r: f"{r['Score'] - prev_scores[r['TeamName']]:+.1f}"
-                if r["TeamName"] in prev_scores else "new",
-                axis=1
-            )
-
-        # "You" marker column — works on dark and light themes
-        display["  "] = display["TeamName"].apply(
-            lambda n: "⬅ you" if OUR_NAME.lower() in str(n).lower() else ""
+        st.caption(
+            f"Snapshot: {age_str}  ·  {len(lb_df):,} teams"
+            + (f"  ·  Gap to prizes: **{gap:+.0f} pts**" if gap is not None else "")
         )
 
-        cols = ["Rank", "TeamName", "Score"]
-        if "Δ" in display.columns:
-            cols.append("Δ")
-        cols.append("  ")
+        # Top 14 + our row always last
+        top14 = lb_df.head(14)
+        display_rows = [
+            {"rank": int(r["Rank"]), "team": r["TeamName"], "score": float(r["Score"])}
+            for _, r in top14.iterrows()
+        ]
+        if our_rank and our_rank > 14:
+            display_rows.append({"rank": our_rank, "team": OUR_NAME, "score": our_score})
 
-        st.dataframe(
-            display[cols].reset_index(drop=True),
-            hide_index=True,
-            use_container_width=True,
-            height=520,
-            column_config={
-                "Rank":     st.column_config.NumberColumn("Rank", format="%d"),
-                "Score":    st.column_config.NumberColumn("Score", format="%.1f"),
-                "TeamName": st.column_config.TextColumn("Team"),
-                "  ":       st.column_config.TextColumn(""),
-            },
-        )
-
-        if gap_to_prize is not None:
-            st.caption(f"Gap to prizes: **{gap_to_prize:+.0f} pts** · Our rank: **#{our_rank}**")
+        st.html(_leaderboard_html(display_rows))
 
 
 # ---------------------------------------------------------------------------
-# My Submissions — 2P and 4P stats split
+# Episode card grid
 # ---------------------------------------------------------------------------
 
-def section_submissions():
-    st.subheader("My Submissions")
-    episodes = load_episodes()
+def _placement_badge(place, nplayer):
+    if place is None:
+        return "?"
+    p    = int(place)
+    icon = {1: "🥇", 2: "🥈", 3: "🥉"}.get(p, "💀")
+    return f"{icon} {p}/{int(nplayer)}"
 
-    if episodes.empty:
-        st.info("No episodes yet — run the pipeline.")
+
+def _render_episode_card(ep, col):
+    ep_id   = str(ep["episode_id"])
+    place   = ep.get("our_placement")
+    nplayer = ep.get("num_players", 2)
+    date    = str(ep.get("create_time", ""))[:10]
+
+    with col:
+        with st.container(border=True):
+            st.caption(_placement_badge(place, nplayer))
+
+            df = load_replay_planets(ep_id)
+            if not df.empty:
+                df["player"] = df["player"].apply(
+                    lambda n: "You" if OUR_NAME.lower() in n.lower() else n[:12]
+                )
+                players = df["player"].unique().tolist()
+                others  = [p for p in players if p != "You"]
+                domain  = ["You"] + others
+                colors  = [YOU_COLOR] + OTHER_COLORS[:len(others)]
+                chart = (
+                    alt.Chart(df)
+                    .mark_line()
+                    .encode(
+                        x=alt.X("step:Q", axis=None),
+                        y=alt.Y("planets:Q", title=None,
+                                axis=alt.Axis(tickCount=3, labelFontSize=9)),
+                        color=alt.Color(
+                            "player:N",
+                            scale=alt.Scale(domain=domain, range=colors),
+                            legend=alt.Legend(
+                                orient="bottom", labelLimit=70,
+                                labelFontSize=9, symbolSize=60,
+                                padding=0, rowPadding=0,
+                            ),
+                        ),
+                    )
+                    .properties(height=110)
+                    .configure_view(strokeWidth=0)
+                )
+                st.altair_chart(chart, use_container_width=True)
+            else:
+                st.caption("no replay")
+
+            st.caption(date)
+
+
+def _render_card_grid(sub_eps: pd.DataFrame, cards_per_row: int = 4):
+    if sub_eps.empty:
+        st.caption("No episodes with placements downloaded yet.")
         return
-
-    for sub_id, sub_name in SUBMISSION_IDS.items():
-        sub_eps = episodes[episodes["submission_id"] == sub_id]
-        n_total = len(sub_eps)
-
-        twop  = sub_eps[(sub_eps["num_players"] == 2) & sub_eps["our_placement"].notna()]
-        fourp = sub_eps[(sub_eps["num_players"] == 4) & sub_eps["our_placement"].notna()]
-        n_downloaded = int(sub_eps["downloaded"].sum())
-
-        with st.expander(f"**{sub_name}**  ·  {n_total} episodes  ·  {n_downloaded} downloaded", expanded=True):
-            if n_downloaded == 0:
-                st.caption("No replays downloaded yet.")
-                continue
-
-            cols = st.columns(2)
-
-            # ── 2P stats ──────────────────────────────────────────────────
-            with cols[0]:
-                st.markdown("**2-player games**")
-                if twop.empty:
-                    st.caption("No 2P replays downloaded yet.")
-                else:
-                    wins2   = int((twop["our_placement"] == 1).sum())
-                    losses2 = int((twop["our_placement"] == 2).sum())
-                    n2 = wins2 + losses2
-                    pct = wins2 / n2 * 100 if n2 else 0
-                    m1, m2, m3 = st.columns(3)
-                    m1.metric("Games",  n2)
-                    m2.metric("Wins",   wins2)
-                    m3.metric("Win %",  f"{pct:.0f}%")
-                    place2_df = pd.DataFrame({
-                        "Result": ["1st (W)", "2nd (L)"],
-                        "Count":  [wins2, losses2],
-                    })
-                    st.caption("Win / Loss")
-                    st.bar_chart(place2_df.set_index("Result"), height=140)
-
-            # ── 4P stats ──────────────────────────────────────────────────
-            with cols[1]:
-                st.markdown("**4-player games**")
-                if fourp.empty:
-                    st.caption("No 4P replays downloaded yet.")
-                else:
-                    counts = {1: 0, 2: 0, 3: 0, 4: 0}
-                    for p in fourp["our_placement"]:
-                        k = int(p)
-                        if k in counts:
-                            counts[k] += 1
-                    n4 = sum(counts.values())
-                    avg4 = fourp["our_placement"].mean()
-                    m1, m2 = st.columns(2)
-                    m1.metric("Games",         n4)
-                    m2.metric("Avg placement", f"{avg4:.2f}")
-                    place4_df = pd.DataFrame({
-                        "Place": ["1st", "2nd", "3rd", "4th"],
-                        "Count": [counts[1], counts[2], counts[3], counts[4]],
-                    })
-                    st.caption("Placement distribution")
-                    st.bar_chart(place4_df.set_index("Place"), height=140)
+    eps_list = list(sub_eps.iterrows())
+    for i in range(0, len(eps_list), cards_per_row):
+        chunk = eps_list[i:i + cards_per_row]
+        cols  = st.columns(cards_per_row)
+        for j, (_, ep) in enumerate(chunk):
+            _render_episode_card(ep, cols[j])
 
 
-# ---------------------------------------------------------------------------
-# Submission log with notes
-# ---------------------------------------------------------------------------
-
-def section_log():
-    st.subheader("Submission Log")
-    notes    = load_notes()
+def section_episodes():
+    subs     = load_submissions()
     episodes = load_episodes()
 
-    cols = st.columns([2, 1, 1, 1, 3])
-    cols[0].markdown("**Submission**")
-    cols[1].markdown("**Episodes**")
-    cols[2].markdown("**Best placement**")
-    cols[3].markdown("**Win %**")
-    cols[4].markdown("**Notes**")
-    st.divider()
+    active  = subs[subs["status"] == "active"]
+    retired = subs[subs["status"] != "active"]
 
-    for sub_id, sub_name in SUBMISSION_IDS.items():
-        sub_eps = episodes[episodes["submission_id"] == sub_id] if not episodes.empty else pd.DataFrame()
-        placed  = sub_eps[sub_eps["our_placement"].notna()] if not sub_eps.empty else pd.DataFrame()
-        best    = int(placed["our_placement"].min()) if not placed.empty else None
-        twop    = placed[placed["num_players"] == 2] if not placed.empty else pd.DataFrame()
-        win_pct = f"{(twop['our_placement']==1).mean()*100:.0f}%" if not twop.empty else "—"
+    st.subheader("Active Agents")
+    for _, sub in active.iterrows():
+        sub_id  = str(sub["submission_id"])
+        name    = sub.get("name", sub_id)
+        if not episodes.empty:
+            sub_eps = (episodes[episodes["submission_id"] == sub_id]
+                       .loc[lambda df: df["our_placement"].notna()]
+                       .sort_values("create_time", ascending=False))
+        else:
+            sub_eps = pd.DataFrame()
 
-        cols = st.columns([2, 1, 1, 1, 3])
-        cols[0].markdown(f"**{sub_name}**  \n`{sub_id}`")
-        cols[1].write(len(sub_eps))
-        cols[2].write(f"{best}{'st' if best==1 else 'nd' if best==2 else 'rd' if best==3 else 'th'}" if best else "—")
-        cols[3].write(win_pct)
-        new_note = cols[4].text_input(
-            "Notes", value=notes.get(sub_id, ""),
-            key=f"note_{sub_id}", label_visibility="collapsed",
-            placeholder="e.g. increased aggression, better 4P…"
-        )
-        if new_note != notes.get(sub_id, ""):
-            notes[sub_id] = new_note
-            save_notes(notes)
+        desc = read_agent_description(name)
+        with st.expander(f"**{name}**  ·  {len(sub_eps)} episodes", expanded=True):
+            if desc:
+                st.caption(desc)
+            _render_card_grid(sub_eps)
+
+    if not retired.empty:
+        st.subheader("Retired Agents")
+        for _, sub in retired.iterrows():
+            sub_id  = str(sub["submission_id"])
+            name    = sub.get("name", sub_id)
+            if not episodes.empty:
+                sub_eps = (episodes[episodes["submission_id"] == sub_id]
+                           .loc[lambda df: df["our_placement"].notna()]
+                           .sort_values("create_time", ascending=False))
+            else:
+                sub_eps = pd.DataFrame()
+
+            with st.expander(f"**{name}**  ·  {len(sub_eps)} episodes", expanded=True):
+                _render_card_grid(sub_eps)
 
 
 # ---------------------------------------------------------------------------
@@ -424,22 +469,20 @@ def section_log():
 # ---------------------------------------------------------------------------
 
 def main():
-    section_header()
+    refresh_slot_ref: list = []
+    section_header(refresh_slot_ref)
     st.divider()
     section_position_and_leaderboard()
     st.divider()
-    section_submissions()
-    st.divider()
-    section_log()
+    section_episodes()
 
-    # Auto-refresh countdown
-    st.divider()
-    refresh_slot = st.empty()
-    for remaining in range(REFRESH_SECS, 0, -1):
-        refresh_slot.caption(f"⏱ Auto-refresh in {remaining}s")
-        time.sleep(1)
-    st.cache_data.clear()
-    st.rerun()
+    if refresh_slot_ref:
+        refresh_slot = refresh_slot_ref[0]
+        for remaining in range(REFRESH_SECS, 0, -1):
+            refresh_slot.caption(f"⏱ {remaining}s")
+            time.sleep(1)
+        st.cache_data.clear()
+        st.rerun()
 
 
 if __name__ == "__main__":

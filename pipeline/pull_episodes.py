@@ -62,8 +62,59 @@ def get_db() -> sqlite3.Connection:
             taken_at  TEXT
         )
     """)
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS submissions (
+            submission_id TEXT PRIMARY KEY,
+            name          TEXT,
+            status        TEXT DEFAULT 'active',
+            submitted_at  TEXT,
+            updated_at    TEXT
+        )
+    """)
     con.commit()
     return con
+
+
+# ---------------------------------------------------------------------------
+# Submission syncing
+# ---------------------------------------------------------------------------
+
+def sync_submissions(con: sqlite3.Connection) -> None:
+    """Pull all submissions from Kaggle and upsert into the submissions table."""
+    result = subprocess.run(
+        [str(KAGGLE), "competitions", "submissions", "orbit-wars"],
+        capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        print(f"  [WARN] kaggle submissions failed: {result.stderr.strip()}")
+        return
+
+    now = datetime.now(timezone.utc).isoformat()
+    lines = result.stdout.strip().splitlines()
+    # Skip header (line 0) and separator (line 1)
+    for line in lines[2:]:
+        line = line.strip()
+        if not line:
+            continue
+        parts = re.split(r"\s{2,}", line)
+        if len(parts) < 3:
+            continue
+        sub_id   = parts[0].strip()
+        # parts[1] is fileName (always main.py), parts[2] is date, parts[3] is description
+        if not sub_id.isdigit():
+            continue
+        submitted_at = parts[2].strip() if len(parts) > 2 else ""
+        name         = parts[3].strip() if len(parts) > 3 else sub_id
+        con.execute(
+            """INSERT INTO submissions (submission_id, name, status, submitted_at, updated_at)
+               VALUES (?, ?, 'active', ?, ?)
+               ON CONFLICT(submission_id) DO UPDATE SET
+                   name=excluded.name,
+                   updated_at=excluded.updated_at""",
+            (sub_id, name, submitted_at, now)
+        )
+    con.commit()
+    print(f"  Submissions synced.")
 
 
 # ---------------------------------------------------------------------------
@@ -122,6 +173,9 @@ def main():
     con = get_db()
     now = datetime.now(timezone.utc).isoformat()
     new_ids: list[str] = []
+
+    # Sync submission list (active/retired status lives in DB)
+    sync_submissions(con)
 
     for sub_id, sub_name in subs.items():
         print(f"\n=== {sub_name} ({sub_id}) ===")
