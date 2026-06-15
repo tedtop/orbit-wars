@@ -26,11 +26,9 @@ KAGGLE = ROOT / ".venv" / "bin" / "kaggle"
 
 OUR_NAME = "Montana Schmeekler"
 
-# IDs to track → friendly name. Update manually when you submit a new bot.
-SUBMISSION_IDS: dict[str, str] = {
-    "53676654": "coordinated_strike_interceptor_v1",
-    "53676680": "markowitz_portfolio_optimization_v1",
-}
+# Kaggle keeps only the most-recent submissions live on the ladder. We auto-detect
+# the active bots from the submission list (newest first) — no manual ID editing.
+ACTIVE_SLOTS = 2
 
 
 # ---------------------------------------------------------------------------
@@ -126,8 +124,17 @@ def sync_submissions(con: sqlite3.Connection) -> None:
                    updated_at=excluded.updated_at""",
             (sub_id, name, submitted_at, now, public_score)
         )
+    # Auto-detect active vs retired: the ACTIVE_SLOTS most-recent submissions are
+    # the ones Kaggle keeps live on the ladder; everything older is retired.
+    active_ids = [r[0] for r in con.execute(
+        "SELECT submission_id FROM submissions ORDER BY submitted_at DESC LIMIT ?",
+        (ACTIVE_SLOTS,)).fetchall()]
+    if active_ids:
+        ph = ",".join("?" * len(active_ids))
+        con.execute(f"UPDATE submissions SET status='retired' WHERE submission_id NOT IN ({ph})", active_ids)
+        con.execute(f"UPDATE submissions SET status='active'  WHERE submission_id IN ({ph})", active_ids)
     con.commit()
-    print(f"  Submissions synced.")
+    print(f"  Submissions synced (active: {active_ids}).")
 
 
 # ---------------------------------------------------------------------------
@@ -180,15 +187,25 @@ def main():
     parser.add_argument("--sub", help="Only check this submission ID")
     args = parser.parse_args()
 
-    subs = ({args.sub: SUBMISSION_IDS.get(args.sub, args.sub)}
-            if args.sub else SUBMISSION_IDS)
-
     con = get_db()
     now = datetime.now(timezone.utc).isoformat()
     new_ids: list[str] = []
 
-    # Sync submission list (active/retired status lives in DB)
+    # Sync submission list first — this upserts all submissions and sets active/retired
+    # status (latest ACTIVE_SLOTS = active). Then pull episodes for the ACTIVE ones.
     sync_submissions(con)
+
+    if args.sub:
+        rows = con.execute(
+            "SELECT submission_id, name FROM submissions WHERE submission_id=?", (args.sub,)
+        ).fetchall()
+        subs = {r[0]: r[1] for r in rows} or {args.sub: args.sub}
+    else:
+        rows = con.execute(
+            "SELECT submission_id, name FROM submissions WHERE status='active' "
+            "ORDER BY submitted_at DESC"
+        ).fetchall()
+        subs = {r[0]: r[1] for r in rows}
 
     for sub_id, sub_name in subs.items():
         print(f"\n=== {sub_name} ({sub_id}) ===")
