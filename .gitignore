@@ -6,3 +6,7 @@ __pycache__/
 leaderboards
 replays
 strategy
+agents/opponents
+episodes
+training
+agents/comet_reaper

@@ -14,6 +14,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 from pathlib import Path
 
@@ -26,17 +27,62 @@ COMPETITION = "orbit-wars"
 # Helpers
 # ---------------------------------------------------------------------------
 
+def is_folder_bot(p: Path) -> bool:
+    """A bot that ships extra files (e.g. orbit_lite/): a dir containing main.py."""
+    return p.is_dir() and (p / "main.py").exists()
+
+
 def list_bots() -> list[Path]:
-    """Return .py files in agents/ that aren't __init__ or opponents."""
-    bots = sorted(
-        p for p in AGENTS_DIR.glob("*.py")
-        if p.stem != "__init__"
-    )
-    return bots
+    """Bots in agents/: single-file (*.py) AND folder bots (dir with main.py)."""
+    singles = [p for p in AGENTS_DIR.glob("*.py") if p.stem != "__init__"]
+    folders = [p for p in AGENTS_DIR.iterdir()
+               if p.name != "opponents" and is_folder_bot(p)]
+    return sorted(singles + folders, key=lambda p: p.name)
+
+
+def bundle_for_submission(bot: Path, tmpdir: str) -> Path:
+    """Return the file to hand Kaggle.
+
+    - single-file bot (agents/foo.py)  -> a temp ``main.py``
+    - folder bot (agents/foo/ with main.py + orbit_lite/) -> a temp ``.tar.gz`` with
+      main.py and its sibling packages at the archive root (the layout Kaggle needs).
+    """
+    if is_folder_bot(bot):
+        out = Path(tmpdir) / f"{bot.name}.tar.gz"
+
+        def _filt(info: tarfile.TarInfo):
+            parts = set(Path(info.name).parts)
+            if {"__pycache__", ".ipynb_checkpoints"} & parts or info.name.endswith((".pyc", ".ipynb")):
+                return None
+            return info
+
+        with tarfile.open(out, "w:gz") as tar:
+            tar.add(bot / "main.py", arcname="main.py", filter=_filt)
+            for child in sorted(bot.iterdir()):
+                if child.name in ("main.py", "__pycache__"):
+                    continue
+                if child.is_dir() or child.suffix == ".py":
+                    tar.add(child, arcname=child.name, filter=_filt)
+        return out
+    main_py = Path(tmpdir) / "main.py"
+    shutil.copy2(bot, main_py)
+    return main_py
 
 
 def smoke_test(bot_path: Path, modes: tuple[str, ...] = ("2p", "4p")) -> bool:
     """Run bot locally with kaggle-environments. Returns True if all pass."""
+    # Folder bots (orbit_lite) can't be imported in-process here (module name
+    # collisions + cwd). Run them isolated via the same harness the gym uses.
+    if is_folder_bot(bot_path):
+        runner = AGENTS_DIR / "opponents" / "_smoke_one.py"
+        ok = True
+        for n in (2, 4):
+            r = subprocess.run([sys.executable, str(runner), str(n), "120"],
+                               cwd=str(bot_path), capture_output=True, text=True)
+            line = (r.stdout.strip().splitlines() or ["<no output>"])[-1]
+            print(f"  • {n}-player: {line}")
+            ok = ok and line.startswith("PASS")
+        return ok
     try:
         from kaggle_environments import make
     except ImportError:
@@ -83,18 +129,17 @@ def smoke_test(bot_path: Path, modes: tuple[str, ...] = ("2p", "4p")) -> bool:
 
 
 def kaggle_submit(bot_path: Path, message: str) -> bool:
-    """Copy bot to a temp main.py and submit to Kaggle."""
+    """Bundle the bot (single-file -> main.py, folder -> tar.gz) and submit."""
     with tempfile.TemporaryDirectory() as tmpdir:
-        main_py = Path(tmpdir) / "main.py"
-        shutil.copy2(bot_path, main_py)
-
+        artifact = bundle_for_submission(bot_path, tmpdir)
         cmd = [
             "kaggle", "competitions", "submit",
             COMPETITION,
-            "-f", str(main_py),
+            "-f", str(artifact),
             "-m", message,
         ]
-        print(f"\n  Running: {' '.join(cmd)}")
+        print(f"\n  Submitting {artifact.name}")
+        print(f"  Running: {' '.join(cmd)}")
         result = subprocess.run(cmd, capture_output=False)
         return result.returncode == 0
 
