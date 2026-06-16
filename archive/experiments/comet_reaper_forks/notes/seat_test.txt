@@ -1,0 +1,1 @@
+comet_reaper vs comet_reaper (identical), 40 games, focal=seat0: seat0 wins=15 seat1 wins=22 draws=3 -> seat0 winrate=41%

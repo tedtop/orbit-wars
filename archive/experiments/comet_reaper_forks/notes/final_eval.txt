@@ -1,0 +1,10 @@
+=== FINAL EVAL (seat-swapped arena, driver paused) ===
+[maestro confirmation, 60 games]
+  maestro gain=0.25 vs comet_reaper: Results: maestro 25–25 comet_reaper  (10 draws, 60 games)
+  maestro gain=0.5 vs comet_reaper: Results: maestro 26–24 comet_reaper  (10 draws, 60 games)
+[comet_reaper vs the REAL public bots, 30 games each]
+  comet_reaper vs the-producer-v2: Results: comet_reaper 14–14 agents/opponents/the-producer-v2/main.py  (2 draws, 30 games)
+  comet_reaper vs floor-matched-fleets-target-veto-evacuation: Results: comet_reaper 19–9 agents/opponents/floor-matched-fleets-target-veto-evacuation/main.py  (2 draws, 30 games)
+  comet_reaper vs orbit-wars-i-m-stronger: Results: comet_reaper 19–9 agents/opponents/orbit-wars-i-m-stronger/main.py  (2 draws, 30 games)
+  comet_reaper vs 1266-elo-the-v44-agent-100-self-contained: Results: comet_reaper 20–10 agents/opponents/1266-elo-the-v44-agent-100-self-contained/main.py  (0 draws, 30 games)
+DONE

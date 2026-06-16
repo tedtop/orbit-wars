@@ -1,0 +1,3 @@
+=== maestro CLEAN confirm (arena, seat-swapped, 50 games each) ===
+MAESTRO_GAIN=0.0: Results: maestro 22–22 comet_reaper  (6 draws, 50 games)
+MAESTRO_GAIN=0.25: Results: maestro 22–22 comet_reaper  (6 draws, 50 games)

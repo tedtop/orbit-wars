@@ -1,0 +1,2 @@
+=== maestro confirmation (60 games each) ===
+MAESTRO_GAIN=0.0: Results: maestro 25–25 comet_reaper  (10 draws, 60 games)

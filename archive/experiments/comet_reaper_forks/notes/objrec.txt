@@ -1,0 +1,24 @@
+Loading /Users/Ted/src/orbit_wars/training/moves_prizezone.jsonl.gz (min_rating=1500.0, limit=20000) …
+  ranking examples (launched sources w/ >=2 legal targets): 14983
+
+Recovered target-preference weights (z-scored; + = top teams prefer MORE of this):
+  neutral          -0.582
+  enemy            +0.582
+  tgt_orbit_r      +0.465
+  dist             -0.432
+  near_dead_enemy  +0.372
+  tgt_prod         +0.170
+  tgt_ships        -0.157
+  tgt_leaderness   -0.121
+  tgt_weakness     +0.121
+  def_atk_ratio    -0.116
+  eta              -0.011
+  comet            +0.006
+
+Top-1 target-prediction accuracy:
+  recovered scorer : train 22.1%   test 21.4%  (n_test=2248)
+  nearest-target   : test 15.8%
+  random           : test 12.8%
+  -> LEARNED real preferences
+
+Saved /Users/Ted/src/orbit_wars/training/objective_weights.json

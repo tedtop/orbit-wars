@@ -1,0 +1,3 @@
+ORACLE_BIAS=0: winrate 11 18
+ORACLE_BIAS=3: winrate 3 18
+ORACLE_BIAS=8: winrate 4 18

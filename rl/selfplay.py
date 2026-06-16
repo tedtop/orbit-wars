@@ -1,4 +1,15 @@
 #!/usr/bin/env python3
+# ============================================================================
+# ⚠️  PARTIAL DEAD END — the BC-clone league (--clones) is abandoned (2026-06-15).
+#     The base self-play loop is fine infra; the clone-opponent path is not.
+#
+# --clones loads training/clone_*.pt — neural policies behavior-cloned from the
+# top public players (see rl/bc_train.py) — as fixed PPO league opponents. The
+# whole neural track hit a BC ceiling and lost 0–16 to comet_reaper (the engine),
+# so training against those clones cannot produce an engine-beating bot.
+# Verdict: abandoned. See archive/experiments/comet_reaper_forks/README.md.
+# The DEAD-END clone code below is fenced with `--- BC-clone league ---` markers.
+# ============================================================================
 """Self-play PPO for Orbit Wars (strategy/rl_strategy.md §5 phase 2).
 
 Drives orbit_wars games manually with the learning policy in seat 0 and opponents
@@ -43,35 +54,61 @@ from aim import lead_aim                      # noqa: E402
 GAMMA, LAM, CLIP, VF, ENT = 0.997, 0.95, 0.2, 0.5, 0.01
 
 
+LAUNCH_THRESH = 0.5  # opponent launch-gate (matches rl_agent deploy decode)
+
+
+def _emit_moves(targets, ships, f, obs, pid):
+    """Turn per-source (target-index, ship-bucket) into lead-aimed [planet,angle,ships]."""
+    mine = [p for p in obs["planets"] if p[1] == pid]
+    id_to_p = {p[0]: p for p in obs["planets"]}
+    omega = float(obs.get("angular_velocity", 0.0))
+    moves = []
+    for si in range(len(mine)):
+        tgt = int(targets[si])
+        if tgt == 0:                       # 0 = no-op
+            continue
+        cid = int(f["cand_target_id"][si, tgt - 1])
+        if cid < 0 or cid not in id_to_p:
+            continue
+        src, tp = mine[si], id_to_p[cid]
+        n_ships = int(max(1, math.floor(src[5] * SHIP_BUCKETS[int(ships[si])])))
+        ang, _x, _y, _e, sun = lead_aim(src[2], src[3], tp[2], tp[3], tp[4], n_ships, omega)
+        if not sun:
+            moves.append([src[0], float(ang), n_ships])
+    return moves
+
+
 def decide(policy, obs, pid, n, deterministic=False):
-    """Run policy on one obs; return (moves, record) where record has training tensors."""
+    """Return (moves, record).
+
+    - opponent (deterministic=True): play ACTIVELY via the launch-gate decode
+      (gate on total launch probability, take the best target) — same as rl_agent.
+      argmax-over-{noop,K} would collapse to no-op and make opponents passive.
+    - learner (deterministic=False): SAMPLE the policy (for a valid PPO log-prob).
+    """
     f = build_features(obs, pid, n)
     S = f["self"].shape[0]
     if S == 0:
         return [], None
     t = lambda a: torch.tensor(a)
     sf, cf, gf, cm = t(f["self"]), t(f["cand"]), t(f["global"]), t(f["cand_mask"])
-    a = policy.act(sf, cf, gf, cm, deterministic=deterministic)
-    mine = [p for p in obs["planets"] if p[1] == pid]
-    id_to_p = {p[0]: p for p in obs["planets"]}
-    moves = []
-    for si in range(S):
-        tgt = int(a["target"][si])
-        if tgt == 0:
-            continue
-        cid = int(f["cand_target_id"][si, tgt - 1])
-        if cid < 0 or cid not in id_to_p:
-            continue
-        src, tp = mine[si], id_to_p[cid]
-        ships = int(max(1, math.floor(src[5] * SHIP_BUCKETS[int(a["ship"][si])])))
-        ang, _ax, _ay, _eta, sun = lead_aim(src[2], src[3], tp[2], tp[3], tp[4],
-                                            ships, float(obs.get("angular_velocity", 0.0)))
-        if sun:
-            continue
-        moves.append([src[0], float(ang), ships])
+    out = policy.forward(sf, cf, gf, cm)
+
+    if deterministic:                       # opponent: active launch-gate, no training record
+        tprob = torch.softmax(out.target_logits, dim=-1)        # [S, K+1]
+        ship_choice = out.ship_logits.argmax(-1)
+        targets = [(int(tprob[si, 1:].argmax()) + 1) if float(1 - tprob[si, 0]) >= LAUNCH_THRESH else 0
+                   for si in range(S)]
+        return _emit_moves(targets, ship_choice, f, obs, pid), None
+
+    # learner: sample for PPO
+    tdist = torch.distributions.Categorical(logits=out.target_logits)
+    sdist = torch.distributions.Categorical(logits=out.ship_logits)
+    tgt = tdist.sample(); ship = sdist.sample()
+    logp = (tdist.log_prob(tgt) + sdist.log_prob(ship)).sum().detach()
+    moves = _emit_moves([int(x) for x in tgt], ship, f, obs, pid)
     rec = {"sf": sf, "cf": cf, "gf": gf, "cm": cm,
-           "tgt": a["target"], "ship": a["ship"],
-           "logp": a["logp"].sum().detach(), "value": a["value"].detach()}
+           "tgt": tgt, "ship": ship, "logp": logp, "value": out.value.detach()}
     return moves, rec
 
 
@@ -150,6 +187,9 @@ def main():
     ap.add_argument("--steps", type=int, default=80)
     ap.add_argument("--players", type=int, default=4, choices=[2, 4])
     ap.add_argument("--lr", type=float, default=3e-4)
+    ap.add_argument("--clones", action="store_true",
+                    help="[DEAD END] add training/clone_*.pt (BC'd top bots) as fixed league "
+                         "opponents — the neural track lost 0–16 to the engine; see module header")
     ap.add_argument("--out", default=str(ROOT / "training" / "selfplay_policy.pt"))
     args = ap.parse_args()
 
@@ -158,10 +198,27 @@ def main():
         policy.load_state_dict(torch.load(args.init, map_location="cpu"))
         print(f"warm-started from {args.init}")
     opt = torch.optim.Adam(policy.parameters(), lr=args.lr)
-    pool = [copy.deepcopy(policy)]  # opponent league (frozen snapshots)
+
+    # --- BC-clone league (DEAD END — see module header) -----------------------
+    # Fixed opponents: BC'd clones of real top bots (Jake Will, Xiangyu Liu, ...).
+    # Same architecture -> load in-process, no subprocess. These never change.
+    # Abandoned: the cloned policies lost 0–16 to comet_reaper, so this league
+    # never pushed the learner toward engine strength. Off unless --clones.
+    import glob
+    clones = []
+    if args.clones:
+        for cp in sorted(glob.glob(str(ROOT / "training" / "clone_*.pt"))):
+            c = PlanetPolicy()
+            c.load_state_dict(torch.load(cp, map_location="cpu"))
+            c.eval()
+            clones.append(c)
+            print(f"league opponent: {Path(cp).stem}")
+    # --- end BC-clone league --------------------------------------------------
+    self_snaps = [copy.deepcopy(policy)]   # frozen past selves (capped)
 
     for it in range(args.iters):
         batch, wins, places = [], 0, []
+        pool = clones + self_snaps         # learner trains vs clones + its own past
         for g in range(args.games):
             opp = [pool[np.random.randint(len(pool))] for _ in range(args.players - 1)]
             recs, obs_seq, place = play_episode(policy, opp, args.players, args.steps, seed=1000 + it * 100 + g)
@@ -174,10 +231,10 @@ def main():
         loss = ppo_update(policy, opt, batch) if batch else float("nan")
         print(f"iter {it:>3}: games={args.games} avg_place={np.mean(places):.2f} "
               f"win%={100*wins/args.games:.0f} steps_collected={len(batch)} loss={loss:.4f}", flush=True)
-        if (it + 1) % 10 == 0:           # grow the league
-            pool.append(copy.deepcopy(policy))
-            if len(pool) > 6:
-                pool.pop(0)
+        if (it + 1) % 10 == 0:           # add a fresh self-snapshot (clones stay fixed)
+            self_snaps.append(copy.deepcopy(policy))
+            if len(self_snaps) > 4:
+                self_snaps.pop(0)
     torch.save(policy.state_dict(), args.out)
     print(f"Saved {args.out}")
 

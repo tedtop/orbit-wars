@@ -1,4 +1,19 @@
 #!/usr/bin/env python3
+# ============================================================================
+# ⚰️  DEAD END — neural BC / self-play track (2026-06-15). Kept as infra; do not
+#     expect it to beat the engine.
+#
+# This is "behavior cloning": train a neural PlanetPolicy to imitate the top
+# public players (their recorded moves from prize-zone episodes). The resulting
+# clones (training/clone_*.pt) were then used as PPO self-play opponents in
+# rl/selfplay.py --clones. The cloned-from-humans policy hit a *BC ceiling* and
+# lost 0–16 to comet_reaper (the orbit_lite engine). The engine is simply
+# stronger than anything this neural track reaches.
+#
+# Verdict: abandoned. See archive/experiments/comet_reaper_forks/README.md.
+# Left in place as a reusable BC loop / cautionary trail — re-run only if you
+# have a genuinely new idea for clearing the BC ceiling.
+# ============================================================================
 """Behavior cloning: train PlanetPolicy to imitate recorded moves.
 
 Bridges replay data -> policy labels. For each (obs, action) example:
@@ -88,11 +103,14 @@ def label_example(obs: dict, action, player_id: int):
     return f, tgt, ship, launched, matched, launches
 
 
-def load_examples(path: str, min_rating: float, limit: int):
+def load_examples(path: str, min_rating: float, limit: int, team: str | None = None):
     out = []
+    team_l = team.lower() if team else None
     with gzip.open(path, "rt") as fh:
         for line in fh:
             r = json.loads(line)
+            if team_l is not None and (r.get("team") or "").lower() != team_l:
+                continue
             if min_rating > 0 and (r.get("rating") is None or r["rating"] < min_rating):
                 continue
             if "obs" not in r:
@@ -107,6 +125,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", default=str(Path(__file__).resolve().parent.parent / "training" / "moves_local.jsonl.gz"))
     ap.add_argument("--min-rating", type=float, default=0.0)
+    ap.add_argument("--team", default=None, help="clone ONE team (e.g. 'Jake Will') — filter to its moves")
     ap.add_argument("--limit", type=int, default=4000, help="max examples to load")
     ap.add_argument("--steps", type=int, default=300)
     ap.add_argument("--noop-weight", type=float, default=0.25,
@@ -116,8 +135,8 @@ def main():
     ap.add_argument("--out", default=str(Path(__file__).resolve().parent.parent / "training" / "bc_policy.pt"))
     args = ap.parse_args()
 
-    print(f"Loading examples from {args.data} (min_rating={args.min_rating}) …")
-    raw = load_examples(args.data, args.min_rating, args.limit)
+    print(f"Loading examples from {args.data} (min_rating={args.min_rating}, team={args.team}) …")
+    raw = load_examples(args.data, args.min_rating, args.limit, args.team)
     # Pre-label (skip examples with no owned sources)
     data, tot_match, tot_launch = [], 0, 0
     for obs, action, pid in raw:

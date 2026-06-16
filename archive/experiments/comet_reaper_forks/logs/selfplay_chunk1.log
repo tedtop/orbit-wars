@@ -1,0 +1,73 @@
+Loading environment cabt failed: dlopen(/Users/Ted/src/orbit_wars/.venv/lib/python3.11/site-packages/kaggle_environments/envs/cabt/cg/libcg.so, 0x0006): tried: '/Users/Ted/src/orbit_wars/.venv/lib/python3.11/site-packages/kaggle_environments/envs/cabt/cg/libcg.so' (slice is not valid mach-o file), '/System/Volumes/Preboot/Cryptexes/OS/Users/Ted/src/orbit_wars/.venv/lib/python3.11/site-packages/kaggle_environments/envs/cabt/cg/libcg.so' (no such file), '/Users/Ted/src/orbit_wars/.venv/lib/python3.11/site-packages/kaggle_environments/envs/cabt/cg/libcg.so' (slice is not valid mach-o file)
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO: Successfully loaded OpenSpiel environments: 31.
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_amazons
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_backgammon
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_python_ant_foraging
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_checkers
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_chess
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_clobber
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_coin_game
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_coin_game_arena
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_connect_four
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_dark_hex
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_dots_and_boxes
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_gin_rummy
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_go
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_goofspiel
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_havannah
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_hearts
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_hex
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_lines_of_action
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_mancala
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_matching_pennies_3p
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_negotiation
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_oshi_zumo
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_othello
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_repeated_game
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_tic_tac_toe
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_ultimate_tic_tac_toe
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_snake
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_y
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_universal_poker
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_repeated_poker
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO:    open_spiel_python_repeated_pokerkit
+[kaggle_environments.envs.open_spiel_env.open_spiel_env] INFO: OpenSpiel games skipped: 0.
+/Users/Ted/src/orbit_wars/rl/selfplay.py:89: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /Users/runner/work/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:839.)
+  targets = [(int(tprob[si, 1:].argmax()) + 1) if float(1 - tprob[si, 0]) >= LAUNCH_THRESH else 0
+warm-started from training/bc_prizezone_v2.pt
+league opponent: clone_jake_will
+league opponent: clone_mjm
+league opponent: clone_tonyk
+league opponent: clone_xiangyu_liu
+iter   0: games=12 avg_place=1.00 win%=100 steps_collected=5306 loss=-1.8916
+iter   1: games=12 avg_place=1.00 win%=100 steps_collected=2551 loss=0.4440
+iter   2: games=12 avg_place=1.00 win%=100 steps_collected=2103 loss=-0.0247
+iter   3: games=12 avg_place=1.00 win%=100 steps_collected=3344 loss=0.6705
+iter   4: games=12 avg_place=1.00 win%=100 steps_collected=2993 loss=-0.9804
+iter   5: games=12 avg_place=1.00 win%=100 steps_collected=4482 loss=0.1832
+iter   6: games=12 avg_place=1.00 win%=100 steps_collected=3005 loss=0.9398
+iter   7: games=12 avg_place=1.00 win%=100 steps_collected=2517 loss=0.9545
+iter   8: games=12 avg_place=1.00 win%=100 steps_collected=2656 loss=0.3090
+iter   9: games=12 avg_place=1.00 win%=100 steps_collected=2894 loss=-1.1379
+iter  10: games=12 avg_place=1.00 win%=100 steps_collected=2978 loss=-0.0579
+iter  11: games=12 avg_place=1.00 win%=100 steps_collected=2607 loss=0.2430
+iter  12: games=12 avg_place=1.08 win%=92 steps_collected=2826 loss=0.1880
+iter  13: games=12 avg_place=1.00 win%=100 steps_collected=2997 loss=-1.5734
+iter  14: games=12 avg_place=1.17 win%=83 steps_collected=2750 loss=-0.0058
+iter  15: games=12 avg_place=1.08 win%=92 steps_collected=2185 loss=1.1202
+iter  16: games=12 avg_place=1.33 win%=83 steps_collected=2626 loss=-0.0871
+iter  17: games=12 avg_place=1.00 win%=100 steps_collected=2689 loss=0.3715
+iter  18: games=12 avg_place=1.08 win%=92 steps_collected=2606 loss=-0.0139
+iter  19: games=12 avg_place=1.00 win%=100 steps_collected=2934 loss=0.9610
+iter  20: games=12 avg_place=1.08 win%=92 steps_collected=2788 loss=0.2417
+iter  21: games=12 avg_place=1.17 win%=83 steps_collected=2545 loss=-0.0842
+iter  22: games=12 avg_place=1.08 win%=92 steps_collected=2889 loss=-0.6050
+iter  23: games=12 avg_place=1.00 win%=100 steps_collected=3169 loss=1.4566
+iter  24: games=12 avg_place=1.08 win%=92 steps_collected=3064 loss=-0.1275
+iter  25: games=12 avg_place=1.33 win%=67 steps_collected=2979 loss=1.2703
+iter  26: games=12 avg_place=1.00 win%=100 steps_collected=2730 loss=0.8526
+iter  27: games=12 avg_place=1.00 win%=100 steps_collected=2682 loss=1.0698
+iter  28: games=12 avg_place=1.00 win%=100 steps_collected=2786 loss=1.2092
+iter  29: games=12 avg_place=1.08 win%=92 steps_collected=2612 loss=0.7584
+Saved training/selfplay_overnight.pt

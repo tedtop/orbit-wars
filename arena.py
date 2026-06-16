@@ -101,13 +101,20 @@ def bar(frac, width=24):
 # Bot discovery and resolution
 # ---------------------------------------------------------------------------
 def discover_bots():
-    """Return {name: spec} — agents/ only.  No random/starter by default."""
+    """Return {name: spec} — agents/ only.  No random/starter by default.
+
+    Includes single-file bots (``agents/*.py``) and folder bots
+    (``agents/*/main.py`` — e.g. comet_reaper and the orbit_lite forks, which
+    ship a sibling ``orbit_lite/`` package next to ``main.py``)."""
     bots = {}
     for path in sorted(glob.glob(os.path.join(AGENTS_DIR, "*.py"))):
         name = os.path.splitext(os.path.basename(path))[0]
         if name == "__init__":
             continue
         bots[name] = path
+    for path in sorted(glob.glob(os.path.join(AGENTS_DIR, "*", "main.py"))):
+        name = os.path.basename(os.path.dirname(path))
+        bots.setdefault(name, path)   # file bot of same name wins
     return bots
 
 
