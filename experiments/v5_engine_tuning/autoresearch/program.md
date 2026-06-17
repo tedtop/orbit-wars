@@ -64,6 +64,14 @@ it to pass more bots — NOT "never fix a wrong one." When the gym disagrees wit
   vs comet_reaper's mature **1249.8**. **Until schmeekler's live score converges, treat ALL gym win% as
   UNVALIDATED proxy signal** — do NOT assume gym gains → ladder gains, and do NOT optimize Jetstream2 compute
   against the gym until it's shown to predict live. Ground truth = the live ladder; the gym is a proxy on probation.
+  **REPLAY DIAGNOSIS (2026-06-17, pipeline):** schmeekler 23 games vs comet_reaper 113 games on the live ladder →
+  **2P is PARITY** (schmeekler 62% firsts / avg place 1.38 vs comet_reaper 65% / 1.35); schmeekler's 4P sample is
+  too small to judge (4/7) and comet_reaper itself only gets **29% firsts in 4P** (4P ≈ high-variance coinflip even
+  for the 1249 bot — NOT where schmeekler is uniquely fragile). **Conclusion: the gym OVERSTATED, didn't invert.**
+  schmeekler's 72% gym edge is *head-to-head vs one strong bot*; vs the diverse field it's field-parity, and its
+  1057 is mostly cold-start lag (likely converges into the ~1200s). **The gym↔live gap = pairwise win% vs a narrow
+  STRONG panel ≠ skill rating vs the DIVERSE field** → that's what gauntlet v2 must fix (rating-style diverse field,
+  not "more 4P"). The earlier "ganged in 4P" hypothesis is NOT supported by replays.
 - ✅ **MCTS dead-end unblocked WITHOUT a net (Track B).** `comet_reaper_mcts` (2-ply opponent lookahead + the
   engine's **EXACT flow scorer** as the leaf eval, not a self-reproducing rollout) hits gym ~80% / producer-v2 85%
   at **~7 ms/turn** (800 ms budget → 100× headroom). Strong — but SAME proxy caveat; must validate live.
@@ -83,21 +91,19 @@ it to pass more bots — NOT "never fix a wrong one." When the gym disagrees wit
 0. **🚨 Validate + (if needed) rebuild the evaluator — gates everything (see Meta-loop).** Poll schmeekler's
    live publicScore vs comet_reaper's 1249.8 (it began ~800, climbing; watch the SLOPE flatten, not the absolute).
    - Converges **above 1249** → gym predicts live, proceed with the inner loop.
-   - Plateaus **below 1249** → gym inverted the rank → **build gauntlet v2 as TWO gates** matching the live regimes:
-     a **4P-FFA ascent gate** (broad field incl. weaker bots, placement/margin scoring — predicts escaping the
-     cold-start basement) AND the existing **2P ceiling** measure; **validate v2 reproduces comet_reaper >
-     schmeekler**, then re-baseline all candidates.
-   - In parallel (cheap, now): **diagnose schmeekler's live replays** — count 2P vs 4P + placements (verifies the
-     regime model) and check whether the static-grab gets ganged in 4P.
+     ✅ DONE — replays show live PARITY (gym overstated, didn't invert; see knowledge bullet). schmeekler still
+     soaking; watch whether it converges to ~comet_reaper (parity confirmed) or above.
+   - **Gauntlet v2 = rating-style DIVERSE field** (the confirmed fix): score candidates by placement/margin vs a
+     broad field of bots at MIXED strength (not just the 5 strong ones), in both 2P and 4P, so the metric tracks
+     field rating rather than a head-to-head quirk. Validate v2 ranks comet_reaper ≈ schmeekler (matching live).
+   - Replay-sample any new candidate's live games via the pipeline once submitted (poll is now unrestricted).
 1. **Track B MCTS** (`comet_reaper_mcts`, 2-ply + exact flow-scorer leaf, ~7 ms/turn) — validate n≥150; it's a
    submission candidate **once the gym is shown to predict live** (don't submit on the proxy that just misled us).
 2. **More structural scoring features** (Track A): potential-field/future-positions, interdiction, phase-aware
    sizing; sweep each new knob.
-   - **★ Format-aware static bonus (HIGH PRIORITY, do first):** schmeekler's static grab likely helps 2P but gets
-     ganged in 4P. Make `static_target_bonus` **full in 2P, reduced/off when `player_count > 2`**. Directly tests
-     whether schmeekler's live drag is a 4P-only pathology — could recover ascent while keeping the 2P edge.
-   - **4P robustness is the binding constraint for ASCENT** (see Meta-loop regime model) — features that survive
-     ganging in 4P matter more right now than further 2P gains.
+   - **Format-aware static bonus (downgraded — cheap test, not high-prio):** replays did NOT confirm 4P ganging
+     (schmeekler 4/7 firsts in 4P; comet_reaper only 29%). Still worth a quick check (static-off-in-4P), but the
+     "4P pathology" premise is unsupported — don't over-invest.
 3. **Learned value function on Jetstream2 (150 CPU + A100).** V(state)→final-ship-fraction. **Train on DOWNLOADED
    prize-zone episodes** (real outcomes, real opponent distribution), NOT pure self-play — its fidelity probe is
    then measurable on real data, **independent of the gym-under-audit**. Richer encoding than 12 global scalars
