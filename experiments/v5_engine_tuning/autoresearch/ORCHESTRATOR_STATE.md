@@ -3,6 +3,20 @@
 _Last updated: 2026-06-17 ~12:00 MT (day 4). Deadline: **2026-06-23 23:59 UTC** (~6 days)._
 _This is the durable memory. Canonical detail lives in `program.md` (knowledge + queue) and `LOG.md` (ledger)._
 
+## 🔻 IMMEDIATE NEXT (incoming orchestrator: read this first)
+- **Ted is about to submit `schmeekler_fmt`** (now at root `agents/schmeekler_fmt/`, baked-in 2P=1.5/4P=0.0).
+  Slot rule CONFIRMED: **2 active, newest-2 auto, NO manual toggle** → submitting fmt **will bump comet_reaper**
+  (oldest) → active becomes {fmt, schmeekler}, LB reads ~1075 (cosmetic until deadline). **This is intended.**
+- **Strategy shift (Ted's call):** comet_reaper @1245 is NOT prize-tier (need >1500), so its slot isn't precious
+  mid-week. **Use the 2 slots to live-calibrate our variants AND generate real episode replays as Track C valuenet
+  training data.** Cycle bots through; **resubmit a STRONG bot (a better comet_reaper *descendant*) before the
+  Jun 23 deadline.** Do NOT auto-submit — Ted runs every submission.
+- **Track A is CLOSED & merged** (fmt copied to root; branch `track-a-structural-features` kept as history; its
+  worktree `../orbit_wars-track-a` can be `git worktree remove`d once Ted closes that tab).
+- **Track C (value function) is the live build** — its first move is LOCAL fidelity probe on ~2650 prize-zone
+  episodes (gate ≥0.65 before any Jetstream2 spend).
+- Poll ~hourly (tool caps 1h); WAKE TED only on: fmt converges / Track C fidelity probe lands / catastrophe.
+
 ## Live ladder (ground truth — poll `.venv/bin/kaggle competitions submissions orbit-wars`)
 - **comet_reaper — 1245** — orbit_lite engine clone. **OUR BEST. Stays in slot 1. Do not touch.**
 - **schmeekler — ~1075** — comet_reaper + static-planet bonus. Plateaued ~170 below CR. Gym oversold it.
@@ -15,8 +29,9 @@ _This is the durable memory. Canonical detail lives in `program.md` (knowledge +
   outcomes would penalize it → reinforces the Track C bet. (Worth a proper replay measure: peak→final planet share.)
 
 ## Active tracks (4 git worktrees; orchestrator = this session on `v5-engine-tuning`)
-- **Track A** (`../orbit_wars-track-a`, `track-a-structural-features`) — COMPLETE; re-activated for the comet 2×2
-  kill-test (`schmeekler_comet`). Best output: `schmeekler_fmt` (≥ schmeekler: 2P-identical, +3.72μ 4P).
+- **Track A** (`track-a-structural-features`) — **CLOSED & merged to root.** Best output: `schmeekler_fmt`
+  (≥ schmeekler: 2P-identical, +3.72μ 4P) — now at `agents/schmeekler_fmt/`. Comet 2×2 kill-test was NOT run
+  (deprioritized — replays showed comets a field-wide non-opportunity). All other bolt-ons DISCARDED.
 - **Track B** (`../orbit_wars-track-b`) — COMPLETE. 2-ply search dead. Its search shell = Track C's Phase-E target.
 - **Track C** (`../orbit_wars-track-c`, `track-c-value-function`) — THE moonshot, launching. Learned value function.
 
