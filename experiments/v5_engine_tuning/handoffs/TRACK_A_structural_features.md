@@ -65,14 +65,18 @@ KEEP only if, at n≥150 (±~5% CI): (1) its **win% vs the public panel ≥ schm
 vs producer-v2 + i-m-stronger), and (2) it also holds its own head-to-head vs schmeekler. Always re-run schmeekler
 on the same panel in the same session so the comparison is apples-to-apples (arena noise drifts run to run).
 
-## Bookkeeping (every iteration)
-- Append a row to `experiments/v5_engine_tuning/autoresearch/LOG.md` (hypothesis → gauntlet result → KEEP/DISCARD).
-- Update "Accumulated knowledge" + re-rank the queue in `experiments/v5_engine_tuning/autoresearch/program.md`.
-- If a feature becomes the new champion, append a milestone to root `TIMELINE.md` (append only, never rewrite).
-- **Commit to branch `track-a-structural-features` only. DO NOT `git push`** — the repo is PUBLIC and we keep
-  strategy secret until the competition ends. Present the commit message for approval before committing.
-- **End every work session with a brief paste-able "state of play" summary** (champion, what ran, results,
-  open questions) so Ted can forward it for strategic review.
+## Bookkeeping — you are a WORKER; the orchestrator owns the ratchet
+The single source of truth — the canonical `autoresearch/program.md` (accumulated knowledge + ranked queue),
+`autoresearch/LOG.md` (ledger), the champion pointer, and root `TIMELINE.md` — is owned by the **orchestrator
+session** (Ted's coordinator on `v5-engine-tuning`), which ingests BOTH tracks' results and keeps them coherent. So:
+- **Do NOT edit `program.md`, `LOG.md`, or `TIMELINE.md`** (they'd fork across worktrees). Instead **journal every
+  experiment in `experiments/v5_engine_tuning/autoresearch/TRACK_A_NOTES.md`**: hypothesis → exact gauntlet
+  numbers per opponent → KEEP/DISCARD + your read. That's the evidence the orchestrator reads each poll.
+- **Commit WIP to your own branch (`track-a-structural-features`) every ~10 minutes** — even half-finished — so
+  the orchestrator's ~20-min poll can see your progress. WIP commits are PRE-AUTHORIZED: **no per-commit approval
+  needed** (branch is isolated + unpushed = safe/revertible). **Never `git push`** (repo is PUBLIC).
+- **End each work cycle with a brief paste-able "state of play" summary** (champion, what ran, results, open
+  questions) so Ted + the orchestrator see your progress.
 
 ## Keep yourself busy — self-paced ~20-min loop (don't idle waiting for Ted)
 Work autonomously through the hypothesis queue. At the end of each work cycle, **schedule a wake-up ~20 min out

@@ -65,13 +65,17 @@ its own head-to-head vs schmeekler, AND (3) it stays within the ~800 ms/turn bud
 panel each session for an apples-to-apples baseline. Also report per-turn wall-clock — a search that wins but
 times out on Kaggle is worthless.
 
-## Bookkeeping (every iteration)
-- Append to `experiments/v5_engine_tuning/autoresearch/LOG.md` (design → gauntlet result + wall-clock → KEEP/DISCARD).
-- Update "Accumulated knowledge" in `experiments/v5_engine_tuning/autoresearch/program.md`.
-- New champion → append a milestone to root `TIMELINE.md` (append only).
-- **Commit to branch `track-b-mcts-search` only. DO NOT `git push`** — repo is PUBLIC; keep strategy secret
-  until the competition ends. Present the commit message for approval first.
-- **End every work session with a brief paste-able "state of play" summary** so Ted can forward it for review.
+## Bookkeeping — you are a WORKER; the orchestrator owns the ratchet
+The single source of truth — the canonical `autoresearch/program.md` (accumulated knowledge + ranked queue),
+`autoresearch/LOG.md` (ledger), the champion pointer, and root `TIMELINE.md` — is owned by the **orchestrator
+session** (Ted's coordinator on `v5-engine-tuning`), which ingests BOTH tracks' results. So:
+- **Do NOT edit `program.md`, `LOG.md`, or `TIMELINE.md`** (they'd fork across worktrees). Instead **journal every
+  experiment in `experiments/v5_engine_tuning/autoresearch/TRACK_B_NOTES.md`**: design → exact gauntlet numbers
+  per opponent + **per-turn wall-clock** → KEEP/DISCARD + your read. That's the evidence the orchestrator reads.
+- **Commit WIP to your own branch (`track-b-mcts-search`) every ~10 minutes** — even half-finished — so the
+  orchestrator's ~20-min poll can see your progress. WIP commits are PRE-AUTHORIZED: **no per-commit approval
+  needed** (branch is isolated + unpushed = safe/revertible). **Never `git push`** (repo is PUBLIC).
+- **End each work cycle with a brief paste-able "state of play" summary** so Ted + the orchestrator see progress.
 
 ## Keep yourself busy — self-paced ~20-min loop (don't idle waiting for Ted)
 Work autonomously. At the end of each work cycle, **schedule a wake-up ~20 min out (`ScheduleWakeup`, re-passing
