@@ -115,6 +115,14 @@ it to pass more bots — NOT "never fix a wrong one." When the gym disagrees wit
   trained on real episodes — now the *evidence-backed* deeper-search path (shallow search is proven dead, so the
   only route to deeper-search gains is a learned leaf eval, exactly the moonshot).
 
+- 🔑 **WHY everything shallow fails — candidate scarcity (Track B mechanistic finding).** The orbit_lite
+  `capture_floor`/`clears_floor` filters collapse each turn to **0–4 valid (src,tgt) candidates** (profiled:
+  64/133 turns = 0, 47 = 1, only 22 = 2–4). With 0–1 candidates most turns, **there is nothing to re-rank** —
+  so bonuses, 2-ply search, any move-reranker is bounded to ~17% of turns and finds nothing. **Implication for
+  the value function:** don't re-rank the safe set — **EXPAND the candidate set to the aggressive/floor-blocked
+  moves the engine rejects, and evaluate them by LEARNED OUTCOME** (a VF trained on games where aggression won),
+  which the exact 1-ply scorer structurally cannot do. This is "calibrated aggression," operationalized.
+
 ## Ranked hypothesis queue (re-ranked 2026-06-17 after the GYM≠LIVE finding)
 0. **🚨 Validate + (if needed) rebuild the evaluator — gates everything (see Meta-loop).** Poll schmeekler's
    live publicScore vs comet_reaper's 1249.8 (it began ~800, climbing; watch the SLOPE flatten, not the absolute).
