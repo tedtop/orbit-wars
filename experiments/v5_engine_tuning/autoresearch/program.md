@@ -72,9 +72,18 @@ it to pass more bots — NOT "never fix a wrong one." When the gym disagrees wit
   1057 is mostly cold-start lag (likely converges into the ~1200s). **The gym↔live gap = pairwise win% vs a narrow
   STRONG panel ≠ skill rating vs the DIVERSE field** → that's what gauntlet v2 must fix (rating-style diverse field,
   not "more 4P"). The earlier "ganged in 4P" hypothesis is NOT supported by replays.
-- ✅ **MCTS dead-end unblocked WITHOUT a net (Track B).** `comet_reaper_mcts` (2-ply opponent lookahead + the
-  engine's **EXACT flow scorer** as the leaf eval, not a self-reproducing rollout) hits gym ~80% / producer-v2 85%
-  at **~7 ms/turn** (800 ms budget → 100× headroom). Strong — but SAME proxy caveat; must validate live.
+- ⚠️ **2-ply exact-flow re-rank is only MARGINAL (Track B, walked back).** `comet_reaper_mcts` v1 looked 80% at
+  n=20 but **collapsed to PARITY at n=50** (75% vs schmeekler 74%) → discard (de-meaned correction has zero
+  variance with a fixed opp model). v2 (true depth-2 beam + state-advancement opp, 13.7 ms/turn) is **+2pp at n=20
+  (within noise), pending n=50.** Lesson: even *correct* 2-ply lookahead barely beats the 1-ply scorer — the engine
+  is a tight optimum vs shallow search. (Deeper search / a value fn may still pay, but cheap lookahead doesn't.)
+- ❌ **Additive scoring bonuses that are too strong OVERRIDE the flow scorer (Track A).** potential-field (DISCARD,
+  flow scorer already encodes ETA/position) and interdiction (**−26pp catastrophic** — wins the race, loses the
+  hold) both failed this way. schmeekler's static bonus works only because it's *small* (1.0–1.5). Structural
+  features must nudge, not dominate, the scorer.
+- ⚠️ **schmeekler's 4P weakness is NOT the static bonus.** Disabling it in 4P (`schmeekler_fmt`) did not rescue 4P
+  placement (μ20.06 vs baseline μ23.11 — slightly worse). Track A's new hypothesis: fleet **sizing**
+  (`reinforce_size_beta` too conservative) in multiway 4P fights. (4P is high-variance regardless.)
 - ✅ **Structural scoring features WIN.** `schmeekler` (bonus for capturing static/non-rotating planets
   first) beats comet_reaper **72% 2P / best-in-pod 4P** at bonus 1.0–1.5 (≥2.0 over-commits). **Current
   champion.** → *the productive direction is more schmeekler-style features.*
