@@ -105,6 +105,15 @@ it to pass more bots — NOT "never fix a wrong one." When the gym disagrees wit
   replay answers (23 games): no static over-commit (owns 40% static vs 45% rotating), no 4P ganging (share
   27%→53%), **zero timeouts** (min overage 42/60s).
 
+- 🧱 **CHEAP-HYPOTHESIS SPACE IS EXHAUSTED (2026-06-17, both tracks).** Every bolt-on bonus (potential-field,
+  interdiction, phase-sizing, format-aware) **DISCARDED at n=150**, and **2-ply exact-flow search is FINAL-dead**
+  (n=50 parity, Track B set depth back to 1). The orbit_lite 1-ply scorer is a very tight optimum; nudging its
+  scores or adding one ply of lookahead does not beat it. schmeekler's static bonus is the *only* surviving
+  structural feature and it's live-**parity-to-slightly-below** comet_reaper. **Two bets remain:** (1) the
+  **comet factorial** (last cheap, replay-backed, build next), (2) the **learned value function on Jetstream2**
+  trained on real episodes — now the *evidence-backed* deeper-search path (shallow search is proven dead, so the
+  only route to deeper-search gains is a learned leaf eval, exactly the moonshot).
+
 ## Ranked hypothesis queue (re-ranked 2026-06-17 after the GYM≠LIVE finding)
 0. **🚨 Validate + (if needed) rebuild the evaluator — gates everything (see Meta-loop).** Poll schmeekler's
    live publicScore vs comet_reaper's 1249.8 (it began ~800, climbing; watch the SLOPE flatten, not the absolute).

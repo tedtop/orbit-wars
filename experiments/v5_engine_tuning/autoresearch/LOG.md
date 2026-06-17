@@ -11,8 +11,9 @@ Append-only. Each experiment: hypothesis → gauntlet result → KEEP/DISCARD. T
 | 2026-06-17 | schmeekler_potential (Track A) | potential-field closing-rate bonus | w0.5/1.0 noise, w1.5 −5pp; flow scorer already encodes ETA/position | ❌ discard |
 | 2026-06-17 | schmeekler_interdict (Track A) | enemy-fleet interdiction bonus | w1.0 **−26pp CATASTROPHIC**; additive bonus overrides the flow scorer (wins race, loses the hold) | ❌ discard |
 | 2026-06-17 | comet_reaper_mcts v1 (Track B) | flat 2-ply combined-LaunchSet re-rank, exact flow leaf | n=20 looked 80% but **n=50 = 75% vs schmeekler 74% (parity)**; de-meaned corr has zero variance w/ fixed opp | ❌ discard |
-| 2026-06-17 | comet_reaper_mcts v2 (Track B) | true depth-2 beam + state-advancement opp model (13.7ms/turn) | n=20 80% vs schmeekler 78% (+2pp, within noise) | ⏳ PENDING n=50 |
-| 2026-06-17 | schmeekler_fmt (Track A) | format-aware static bonus (off in 4P) | head-to-head 4P pod: **+3.72μ, 6 fewer 4th-places vs schmeekler; 2P perfect parity** (earlier focal-vs-3×CR pod was ambiguous) | 🟡 KEEP-candidate, n=150 + 0.5 sweep running — but on the GYM-under-audit, so suggestive not certified |
+| 2026-06-17 | comet_reaper_mcts v2 (Track B) | true depth-2 beam + state-advancement opp model (13.7ms/turn) | n=20 looked +2pp; **n=50 = 75% = schmeekler 74%** | ❌ DISCARD — **Track B FINAL: 2-ply search dead; default back to depth=1** |
+| 2026-06-17 | schmeekler_fmt (Track A) | format-aware static bonus (off in 4P) | +3.72μ at small n **collapsed to 66% at n=150** (below schmeekler ~74%) | ❌ DISCARD (small-sample mirage) |
+| 2026-06-17 | schmeekler_phase (Track A) | phase-aware ship sizing (early 1.2× → late 3.0×) | 1.2=19%, 1.5=22% — breaks the engine's ROI/speed/floor sizing interaction | ❌ DISCARD |
 
 **Current champion:** `schmeekler` (static_target_bonus=1.5) — but **live ≈ comet_reaper PARITY**; gym overstated it.
 **Live (2026-06-17):** schmeekler ~1066–1085–**1075** = PLATEAUED ~170 below comet_reaper 1245 (not near 1259). Cold-start
