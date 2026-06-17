@@ -374,265 +374,328 @@ def section_position_and_leaderboard():
             score_delta = our_score - float(prev_our.iloc[0]["Score"])
             rank_delta  = int(prev_our.iloc[0]["Rank"]) - our_rank
 
-    left, right = st.columns([0.55, 0.45])
+    # ── Top row: position metrics (left) + leaderboard (right) ───────────────
+    m_col, lb_col = st.columns([0.3, 0.7])
 
-    with left:
+    with m_col:
         st.subheader("My Position")
-        m1, m2 = st.columns(2)
-        m1.metric("Score", f"{our_score:.1f}" if our_score else "—",
+        c1, c2 = st.columns(2)
+        c1.metric("Score", f"{our_score:.1f}" if our_score else "—",
                   delta=f"{score_delta:+.1f} since last snapshot" if score_delta is not None else None)
-        m2.metric("Rank", f"#{our_rank}" if our_rank else "—",
+        c2.metric("Rank", f"#{our_rank}" if our_rank else "—",
                   delta=f"{rank_delta:+d} places since last snapshot" if rank_delta is not None else None,
                   delta_color="normal")
 
-        if not hist.empty and len(hist) >= 2:
-            # Time-range filter pills — refilter hist before building all 3 charts
-            _range_opts = {"All": None, "7d": 7 * 24, "3d": 3 * 24, "24h": 24, "6h": 6}
-            _sel_range  = st.pills(
-                "Range", list(_range_opts.keys()), default="All",
-                label_visibility="collapsed", key="chart_range",
+    with lb_col:
+        if lb_df is not None:
+            prize_row   = lb_df[lb_df["Rank"] == 10]
+            prize_score = float(prize_row.iloc[0]["Score"]) if not prize_row.empty else None
+            gap         = prize_score - our_score if (prize_score and our_score) else None
+            st.subheader("Leaderboard")
+            st.caption(
+                f"Snapshot: {age_str}  ·  {len(lb_df):,} teams"
+                + (f"  ·  Gap to prizes: **{gap:+.0f} pts**" if gap is not None else "")
             )
-            _cutoff_h = _range_opts.get(_sel_range or "All")
-            if _cutoff_h:
-                _t_max    = hist["time"].max()
-                hist_view = hist[hist["time"] >= _t_max - pd.Timedelta(hours=_cutoff_h)]
-            else:
-                hist_view = hist
+            top14 = lb_df.head(14)
+            display_rows = [
+                {"rank": int(r["Rank"]), "team": r["TeamName"], "score": float(r["Score"])}
+                for _, r in top14.iterrows()
+            ]
+            if our_rank and our_rank > 14:
+                display_rows.append({"rank": our_rank, "team": OUR_NAME, "score": our_score})
+            st.html(_leaderboard_html(display_rows))
 
-            # Submission annotation data
-            _subs_ann = load_submissions()
-            _ann_df   = pd.DataFrame()
-            if not _subs_ann.empty:
-                _a = _subs_ann[
-                    _subs_ann["submitted_at"].notna() &
-                    (_subs_ann["submitted_at"].astype(str).str.strip() != "")
-                ].copy()
-                if not _a.empty:
-                    _a["time"]  = pd.to_datetime(_a["submitted_at"], utc=True, errors="coerce")
-                    _a          = _a.dropna(subset=["time"])
-                    _a["label"] = _a["name"].str[:20]
-                    _ann_df     = _a[["time", "name", "label", "public_score"]].reset_index(drop=True)
+    # ── Full-width trend charts (below the top row) ───────────────────────────
+    if hist.empty or len(hist) < 2:
+        st.info("No leaderboard history yet — run the pipeline.")
+        return
 
-            # Stamp each snapshot with the submission that was active at that time
-            _sub_times = pd.DataFrame()
-            if not _subs_ann.empty:
-                _sub_times = (
-                    _subs_ann[_subs_ann["submitted_at"].notna()]
-                    .assign(sub_time=lambda d: pd.to_datetime(
-                        d["submitted_at"], utc=True, errors="coerce"))
-                    .dropna(subset=["sub_time"])
-                    .sort_values("sub_time")
-                    [["sub_time", "name"]]
-                    .reset_index(drop=True)
-                )
+    _range_opts = {"All": None, "7d": 7 * 24, "3d": 3 * 24, "24h": 24, "6h": 6}
+    _sel = st.pills("Range", list(_range_opts.keys()), default="All",
+                    label_visibility="collapsed", key="chart_range")
+    _cutoff_h = _range_opts.get(_sel or "All")
+    if _cutoff_h:
+        hist_view = hist[hist["time"] >= hist["time"].max() - pd.Timedelta(hours=_cutoff_h)]
+    else:
+        hist_view = hist
 
-            _hb = hist_view.copy()
-            if not _sub_times.empty:
-                _hb["bot_name"] = _sub_times.iloc[0]["name"]
-                for _, _sr in _sub_times.iterrows():
-                    _hb.loc[_hb["time"] >= _sr["sub_time"], "bot_name"] = _sr["name"]
-            else:
-                _hb["bot_name"] = "unknown"
-
-            # Stable bot color palette (consistent across all charts)
-            _BOT_PALETTE = {
-                "comet_reaper v1":                     "#f59e0b",  # amber/gold
-                "schmeekler@1.5":                      "#4c78a8",  # steel blue
-                "schmeekler_fmt":                      "#54a24b",  # green
-                "markowitz_portfolio_optimization v1": "#666",
-                "coordinated_strike_interceptor v1":   "#666",
+    # Submission metadata
+    _subs_ann  = load_submissions()
+    _ann_df    = pd.DataFrame()
+    _sub_times = pd.DataFrame()
+    if not _subs_ann.empty:
+        _a = _subs_ann[
+            _subs_ann["submitted_at"].notna() &
+            (_subs_ann["submitted_at"].astype(str).str.strip() != "")
+        ].copy()
+        if not _a.empty:
+            _a["time"]  = pd.to_datetime(_a["submitted_at"], utc=True, errors="coerce")
+            _a          = _a.dropna(subset=["time"])
+            _a["label"] = _a["name"].str[:22]
+            _SHORT_NAMES = {
+                "comet_reaper v1": "comet_reaper",
+                "schmeekler@1.5":  "schmeekler",
+                "schmeekler_fmt":  "schmeekler_fmt",
             }
-            _hb_names  = sorted(_hb["bot_name"].unique().tolist())
-            _c_domain  = _hb_names
-            _c_range   = [_BOT_PALETTE.get(n, "#888") for n in _hb_names]
-            _bot_color = alt.Color(
-                "bot_name:N",
-                scale=alt.Scale(domain=_c_domain, range=_c_range),
-                legend=alt.Legend(title=None, orient="bottom",
-                                  labelFontSize=10, symbolSize=100,
-                                  padding=2, rowPadding=2),
+            _a["short_name"]     = _a["name"].map(_SHORT_NAMES).fillna("")
+            _a["released_label"] = _a["short_name"].apply(
+                lambda s: f"{s} released" if s else ""
             )
-            _x_enc = alt.X("time:T", title=None,
-                           axis=alt.Axis(format="%m/%d %H:%M"))
-
-            # Colored submission annotation rules + top-anchored labels
-            def _ann_layers(_h: int):
-                if _ann_df.empty or hist_view.empty:
-                    return []
-                _lo  = hist_view["time"].min()
-                _hi  = hist_view["time"].max()
-                _vis = _ann_df[(_ann_df["time"] >= _lo) & (_ann_df["time"] <= _hi)].copy()
-                if _vis.empty:
-                    return []
-                _rd  = _vis["name"].tolist()
-                _rr  = [_BOT_PALETTE.get(n, "#888") for n in _rd]
-                _ce  = alt.Color("name:N", scale=alt.Scale(domain=_rd, range=_rr), legend=None)
-                rules = (
-                    alt.Chart(_vis)
-                    .mark_rule(strokeDash=[5, 3], strokeWidth=2, opacity=0.9)
-                    .encode(
-                        x=alt.X("time:T"),
-                        color=_ce,
-                        tooltip=[
-                            alt.Tooltip("time:T",         format="%m/%d %H:%M", title="Submitted"),
-                            alt.Tooltip("name:N",         title="Bot"),
-                            alt.Tooltip("public_score:Q", format=".1f",         title="Score"),
-                        ],
-                    )
-                )
-                labels = (
-                    alt.Chart(_vis)
-                    .mark_text(angle=270, align="left", baseline="middle",
-                               fontSize=10, fontWeight="bold", dx=3)
-                    .encode(
-                        x=alt.X("time:T"),
-                        y=alt.value(12),
-                        text=alt.Text("label:N"),
-                        color=_ce,
-                    )
-                )
-                return [rules, labels]
-
-            # Reference lines: comet_reaper baseline + prize zone
-            _ref_df = pd.DataFrame([
-                {"y": 1234.7, "ref": "CR best (1234)"},
-                {"y": 1500,   "ref": "Prize zone (~1500)"},
-            ])
-            _ref_lines = (
-                alt.Chart(_ref_df)
-                .mark_rule(strokeDash=[3, 3], strokeWidth=1, opacity=0.45)
-                .encode(
-                    y=alt.Y("y:Q"),
-                    color=alt.Color(
-                        "ref:N",
-                        scale=alt.Scale(
-                            domain=["CR best (1234)", "Prize zone (~1500)"],
-                            range=["#f59e0b",          "#a855f7"],
-                        ),
-                        legend=alt.Legend(title=None, orient="bottom",
-                                          labelFontSize=9, symbolSize=50,
-                                          padding=0, rowPadding=0),
-                    ),
-                    tooltip=["ref:N", alt.Tooltip("y:Q", format=".0f")],
-                )
-            )
-
-            st.caption("Score over time")
-            st.altair_chart(
-                alt.layer(
-                    alt.Chart(_hb).mark_line(strokeWidth=2).encode(
-                        x=_x_enc,
-                        y=alt.Y("score:Q", title="Score", scale=alt.Scale(zero=False, nice=True)),
-                        color=_bot_color,
-                        tooltip=[alt.Tooltip("time:T", format="%m/%d %H:%M"),
-                                 alt.Tooltip("score:Q",    format=".1f"),
-                                 alt.Tooltip("rank:Q"),
-                                 alt.Tooltip("bot_name:N", title="Bot")],
-                    ).properties(height=150),
-                    _ref_lines,
-                    *_ann_layers(150),
-                ),
-                use_container_width=True,
-            )
-
-            st.caption("Rank over time (lower = better)")
-            st.altair_chart(
-                alt.layer(
-                    alt.Chart(_hb).mark_line(strokeWidth=2).encode(
-                        x=_x_enc,
-                        y=alt.Y("rank:Q", title="Rank",
-                                scale=alt.Scale(reverse=True, zero=False, nice=True)),
-                        color=_bot_color,
-                        tooltip=[alt.Tooltip("time:T", format="%m/%d %H:%M"),
-                                 alt.Tooltip("rank:Q"),
-                                 alt.Tooltip("score:Q",    format=".1f"),
-                                 alt.Tooltip("bot_name:N", title="Bot")],
-                    ).properties(height=130),
-                    *_ann_layers(130),
-                ),
-                use_container_width=True,
-            )
-
-            # Score by submission — bar chart of current public scores (bots > 800 only)
-            if not _subs_ann.empty:
-                _sub_bar = (
-                    _subs_ann[_subs_ann["public_score"].notna() &
-                              (_subs_ann["public_score"] > 800)]
-                    .sort_values("public_score", ascending=False)
-                    .copy()
-                )
-                if not _sub_bar.empty:
-                    _sb_dom   = _sub_bar["name"].tolist()
-                    _sb_range = [_BOT_PALETTE.get(n, "#888") for n in _sb_dom]
-                    _sb_color = alt.Color(
-                        "name:N", scale=alt.Scale(domain=_sb_dom, range=_sb_range), legend=None
-                    )
-                    _x_max = max(1550, float(_sub_bar["public_score"].max()) + 80)
-                    _bars = (
-                        alt.Chart(_sub_bar)
-                        .mark_bar(cornerRadiusEnd=4)
-                        .encode(
-                            x=alt.X("public_score:Q", title="Score",
-                                    scale=alt.Scale(domain=[900, _x_max])),
-                            y=alt.Y("name:N", title=None, sort="-x"),
-                            color=_sb_color,
-                            tooltip=["name:N", alt.Tooltip("public_score:Q", format=".1f", title="Score")],
-                        )
-                    )
-                    _bar_labels = (
-                        alt.Chart(_sub_bar)
-                        .mark_text(align="left", dx=5, fontSize=11, fontWeight="bold")
-                        .encode(
-                            x=alt.X("public_score:Q"),
-                            y=alt.Y("name:N", sort="-x"),
-                            text=alt.Text("public_score:Q", format=".0f"),
-                            color=_sb_color,
-                        )
-                    )
-                    _prize_rule = (
-                        alt.Chart(pd.DataFrame({"x": [1500], "ref": ["Prize zone"]}))
-                        .mark_rule(color="#a855f7", strokeDash=[4, 3], strokeWidth=1.5, opacity=0.6)
-                        .encode(x=alt.X("x:Q"), tooltip=["ref:N"])
-                    )
-                    _cr_rule = (
-                        alt.Chart(pd.DataFrame({"x": [1234.7], "ref": ["comet_reaper"]}))
-                        .mark_rule(color="#f59e0b", strokeDash=[4, 3], strokeWidth=1.5, opacity=0.6)
-                        .encode(x=alt.X("x:Q"), tooltip=["ref:N"])
-                    )
-                    st.caption("Score by submission (active & recent)")
-                    st.altair_chart(
-                        alt.layer(
-                            _bars, _bar_labels, _prize_rule, _cr_rule,
-                        ).properties(height=max(60, len(_sub_bar) * 30)),
-                        use_container_width=True,
-                    )
-        else:
-            st.info("No leaderboard history yet — run the pipeline.")
-
-    with right:
-        if lb_df is None:
-            st.warning("No leaderboard snapshot found.")
-            return
-
-        prize_row   = lb_df[lb_df["Rank"] == 10]
-        prize_score = float(prize_row.iloc[0]["Score"]) if not prize_row.empty else None
-        gap         = prize_score - our_score if (prize_score and our_score) else None
-
-        st.subheader("Leaderboard")
-        st.caption(
-            f"Snapshot: {age_str}  ·  {len(lb_df):,} teams"
-            + (f"  ·  Gap to prizes: **{gap:+.0f} pts**" if gap is not None else "")
+            _ann_df = _a[["time", "name", "label", "short_name",
+                           "released_label", "public_score"]].reset_index(drop=True)
+        _sub_times = (
+            _subs_ann[_subs_ann["submitted_at"].notna()]
+            .assign(sub_time=lambda d: pd.to_datetime(d["submitted_at"], utc=True, errors="coerce"))
+            .dropna(subset=["sub_time"])
+            .sort_values("sub_time")
+            [["sub_time", "name"]]
+            .reset_index(drop=True)
         )
 
-        top14 = lb_df.head(14)
-        display_rows = [
-            {"rank": int(r["Rank"]), "team": r["TeamName"], "score": float(r["Score"])}
-            for _, r in top14.iterrows()
-        ]
-        if our_rank and our_rank > 14:
-            display_rows.append({"rank": our_rank, "team": OUR_NAME, "score": our_score})
+    # Tag each snapshot with the active submission at that time
+    _hb = hist_view.copy()
+    if not _sub_times.empty:
+        _hb["bot_name"] = _sub_times.iloc[0]["name"]
+        for _, _sr in _sub_times.iterrows():
+            _hb.loc[_hb["time"] >= _sr["sub_time"], "bot_name"] = _sr["name"]
+    else:
+        _hb["bot_name"] = "unknown"
 
-        st.html(_leaderboard_html(display_rows))
+    # Stable color palette
+    _BOT_PALETTE = {
+        "comet_reaper v1":                     "#f59e0b",
+        "schmeekler@1.5":                      "#4c78a8",
+        "schmeekler_fmt":                      "#54a24b",
+        "markowitz_portfolio_optimization v1": "#555",
+        "coordinated_strike_interceptor v1":   "#555",
+    }
+    _hb_names  = sorted(_hb["bot_name"].unique().tolist())
+    _c_domain  = _hb_names
+    _c_range   = [_BOT_PALETTE.get(n, "#888") for n in _hb_names]
+    _color_enc = alt.Color(
+        "bot_name:N",
+        scale=alt.Scale(domain=_c_domain, range=_c_range),
+        legend=alt.Legend(title=None, orient="bottom", labelFontSize=11,
+                          symbolSize=120, padding=4, rowPadding=3),
+    )
+    _x_enc = alt.X("time:T", title=None,
+                   axis=alt.Axis(format="%m/%d %H:%M", labelFontSize=10))
+
+    # Colored vertical submission rules + "{bot} released" label at top
+    def _sub_rules():
+        if _ann_df.empty or hist_view.empty:
+            return []
+        _lo  = hist_view["time"].min()
+        _hi  = hist_view["time"].max()
+        _vis = _ann_df[(_ann_df["time"] >= _lo) & (_ann_df["time"] <= _hi)].copy()
+        if _vis.empty:
+            return []
+        _rd  = _vis["name"].tolist()
+        _rr  = [_BOT_PALETTE.get(n, "#888") for n in _rd]
+        _ce  = alt.Color("name:N", scale=alt.Scale(domain=_rd, range=_rr), legend=None)
+        rules = (
+            alt.Chart(_vis)
+            .mark_rule(strokeDash=[6, 4], strokeWidth=2, opacity=0.75)
+            .encode(
+                x=alt.X("time:T"),
+                color=_ce,
+                tooltip=[
+                    alt.Tooltip("time:T",         format="%m/%d %H:%M", title="Submitted"),
+                    alt.Tooltip("name:N",         title="Bot"),
+                    alt.Tooltip("public_score:Q", format=".1f",         title="Score at sub"),
+                ],
+            )
+        )
+        # Horizontal "{bot} released" label anchored to top of chart
+        _vis_lbl = _vis[_vis["released_label"] != ""] if "released_label" in _vis.columns else _vis.iloc[:0]
+        if _vis_lbl.empty:
+            return [rules]
+        labels = (
+            alt.Chart(_vis_lbl)
+            .mark_text(angle=0, align="left", baseline="top",
+                       fontSize=9, fontWeight="bold", dx=5, dy=3)
+            .encode(
+                x=alt.X("time:T"),
+                y=alt.value(10),
+                text=alt.Text("released_label:N"),
+                color=_ce,
+            )
+        )
+        return [rules, labels]
+
+    # Reference horizontals: CR best + prize zone
+    _ref_df = pd.DataFrame([
+        {"y": 1234.7, "ref": "CR best  1234"},
+        {"y": 1500.0, "ref": "Prize zone  ~1500"},
+    ])
+    _ref_lines = (
+        alt.Chart(_ref_df)
+        .mark_rule(strokeDash=[4, 3], strokeWidth=1.5, opacity=0.5)
+        .encode(
+            y=alt.Y("y:Q"),
+            color=alt.Color(
+                "ref:N",
+                scale=alt.Scale(
+                    domain=["CR best  1234", "Prize zone  ~1500"],
+                    range=["#f59e0b", "#a855f7"],
+                ),
+                legend=alt.Legend(title=None, orient="bottom", labelFontSize=10,
+                                  symbolSize=80, padding=2, rowPadding=2),
+            ),
+            tooltip=["ref:N", alt.Tooltip("y:Q", format=".0f")],
+        )
+    )
+
+    # ── Score over time: area gradient + line ───────────────────────────────
+    # Explicit Y domain so the area doesn't fill to 0 (which wrecks the scale)
+    _y_floor = float(_hb["score"].min()) - 40
+    _y_ceil  = float(_hb["score"].max()) + 70
+    _s_scale = alt.Scale(domain=[_y_floor, _y_ceil], zero=False, nice=False)
+
+    _s_base = alt.Chart(_hb).encode(x=_x_enc, color=_color_enc)
+    st.caption("Score over time — each color = one submission")
+    st.altair_chart(
+        alt.layer(
+            # Area fill: from score line DOWN to y_floor (not to 0)
+            _s_base.mark_area(opacity=0.18, interpolate="monotone").encode(
+                y=alt.Y("score:Q", scale=_s_scale),
+                y2=alt.Y2(datum=_y_floor),
+            ),
+            # Line on top
+            _s_base.mark_line(strokeWidth=2.5, interpolate="monotone").encode(
+                y=alt.Y("score:Q", title="Score", scale=_s_scale),
+                tooltip=[alt.Tooltip("time:T", format="%m/%d %H:%M"),
+                         alt.Tooltip("score:Q", format=".1f"),
+                         alt.Tooltip("rank:Q"),
+                         alt.Tooltip("bot_name:N", title="Bot")],
+            ),
+            _ref_lines,
+            *_sub_rules(),
+        ).properties(height=320),
+        use_container_width=True,
+    )
+
+    # ── Rank over time: clean line only (area fill misbehaves on reversed scale)
+    _r_base = alt.Chart(_hb).encode(x=_x_enc, color=_color_enc)
+    st.caption("Rank over time — lower is better")
+    st.altair_chart(
+        alt.layer(
+            _r_base.mark_line(strokeWidth=2.5, interpolate="monotone").encode(
+                y=alt.Y("rank:Q", title="Rank  ↓ better",
+                        scale=alt.Scale(reverse=True, zero=False, nice=True)),
+                tooltip=[alt.Tooltip("time:T", format="%m/%d %H:%M"),
+                         alt.Tooltip("rank:Q"),
+                         alt.Tooltip("score:Q", format=".1f"),
+                         alt.Tooltip("bot_name:N", title="Bot")],
+            ),
+            *_sub_rules(),
+        ).properties(height=200),
+        use_container_width=True,
+    )
+
+    # ── Per-bot zoom: individual local Y-scale for oscillation detail ────────
+    st.caption("Per-bot convergence (local scale — shows oscillation within each bot's range)")
+    _bot_names_ordered = sorted(
+        _hb["bot_name"].unique().tolist(),
+        key=lambda n: _hb.loc[_hb["bot_name"] == n, "score"].mean(),
+        reverse=True,
+    )
+    _per_bot_cols = st.columns(min(len(_bot_names_ordered), 3))
+    for _i, _bn in enumerate(_bot_names_ordered):
+        _bd = _hb[_hb["bot_name"] == _bn].copy()
+        if len(_bd) < 2:
+            continue
+        _bc     = _BOT_PALETTE.get(_bn, "#888")
+        _bx_enc = alt.X("time:T", title=None,
+                        axis=alt.Axis(format="%m/%d %H:%M", labelFontSize=9, tickCount=3))
+
+        # Score mini-chart with local scale
+        _bs_floor = float(_bd["score"].min()) - 8
+        _bs_ceil  = float(_bd["score"].max()) + 12
+        _bs_scale = alt.Scale(domain=[_bs_floor, _bs_ceil], zero=False, nice=False)
+        _bs_base  = alt.Chart(_bd).encode(x=_bx_enc)
+        _bscore   = alt.layer(
+            _bs_base.mark_area(opacity=0.25, color=_bc, interpolate="monotone").encode(
+                y=alt.Y("score:Q", scale=_bs_scale, title="Score"),
+                y2=alt.Y2(datum=_bs_floor),
+            ),
+            _bs_base.mark_line(strokeWidth=2, color=_bc, interpolate="monotone").encode(
+                y=alt.Y("score:Q", scale=_bs_scale),
+                tooltip=[alt.Tooltip("time:T", format="%m/%d %H:%M"),
+                         alt.Tooltip("score:Q", format=".1f"),
+                         alt.Tooltip("rank:Q")],
+            ),
+        ).properties(height=110)
+
+        # Rank mini-chart with local scale
+        _br_floor = float(_bd["rank"].min()) - 2
+        _br_ceil  = float(_bd["rank"].max()) + 2
+        _br_scale = alt.Scale(domain=[_br_ceil, _br_floor], zero=False, nice=False)  # reversed
+        _brank    = (
+            alt.Chart(_bd).encode(x=_bx_enc)
+            .mark_line(strokeWidth=1.5, color=_bc, interpolate="monotone", strokeDash=[])
+            .encode(
+                y=alt.Y("rank:Q", scale=_br_scale, title="Rank"),
+                tooltip=[alt.Tooltip("time:T", format="%m/%d %H:%M"),
+                         alt.Tooltip("rank:Q"),
+                         alt.Tooltip("score:Q", format=".1f")],
+            )
+            .properties(height=70)
+        )
+
+        _cur_score = float(_bd.sort_values("time").iloc[-1]["score"])
+        _cur_rank  = int(_bd.sort_values("time").iloc[-1]["rank"])
+        with _per_bot_cols[_i % 3]:
+            st.markdown(
+                f"<span style='color:{_bc};font-weight:700;font-size:13px'>{_bn}</span>"
+                f"<span style='color:#999;font-size:11px;margin-left:8px'>"
+                f"score {_cur_score:.0f} · rank #{_cur_rank}</span>",
+                unsafe_allow_html=True,
+            )
+            st.altair_chart(alt.vconcat(_bscore, _brank, spacing=4),
+                            use_container_width=True)
+
+    # ── Current score by submission (bar) ───────────────────────────────────
+    if not _subs_ann.empty:
+        _sub_bar = (
+            _subs_ann[_subs_ann["public_score"].notna() & (_subs_ann["public_score"] > 800)]
+            .sort_values("public_score", ascending=False)
+            .copy()
+        )
+        if not _sub_bar.empty:
+            _sb_dom   = _sub_bar["name"].tolist()
+            _sb_range = [_BOT_PALETTE.get(n, "#888") for n in _sb_dom]
+            _sb_color = alt.Color("name:N",
+                                   scale=alt.Scale(domain=_sb_dom, range=_sb_range),
+                                   legend=None)
+            _x_max = max(1550, float(_sub_bar["public_score"].max()) + 80)
+            st.caption("Current score by submission")
+            st.altair_chart(
+                alt.layer(
+                    alt.Chart(_sub_bar).mark_bar(cornerRadiusEnd=4).encode(
+                        x=alt.X("public_score:Q", title="Score",
+                                scale=alt.Scale(domain=[900, _x_max])),
+                        y=alt.Y("name:N", title=None, sort="-x"),
+                        color=_sb_color,
+                        tooltip=["name:N",
+                                 alt.Tooltip("public_score:Q", format=".1f", title="Score")],
+                    ),
+                    alt.Chart(_sub_bar).mark_text(align="left", dx=5, fontSize=11,
+                                                   fontWeight="bold").encode(
+                        x=alt.X("public_score:Q"),
+                        y=alt.Y("name:N", sort="-x"),
+                        text=alt.Text("public_score:Q", format=".0f"),
+                        color=_sb_color,
+                    ),
+                    alt.Chart(pd.DataFrame({"x": [1234.7], "r": ["comet_reaper"]})).mark_rule(
+                        color="#f59e0b", strokeDash=[4, 3], strokeWidth=1.5, opacity=0.7
+                    ).encode(x=alt.X("x:Q"), tooltip=["r:N"]),
+                    alt.Chart(pd.DataFrame({"x": [1500], "r": ["Prize zone"]})).mark_rule(
+                        color="#a855f7", strokeDash=[4, 3], strokeWidth=1.5, opacity=0.7
+                    ).encode(x=alt.X("x:Q"), tooltip=["r:N"]),
+                ).properties(height=max(70, len(_sub_bar) * 32)),
+                use_container_width=True,
+            )
 
 
 # ---------------------------------------------------------------------------
