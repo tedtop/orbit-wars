@@ -43,8 +43,12 @@ it to pass more bots — NOT "never fix a wrong one." When the gym disagrees wit
   schmeekler (gym +72% → live ~1057, converging). If schmeekler's asymptote < 1249, the gym **inverted the rank**
   and gauntlet v2 must reproduce comet_reaper > schmeekler.
 - **Why the gym likely mis-predicts → what v2 changes:** (1) field mismatch — panel is 5 *strong* bots vs the
-  live mix of hundreds at all skill levels; (2) format mismatch — live is likely 4P FFA where a periphery
-  static-grabber gets *ganged*, vs our 2P-heavy gym; (3) metric mismatch — binary win-rate vs placement/margin.
+  live mix of hundreds at all skill levels; (2) **REGIME-DEPENDENT matchmaking** (Ted's leaderboard+forum read,
+  verify via replays): new/low bots are matched **4P FFA-heavy**; as they converge the **top bots play ~2P**
+  (forum complaints that the top-2 play only 2P). So **4P = the cold-start GATEWAY, 2P = the prize-zone CEILING** —
+  a bot must survive 4P to *ascend* and win 2P to *hold the top*. Our 2P-heavy gym models the ceiling but is blind
+  to the gateway, so it can't see a bot like schmeekler that's 2P-strong but 4P-fragile (periphery static-grab gets
+  ganged) and stuck in the basement; (3) metric mismatch — binary win-rate vs placement/margin.
 - **Calibrate on REAL data, not more submissions** (each live point costs a slot + ~overnight). Use downloaded
   prize-zone episodes; a value function trained on real outcomes is itself a candidate "better gauntlet."
 - **Diagnostic feeding v2:** analyze schmeekler's live replays → identify what the gym is blind to → encode it.
@@ -79,14 +83,21 @@ it to pass more bots — NOT "never fix a wrong one." When the gym disagrees wit
 0. **🚨 Validate + (if needed) rebuild the evaluator — gates everything (see Meta-loop).** Poll schmeekler's
    live publicScore vs comet_reaper's 1249.8 (it began ~800, climbing; watch the SLOPE flatten, not the absolute).
    - Converges **above 1249** → gym predicts live, proceed with the inner loop.
-   - Plateaus **below 1249** → gym inverted the rank → **build gauntlet v2**: weight 4P FFA like live, broaden the
-     opponent field (add weaker bots so rating dynamics match), score by placement/margin not binary win-rate;
-     **validate v2 reproduces comet_reaper > schmeekler** before trusting it; then re-baseline all candidates.
-   - In parallel (cheap, now): **diagnose schmeekler's live replays** to see *why* (static-grab ganged in 4P?).
+   - Plateaus **below 1249** → gym inverted the rank → **build gauntlet v2 as TWO gates** matching the live regimes:
+     a **4P-FFA ascent gate** (broad field incl. weaker bots, placement/margin scoring — predicts escaping the
+     cold-start basement) AND the existing **2P ceiling** measure; **validate v2 reproduces comet_reaper >
+     schmeekler**, then re-baseline all candidates.
+   - In parallel (cheap, now): **diagnose schmeekler's live replays** — count 2P vs 4P + placements (verifies the
+     regime model) and check whether the static-grab gets ganged in 4P.
 1. **Track B MCTS** (`comet_reaper_mcts`, 2-ply + exact flow-scorer leaf, ~7 ms/turn) — validate n≥150; it's a
    submission candidate **once the gym is shown to predict live** (don't submit on the proxy that just misled us).
 2. **More structural scoring features** (Track A): potential-field/future-positions, interdiction, phase-aware
    sizing; sweep each new knob.
+   - **★ Format-aware static bonus (HIGH PRIORITY, do first):** schmeekler's static grab likely helps 2P but gets
+     ganged in 4P. Make `static_target_bonus` **full in 2P, reduced/off when `player_count > 2`**. Directly tests
+     whether schmeekler's live drag is a 4P-only pathology — could recover ascent while keeping the 2P edge.
+   - **4P robustness is the binding constraint for ASCENT** (see Meta-loop regime model) — features that survive
+     ganging in 4P matter more right now than further 2P gains.
 3. **Learned value function on Jetstream2 (150 CPU + A100).** V(state)→final-ship-fraction. **Train on DOWNLOADED
    prize-zone episodes** (real outcomes, real opponent distribution), NOT pure self-play — its fidelity probe is
    then measurable on real data, **independent of the gym-under-audit**. Richer encoding than 12 global scalars
