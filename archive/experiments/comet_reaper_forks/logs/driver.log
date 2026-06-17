@@ -612,3 +612,715 @@
 [2026-06-15 22:34:27] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
 [2026-06-15 22:34:29] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
 [2026-06-15 22:34:31] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:34:33] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:34:35] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:34:37] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:34:39] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:34:41] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:34:43] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:34:45] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:34:47] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:34:49] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:34:51] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:34:54] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:34:56] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:34:58] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:35:00] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:35:02] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:35:04] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:35:06] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:35:08] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:35:10] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:35:12] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:35:14] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:35:16] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:35:18] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:35:20] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:35:23] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:35:25] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:35:27] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:35:29] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:35:31] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:35:33] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:35:35] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:35:37] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:35:39] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:35:41] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:35:43] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:35:45] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:35:47] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:35:49] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:35:51] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:35:53] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:35:55] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:35:57] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:35:59] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:36:02] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:36:04] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:36:06] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:36:08] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:36:10] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:36:12] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:36:14] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:36:16] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:36:18] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:36:20] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:36:22] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:36:24] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:36:26] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:36:28] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:36:30] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:36:32] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:36:34] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:36:36] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:36:38] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:36:41] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:36:43] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:36:45] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:36:47] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:36:49] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:36:51] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:36:53] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:36:55] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:36:57] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:36:59] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:37:01] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:37:03] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:37:05] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:37:07] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:37:09] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:37:11] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:37:13] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:37:15] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:37:17] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:37:19] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:37:22] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:37:24] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:37:26] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:37:28] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:37:30] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:37:32] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:37:34] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:37:36] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:37:38] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:37:40] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:37:42] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:37:44] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:37:44] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:37:46] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:37:46] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:37:48] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:37:48] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:37:50] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:37:50] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:37:52] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:37:52] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:37:54] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:37:54] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:37:56] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:37:56] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:37:58] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:37:58] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:38:00] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:01] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:38:03] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:03] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:38:05] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:05] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:38:07] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:07] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:38:09] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:09] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:38:11] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:11] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:38:13] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:13] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:38:15] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:15] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:38:17] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:17] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:38:19] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:19] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:38:21] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:21] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:38:23] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:23] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:38:25] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:25] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:38:27] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:27] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:38:29] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:29] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:38:31] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:31] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:38:33] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:33] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:38:35] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:36] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:38:38] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:38] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:38:40] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:40] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:38:42] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:42] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:38:44] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:44] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:38:46] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:46] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:38:48] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:48] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:38:50] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:50] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:38:52] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:52] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:38:54] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:54] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:38:56] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:56] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:38:58] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:38:58] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:39:00] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:00] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:39:02] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:02] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:39:04] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:04] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:39:06] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:06] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:39:08] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:08] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:39:11] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:11] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:39:13] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:13] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:39:15] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:15] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:39:17] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:17] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:39:19] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:19] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:39:21] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:21] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:39:23] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:23] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:39:25] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:25] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:39:27] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:27] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:39:29] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:29] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:39:31] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:31] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:39:33] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:33] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:39:35] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:35] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:39:37] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:37] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:39:39] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:39] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:39:41] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:41] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:39:43] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:43] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:39:45] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:45] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:39:47] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:48] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:39:50] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:50] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:39:52] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:52] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:39:54] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:54] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:39:56] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:56] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:39:58] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:39:58] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:40:00] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:00] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:40:02] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:02] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:40:04] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:04] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:40:06] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:06] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:40:08] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:08] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:40:10] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:10] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:40:12] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:12] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:40:14] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:14] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:40:16] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:16] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:40:18] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:18] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:40:21] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:21] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:40:23] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:23] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:40:25] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:25] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:40:27] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:27] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:40:29] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:29] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:40:31] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:31] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:40:33] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:33] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:40:35] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:35] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:40:37] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:37] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:40:39] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:39] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:40:41] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:41] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:40:43] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:43] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:40:45] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:45] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:40:47] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:47] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:40:49] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:49] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:40:51] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:51] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:40:53] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:53] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:40:56] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:56] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:40:58] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:40:58] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:41:00] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:00] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:41:02] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:02] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:41:04] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:04] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:41:06] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:06] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:41:08] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:08] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:41:10] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:10] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:41:12] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:12] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:41:14] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:14] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:41:16] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:16] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:41:18] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:18] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:41:20] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:20] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:41:22] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:22] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:41:24] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:24] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:41:26] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:26] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:41:29] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:29] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:41:31] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:31] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:41:33] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:33] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:41:35] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:35] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:41:37] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:37] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:41:39] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:39] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:41:41] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:41] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:41:43] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:43] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:41:45] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:45] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:41:47] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:47] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:41:49] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:49] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:41:51] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:51] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:41:53] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:53] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:41:55] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:55] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:41:57] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:57] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:41:59] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:41:59] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:42:02] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:02] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:42:04] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:04] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:42:06] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:06] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:42:08] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:08] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:42:10] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:10] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:42:12] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:12] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:42:14] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:14] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:42:16] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:16] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:42:18] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:18] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:42:20] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:20] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:42:22] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:22] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:42:24] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:24] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:42:26] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:26] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:42:28] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:28] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:42:30] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:30] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:42:33] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:33] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:42:35] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:35] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:42:37] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:37] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:42:39] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:39] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:42:41] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:41] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:42:43] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:43] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:42:45] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:45] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:42:47] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:47] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:42:49] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:49] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:42:51] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:51] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:42:53] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:53] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:42:55] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:55] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:42:57] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:57] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:42:59] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:42:59] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:43:01] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:01] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:43:04] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:04] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:43:06] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:06] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:43:08] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:08] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:43:10] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:10] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:43:12] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:12] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:43:14] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:14] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:43:16] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:16] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:43:18] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:18] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:43:20] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:20] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:43:22] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:22] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:43:24] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:24] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:43:26] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:26] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:43:28] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:28] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:43:30] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:30] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:43:32] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:32] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:43:35] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:35] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:43:37] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:37] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:43:39] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:39] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:43:41] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:41] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:43:43] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:43] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:43:45] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:45] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:43:47] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:47] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:43:49] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:49] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:43:51] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:51] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:43:53] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:53] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:43:55] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:55] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:43:57] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:57] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:43:59] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:43:59] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:44:01] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:01] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:44:03] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:03] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:44:06] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:06] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:44:08] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:08] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:44:10] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:10] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:44:12] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:12] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:44:14] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:14] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:44:16] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:16] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:44:18] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:18] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:44:20] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:20] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:44:22] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:22] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:44:24] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:24] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:44:26] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:26] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:44:28] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:28] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:44:30] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:30] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:44:32] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:32] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:44:34] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:34] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:44:37] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:37] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:44:39] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:39] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:44:41] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:41] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:44:43] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:43] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:44:45] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:45] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:44:47] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:47] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:44:49] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:49] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:44:51] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:51] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:44:53] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:53] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:44:55] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:55] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:44:57] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:57] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:44:59] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:44:59] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:45:01] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:01] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:45:03] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:03] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:45:05] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:06] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:45:08] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:08] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:45:10] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:10] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:45:12] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:12] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:45:14] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:14] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:45:16] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:16] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:45:18] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:18] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:45:20] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:20] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:45:22] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:22] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:45:24] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:24] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:45:26] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:26] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:45:28] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:28] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:45:30] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:30] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:45:32] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:32] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:45:34] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:34] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:45:37] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:37] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:45:39] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:39] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:45:41] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:41] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:45:43] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:43] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:45:45] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:45] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:45:47] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:47] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:45:49] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:49] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:45:51] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:51] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:45:53] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:53] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:45:55] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:55] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:45:57] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:57] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:45:59] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:45:59] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:46:01] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:01] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:46:03] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:03] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:46:05] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:05] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:46:07] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:08] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:46:10] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:10] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:46:12] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:12] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:46:14] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:14] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:46:16] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:16] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:46:18] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:18] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:46:20] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:20] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:46:22] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:22] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:46:24] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:24] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:46:26] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:26] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:46:28] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:28] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:46:30] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:30] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:46:32] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:32] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:46:34] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:34] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:46:36] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:36] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:46:39] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:39] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:46:41] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:41] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:46:43] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:43] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:46:45] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:45] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:46:47] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:47] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:46:49] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:49] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:46:51] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:51] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:46:53] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:53] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:46:55] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:55] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:46:57] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:57] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:46:59] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:46:59] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:47:01] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:01] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:47:03] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:03] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:47:05] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:05] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:47:07] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:07] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:47:10] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:10] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:47:12] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:12] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:47:14] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:14] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:47:16] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:16] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:47:18] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:18] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:47:20] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:20] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:47:22] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:22] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:47:24] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:24] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:47:26] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:26] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:47:28] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:28] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:47:30] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:30] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:47:32] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:32] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:47:34] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:34] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:47:36] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:36] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:47:38] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:38] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:47:41] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:41] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:47:43] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:43] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:47:45] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:45] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:47:47] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:47] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:47:49] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:49] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:47:51] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:51] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:47:53] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:53] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:47:55] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:55] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:47:57] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:57] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:47:59] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:47:59] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:48:01] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:48:01] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:48:03] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:48:03] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:48:05] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:48:05] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:48:07] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:48:07] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:48:09] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:48:10] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:48:12] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:48:12] maestro   MAESTRO_GAIN [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:48:14] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:48:14] helmsman  HELMSMAN_HORIZON_MULT [2P vs comet_reaper] 1.0=0%  1.15=0%  1.3=0%  1.5=0% | best=1.0 (0%, n=0)
+[2026-06-15 22:48:16] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:48:16] kingmaker KINGMAKER_LEADER_WEIGHT [focal-4P vs 3x comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:48:18] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:48:18] oracle    ORACLE_BIAS [2P vs comet_reaper] 0.0=0%  2.0=0%  5.0=0%  10.0=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:48:20] self-play mgmt error: [Errno 2] No such file or directory: '/Users/Ted/src/orbit_wars/overnight/selfplay.log'
+[2026-06-15 22:48:20] precog    PRECOG_OPP_STRENGTH [2P vs comet_reaper] 0.0=0%  0.1=0%  0.25=0%  0.5=0% | best=0.0 (0%, n=0)
+[2026-06-15 22:48:22] === overnight driver STOP ===

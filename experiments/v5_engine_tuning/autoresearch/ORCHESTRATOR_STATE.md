@@ -18,9 +18,10 @@ _This is the durable memory. Canonical detail lives in `program.md` (knowledge +
 - Poll ~hourly (tool caps 1h); WAKE TED only on: fmt converges / Track C fidelity probe lands / catastrophe.
 
 ## Live ladder (ground truth — poll `.venv/bin/kaggle competitions submissions orbit-wars`)
-- **comet_reaper — 1234.7** (sub 53707586) — OUR BEST score but **currently INACTIVE (bumped, 3rd slot)**. Intentional — using slots for live-calibration + Track C training data. Resubmit strong descendant before Jun 23.
-- **schmeekler — 1096.2** (sub 53770052) — active, 53 eps, still converging slowly.
-- **schmeekler_fmt — 1143.8** (sub 53785483) — active, 30 eps, **↑ +17.8 this tick** — still rising. 91 pts below comet_reaper.
+- **comet_reaper — 1234.7** (sub 53707586) — OUR BEST score, **INACTIVE (3rd slot)**. Intentional — preserve; resubmit before Jun 23.
+- **schmeekler — 1096.2** (sub 53770052) — active, 53 eps, plateaued.
+- **schmeekler_fmt — 1167.4** (sub 53785483) — active, 38 eps, **↑ +23.6 this tick — STILL RISING**. 67.3 pts below comet_reaper. Not plateaued.
+- _Last polled: 2026-06-17 ~22:30 MT_
 - The Producer (best public) ≈ 1259. #1 ≈ 1793. Prize zone ≈ 1500.
 - **Active slots: {schmeekler_fmt, schmeekler}** — comet_reaper bumped per strategy (intentional).
 - 🔎 **DIAGNOSTIC (from episode graphs):** in several LOSSES schmeekler builds a planet lead mid-game then
@@ -29,15 +30,18 @@ _This is the durable memory. Canonical detail lives in `program.md` (knowledge +
   **COLLAPSES late** (over-extends, can't hold). The 1-ply scorer is blind to this; a value function on FINAL
   outcomes would penalize it → reinforces the Track C bet. (Worth a proper replay measure: peak→final planet share.)
 
-## Active tracks (4 git worktrees; orchestrator = this session on `v5-engine-tuning`)
-- **Track A worktree** (`../orbit_wars-track-a`, branch `track-b-stochastic-search`) — **REPURPOSED OVERNIGHT.**
-  Building `comet_reaper_stochastic`: Boltzmann opponent model + 192-candidate EV depth-2 search. The 2-ply
-  argmax "oracle" failure ≠ structural impossibility — stochastic model fixes it. τ sweep [0.5,1,2,5] at n=30,
-  then n=150 on best. This is the correct 2-player MDP Bellman equation.
-- **Track B** (`../orbit_wars-track-b`, `track-b-mcts-search`) — Building `schmeekler_orbit`: orbit timing
-  (delay launch until planet is closer/cheaper). Orthogonal to stochastic model. n=30 directional, then n=150.
-- **Track C** (`../orbit_wars-track-c`, `track-c-value-function`) — VF moonshot: labeler → encoder → fidelity
-  probe (AUC ≥ 0.65 gates integration). Eventually plugs into Track A's stochastic search shell as leaf eval.
+## Active tracks (orchestrator = this session on `v5-engine-tuning`)
+- **Stochastic search** (worktree `../orbit_wars-track-a`, branch `track-b-stochastic-search`) — **THE LIVE BET.**
+  `comet_reaper_stochastic`: Boltzmann opponent model P(R1_j) ∝ exp(score_j/τ), EV depth-2, 192 candidates. 5 bugs fixed.
+  τ SWEEP STATUS (n=20/opp, 5-opp panel, seat-swapped):
+  - τ=2.0: **61/100 = 61% OVERALL** ✓ (50% CR, 55% PV2, 60% IMS, 60% FM, 80% 1266) — POSITIVE SIGNAL, schmeekler baseline PENDING for comparison
+  - τ=1.0: RUNNING (n=20)
+  - τ=0.5, 5.0: PENDING
+  - schmeekler baseline vs same panel: RUNNING in parallel
+  Wake condition: any τ beats schmeekler baseline by >5pp at n=30 → escalate to n=150.
+- **Track C (value function) — COMPLETE → NULL RESULT** (`../orbit_wars-track-c`): AUC=0.9835 PASS, but Phase E
+  arena 2P=parity, 4P=HURT. Bolt-on integration doesn't work. To use V: must REPLACE `score_candidates` inside
+  orbit_lite (deep refactor). No submittable bot from this track. V model (value_probe.pt) preserved for future use.
 
 ## REVISED UNDERSTANDING (2026-06-17 evening)
 - 2-ply dead end was argmax oracle failure, NOT structural impossibility
@@ -51,6 +55,7 @@ _This is the durable memory. Canonical detail lives in `program.md` (knowledge +
 - ❌ Potential-field, interdiction, phase-sizing bonuses — all DISCARD at n=150 (additive bonuses override the scorer).
 - ❌ 2-ply shallow search (comet_reaper_mcts v1/v2) — n=50 parity. **Provably ≈ schmeekler — do NOT submit it.**
 - ❌ Comet-aware — CONFIRMED DISCARD (2×2 kill-test, n=50): schmeekler_comet=74%=baseline (+0pp); comet_reaper_comet=61% (regresses). Flow scorer already handles comet valuation; flat bonus is noise.
+- ❌ **Track C bolt-on VF (comet_reaper_vf)** — AUC=0.9835 (V has real signal), but: 2P parity vs same-engine (moves duplicate); 4P HURT (aggressive expansions expose to 3-opp counter). Bolt-on ≠ policy-level. Would require replacing `score_candidates` — deep refactor, no time. V model (value_probe.pt) preserved for future seasons.
 
 ## THE mechanistic insight (shapes everything)
 orbit_lite's `capture_floor`/`clears_floor` collapse each turn to **0–4 candidates (0–1 most turns)** → nothing to
@@ -67,9 +72,8 @@ floor-blocked moves the engine refuses, judge by LEARNED outcome (value function
 - **The only real gym = the live ladder (submitting).** That's why fmt gets a live test.
 
 ## Remaining bets
-1. **schmeekler_fmt live test** — replace schmeekler slot (NEVER comet_reaper). Calibration + best schmeekler variant.
-2. **Track C value function** — the real upside. Fidelity probe on REAL episodes (gym-independent) gates it.
-3. comet 2×2 kill-test (Track A) — cheap, expected ≈0.
+1. **schmeekler_fmt live test** — still converging (1143.8, 30 eps). Best schmeekler variant; still ~91pts below comet_reaper.
+2. **comet_reaper_stochastic** — THE ONLY REMAINING OFFENSIVE BET. τ sweep running. If any τ beats schmeekler >5pp @ n=20, escalate to n=150.
 
 ## Hard rules / slot discipline
 - **Repo is PUBLIC — never `git push`.** Commit locally only.

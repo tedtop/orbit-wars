@@ -156,7 +156,37 @@ it to pass more bots — NOT "never fix a wrong one." When the gym disagrees wit
    then measurable on real data, **independent of the gym-under-audit**. Richer encoding than 12 global scalars
    (spatial structure matters). Composes with Track B as the MCTS leaf eval. The 1793-tier moonshot; A100 makes
    training trivial, so the risk is encoding/coverage, not compute time. Gate the build behind item 0.
-4. **4P meta-play** (coalition / weakest-enemy / don't-be-leader), validated seat-rotated.
+4. **Orbit timing — WHEN to attack, not just WHETHER** (Track B, `schmeekler_orbit`) 🟢 QUEUED TONIGHT
+   - **Insight:** The engine computes `floor[T, K_eta]` for launching NOW with varying ETAs. It never considers
+     *delaying the launch itself* by T_future steps until the target planet's orbit brings it closer.
+   - **Build:** Fork `schmeekler`. Add `_best_launch_window(movement, source_idx, target_idx, alive_by_step,
+     n_scan=150)` → returns `(min_floor, steps_until_min)` per (src, tgt) pair by scanning future orbital positions.
+     For each target: if `min_future_floor < HOLD_THRESHOLD × current_floor` AND `steps_until_min < HOLD_WINDOW`
+     (env knobs, defaults 0.6 / 50): suppress the attack now; instead reinforce our nearest planet toward that
+     target (build garrison for the optimal window).
+   - **Fork from:** `schmeekler` (has static bonus; timing is orthogonal).
+   - **Branch:** `track-b-mcts-search` (repurposed). Bot in `agents/schmeekler_orbit/`.
+   - **Env knobs:** `ORBIT_TIMING=1`, `HOLD_THRESHOLD=0.6`, `HOLD_WINDOW=50` — sweep threshold [0.4, 0.6, 0.8] at n=50.
+   - **Reuse:** `movement.alive_by_step`, distance cache — no new imports. ~negligible compute.
+   - **Gate:** n≥150 vs schmeekler + comet_reaper. KEEP only if clearly > schmeekler outside CI.
+   - **Risk:** Low. Worst case = parity (wrong suppress windows). Doesn't interact with 4P bonus.
+
+5. **Stochastic Markov opponent model** (Track B, `schmeekler_stochastic`) 🔵 QUEUED MORNING
+   - **Insight:** Track B's 2-ply used argmax opponent (oracle). Replace with Boltzmann distribution over all
+     opponent moves: `P(R1_j) ∝ exp(score_j / τ)`. EV(W1) = Σ_j P(R1_j) × competitive_score(W1 + R1_j).
+     With EV as the scorer, floor-blocked moves naturally score near zero (failed capture → weakened state →
+     lower competitive_score) so we can expand to ALL ~192 (src, tgt) pairs — solving the candidate-scarcity problem.
+   - **Key diff from prior 2-ply:** prior used de-mean correction (zero variance with 0–4 candidates); this uses
+     absolute EV over 192 candidates. Mechanistically distinct — not a revival of dead shallow search.
+   - **Fork from:** `comet_reaper` (cleaner base, no bonus confound). Bot in `agents/comet_reaper_stochastic/`.
+   - **Branch:** `track-b-mcts-search` (after orbit timing is done or in parallel).
+   - **τ sweep:** grid [0.5, 1.0, 2.0, 5.0, 10.0] at n=30 first → pick best → n=150 confirm.
+   - **Reuse:** `_advance_garrison_single_wave()`, `_plan_opponent_1ply()` from Track B codebase.
+   - **Gate:** n≥150, AUC of EV ranking > 0.5. KEEP only if beats comet_reaper outside CI.
+   - **Risk:** Medium. τ=0 is the oracle disaster. τ calibration is the whole game.
+   - **Hold until:** Track C fidelity probe result (if VF passes, VF subsumes this; if VF fails, this is Plan B).
+
+6. **4P meta-play** (coalition / weakest-enemy / don't-be-leader), validated seat-rotated.
 
 **Resources:** Jetstream2 = 150 CPU cores + 1× A100 (data-gen is CPU-bound, ValueNet training GPU-bound → minutes).
 

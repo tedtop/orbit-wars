@@ -16,7 +16,8 @@ Append-only. Each experiment: hypothesis → gauntlet result → KEEP/DISCARD. T
 | 2026-06-17 | schmeekler_phase (Track A) | phase-aware ship sizing (early 1.2× → late 3.0×) | 1.2=19%, 1.5=22% — breaks the engine's ROI/speed/floor sizing interaction | ❌ DISCARD |
 
 | 2026-06-17 | **schmeekler_orbit** (Track B repurposed) | delay launch until planet closer/cheaper | HOLD_THRESHOLD=0.6 fires 0% turns; 0.8 fires 42% → passivity catastrophe. Root cause: capture floor is INDEPENDENT of orbital position for neutrals (garrison constant); enemy floors INCREASE with delay. Closer ≠ cheaper in this game. | ❌ DISCARD |
-| 2026-06-17 | comet_reaper_vf (Track C Phase D) | learned value function on real episodes | AUC=0.9905, Pearson=0.9145, 19ms/turn — massive PASS. Phase E bot built. | ✅ PASS gate → gym eval pending |
+| 2026-06-17 | comet_reaper_vf (Track C Phase D) | learned value function on real episodes | AUC=0.9905, Pearson=0.9145, 19ms/turn — massive PASS. Phase E bot built. | ✅ PASS gate → Phase E eval |
+| 2026-06-17 | comet_reaper_vf (Track C Phase E) | bolt-on VF expansion beats diverse field | 2P: 17-17-6 parity vs comet_reaper (both engine → duplicate moves); 4P: 12 vs 23 firsts — **HURT** (aggressive moves expose defensive holes to 3 opponents); 2P-gated variant still parity | ❌ **DISCARD** — bolt-on integration doesn't transfer; V has genuine signal (AUC=0.98) but needs to REPLACE `score_candidates`, not layer above it |
 | 2026-06-17 | schmeekler_comet + comet_reaper_comet (Track A 2×2) | comet-targeting bonus (additive 1.5 to comet-planet candidates) | schmeekler_comet 74% OVERALL = schmeekler baseline 74% (+0pp); comet_reaper_comet 61% OVERALL ≈ comet_reaper baseline (+0pp); bonus sweep not run (no gain at n=50) | ❌ DISCARD — flow scorer already handles ephemeral target valuation; flat bonus is noise |
 
 **Current champion:** `schmeekler` (static_target_bonus=1.5) — but **live ≈ comet_reaper PARITY**; gym overstated it.
