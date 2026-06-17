@@ -15,10 +15,14 @@ Append-only. Each experiment: hypothesis → gauntlet result → KEEP/DISCARD. T
 | 2026-06-17 | schmeekler_fmt (Track A) | format-aware static bonus (off in 4P) | head-to-head 4P pod: **+3.72μ, 6 fewer 4th-places vs schmeekler; 2P perfect parity** (earlier focal-vs-3×CR pod was ambiguous) | 🟡 KEEP-candidate, n=150 + 0.5 sweep running — but on the GYM-under-audit, so suggestive not certified |
 
 **Current champion:** `schmeekler` (static_target_bonus=1.5) — but **live ≈ comet_reaper PARITY**; gym overstated it.
-**Live (2026-06-17):** schmeekler 1057→1079→1085→**1066** (oscillating ~1066–1085 = PLATEAUED, ~170 below comet_reaper
-1245, not near 1259). Cold-start lag has ended → schmeekler is genuinely a touch *below* comet_reaper live; the gym
-overstated it. **Gym v2:** dead-bot poisoning fixed; valid-anchor Spearman ~0.60 but still over-rates schmeekler vs CR
-(4P weak-farming?) → iterate p4/strength-weighting; clean+low-p4 runs pending.
+**Live (2026-06-17):** schmeekler ~1066–1085–**1075** = PLATEAUED ~170 below comet_reaper 1245 (not near 1259). Cold-start
+lag ended → schmeekler genuinely a touch *below* CR live; the gym overstated it.
+**Gym v2 (clean, valid anchors):** hard inversion FIXED — CR 25.53 ≳ schmeekler 25.17 (≈tie); weak bots far below.
+Spearman 0.43 is an artifact of the 4 top anchors being within 66 live pts (1200–1266) — uncrackable noise, wrong metric.
+Residual: gym shows CR≈schmeekler but live is CR≫schmeekler (+170) → gym understates CR's margin, so a SMALL gym edge over
+CR ≠ a live gain. (low-p4 run testing whether less 4P sharpens CR>schmeekler.)
+**Submission discipline:** HOLD. No candidate has a credible *live*-beats-comet_reaper case yet; comet_reaper (1245) stays our
+best submitted bot. Also verify Kaggle's active-slot rule before submitting (a 3rd sub may retire comet_reaper → LB drop).
 **Read so far:** structural-bonus features (potential/interdict) and 2-ply exact-flow re-rank all ≈parity-or-worse —
 the orbit_lite 1-ply scorer is a tight optimum even vs correct 2-ply lookahead. New live-evidence lever = the
 engine-wide **comet blind spot** (Track A's next build) + a **gym v2** that predicts the ladder (calibrating now).
