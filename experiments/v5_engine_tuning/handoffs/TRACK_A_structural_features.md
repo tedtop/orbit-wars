@@ -15,8 +15,12 @@ flow-diff planner. Our clone is **`comet_reaper`** (it vendors `orbit_lite/`). O
 (`static_target_bonus=1.5`). It beats comet_reaper **72% 2P (seat-swapped)** and the whole public panel.
 
 **Key established fact:** *adding structural features to the 1-ply scorer is the direction that WORKS.*
-(Config tuning → nothing, best 0.34. Simple forward-sim re-rank → no signal. BC/RL → dead end, 0–16.)
-**Your job: find the next schmeekler-style feature.**
+(Re-tuning the *stock* engine config → nothing, best 0.34. Simple forward-sim re-rank → no signal. BC/RL →
+dead end, 0–16.) **Your job: find the next schmeekler-style feature.**
+
+> **Note on "config tuning":** re-tuning the *base* engine knobs is the dead part. **Sweeping the knob each
+> NEW feature introduces is NOT ruled out — it IS the job** (schmeekler's `static_bonus` sweep → 1.0–1.5 is the
+> model). Every feature below ships its own env knob; sweep it (grid is fine; Optuna if the space is multi-dim).
 
 ## Your task — build & validate new structural scoring features
 Fork **schmeekler** (the champion, not comet_reaper) into new bots under `agents/<name>/` and add ONE feature
@@ -63,6 +67,14 @@ noise** (use n≥150 for the final call; ±~5% CI). Sweep the env knob to find t
   strategy secret until the competition ends. Present the commit message for approval before committing.
 - **End every work session with a brief paste-able "state of play" summary** (champion, what ran, results,
   open questions) so Ted can forward it for strategic review.
+
+## Keep yourself busy — self-paced ~20-min loop (don't idle waiting for Ted)
+Work autonomously through the hypothesis queue. At the end of each work cycle, **schedule a wake-up ~20 min out
+(`ScheduleWakeup`, re-passing your task) and post a brief status update** — what you just tested, the gauntlet
+result, what's next — then continue. Keep looping until you either (a) hit a documented dead end on every queued
+hypothesis, or (b) produce a **submission candidate** that beats the champion `schmeekler` on the gauntlet
+(n≥150, outside CI, within time budget). When you hit (a) or (b), post a final state-of-play and stop scheduling.
+Don't wait for Ted between cycles — he reads the status updates asynchronously and will redirect if needed.
 
 ## First moves
 1. `git checkout track-a-structural-features` (confirm you're on it).

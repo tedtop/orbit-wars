@@ -67,6 +67,15 @@ report per-turn wall-clock — a search that wins but times out on Kaggle is wor
   until the competition ends. Present the commit message for approval first.
 - **End every work session with a brief paste-able "state of play" summary** so Ted can forward it for review.
 
+## Keep yourself busy — self-paced ~20-min loop (don't idle waiting for Ted)
+Work autonomously. At the end of each work cycle, **schedule a wake-up ~20 min out (`ScheduleWakeup`, re-passing
+your task) and post a brief status update** — what you just built/tested, gauntlet result + per-turn wall-clock,
+what's next — then continue. Search is a long build, so report incremental progress (scaffold up → fallback
+verified → tree depth N working → timing). Keep looping until you either (a) hit a documented dead end, or
+(b) produce a **submission candidate** that beats champion `schmeekler` on the gauntlet (n≥150, outside CI,
+within the ~800 ms/turn budget). On (a) or (b), post a final state-of-play and stop scheduling. Don't wait for
+Ted between cycles — he reads the updates asynchronously and will redirect if needed.
+
 ## First moves
 1. `git checkout track-b-mcts-search` (confirm).
 2. Read `agents/comet_reaper_search/main.py` + `search_engine.py` (the dead end) and

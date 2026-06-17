@@ -25,7 +25,9 @@ A candidate is a "keep" only if it beats the current champion **outside the CI**
 - ❌ **Simple search is redundant with the 1-ply scorer.** Forward-sim rollout re-rank (`comet_reaper_search`)
   added no signal — the aggressive rollout policy reproduces the candidate moves. 2-ply opponent-response
   (`precog`) was parity too. Real gains need a proper MCTS *tree + value function* (big build).
-- ❌ **Config tuning** (Optuna over ~19 engine knobs) found nothing (best 0.34) — base config is a tight optimum.
+- ⚠️ **Re-tuning the STOCK engine config is dead** (Optuna over ~19 base knobs, best 0.34 — already a tight
+  optimum). But **sweeping the knob a NEW feature introduces is alive and IS the job** — schmeekler's
+  `static_bonus` sweep (→1.0–1.5) is the model. Every new feature ships an env knob; sweep it (Optuna or grid).
 - ❌ **BC / RL / cloning** is a dead end (0–16 vs the engine; forum-confirmed). Aggression must be
   *calibrated* (naive aggression over-extends), which is what search/structure provides — not knob-lowering.
 
