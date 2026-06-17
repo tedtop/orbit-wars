@@ -90,6 +90,42 @@ maestro, helmsman, oracle), and ran them against the engine on **seat-swapped** 
   (see its `README.md`). The neural BC/self-play track (Phase 4) is kept in `rl/` but
   carries `DEAD END` banners.
 
+## Phase 6 — Config tuning + forum intel (Jun 16–17)
+
+**Milestone: `comet_reaper` hit a new best — #144 / 1243.8** (up from #183 / 1235.9; first time inside
+the top ~150).
+
+Finally read the Kaggle competition notebooks (pulled via `kaggle kernels pull` →
+`experiments/v5_engine_tuning/intel_kernels/`):
+
+- `souldrive/why-cloning-the-1-bot-loses-to-greedy` **independently confirms our Phase-4 dead end:** a BC
+  clone of #1 (LB **1793**) wins only **~17%** vs the greedy Producer (~1240); PPO made it worse (4%).
+  *"If a fast search exists, run the search — don't clone."* And **inference is not the bottleneck** —
+  ~1 s/turn budget vs ~25 ms used → **~30× headroom for deeper search.**
+- `improved-agent-v2`, `improved-heuristic-agent` (target ~1500): 1-ply heuristics with better
+  **scoring/sizing** — NPV/snowball scoring with ownership multipliers (enemy 2.05× / neutral 1.4× /
+  contested 0.7× / friendly 0.3×), phase-aware ship sizing (1.2×→3.0×), speed-bracket sizing, enemy-fleet
+  interdiction, 4P weakest-enemy + elimination bonus.
+- **Landscape: comet_reaper ≈ Producer ≈ 1240; #1 ≈ 1793.** Two levers — better scoring/sizing
+  (1240→~1500), and **deeper multi-ply search** (~1500→1793, the real prize lever; we have the budget).
+
+Plan (`experiments/v5_engine_tuning/`): low-noise seat-rotated **gauntlet** → bench comet_reaper vs the
+improved field → port what wins → **Optuna** over the ~22 config knobs → **deeper search**, with an
+**autoresearch** ratchet as orchestrator.
+
+**🏆 Result — `schmeekler` (Ted's own idea) BEATS comet_reaper.** A comet_reaper fork that adds a tunable
+scoring bonus for capturing **static (non-rotating) planets** first (the safe periphery land-grab — static
+planets can't drift into enemy reach). Swept `static_target_bonus`: **1.0–1.5 is the sweet spot** (beats
+comet_reaper ~71–72% 2P, seat-swapped), ≥2.0 over-commits and tanks. Validated:
+- 2P vs comet_reaper: **72%** (36–14, n=50). vs the public panel: producer-v2 **77%**, floor-matched 77%,
+  i-m-stronger 70%, 1266-elo 60% — beats the whole field (comet_reaper only *tied* producer-v2).
+- 4P (focal vs 3× comet_reaper): **best in the pod** — 35% first-places vs each comet_reaper's ~22%.
+- **Submitted 2026-06-17** as our new bot. First thing all project to genuinely beat the engine.
+
+Also this phase: `comet_reaper_tuned` (knob-exposed for Optuna; config sweep found nothing, best 0.34 —
+base config is a tight optimum) and `comet_reaper_search` (Numba forward-sim lookahead, ~80k rollouts/turn;
+the single-move signal washes out over the rollout — being fixed). ⚠️ search in progress.
+
 ---
 
 ## Open questions / next directions
