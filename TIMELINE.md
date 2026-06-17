@@ -128,6 +128,24 @@ the single-move signal washes out over the rollout — being fixed). ⚠️ sear
 
 ---
 
+## 2026-06-17 — Track A comet 2×2 factorial kill-test: DISCARD
+
+Tested `comet_target_bonus=1.5` (additive score bonus for targeting ephemeral comet-planets) across
+a 2×2 factorial: with/without the static bonus (schmeekler vs comet_reaper base) × with/without the
+comet bonus. Implementation: `obs_tensors["comet_planet_ids"]` → `torch.isin()` mask → additive bonus.
+
+Results (n=50/opp, 5-opp panel, seat-swapped):
+- **schmeekler_comet** (static=1.5, comet=1.5): OVERALL 74% = schmeekler baseline 74% → **+0pp**
+- **comet_reaper_comet** (static=0, comet=1.5): OVERALL ~61% ≈ comet_reaper baseline → **+0pp**
+
+Per-opp breakdown: schmeekler_comet 72%/74%/78%/78%/66%; comet_reaper_comet 50%/52%/67%/71%/66%.
+
+The flow scorer already handles ephemeral target valuation implicitly. A flat additive bonus is noise —
+comets are correctly de-prioritized by the engine because they are structurally low-value (prod=1.0,
+short time window). COMET bonus sweep (0.5/1.0/2.0) not run; verdict: DISCARD.
+
+---
+
 ## Open questions / next directions
 
 - Multi-knob config search (CMA-ES / Optuna) over the engine's ~20 knobs vs a fixed
