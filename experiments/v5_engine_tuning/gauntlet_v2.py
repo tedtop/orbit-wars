@@ -43,6 +43,9 @@ WATCH = {"schmeekler": (None, 1085)}  # moving target — ranked but NOT in the 
 # extra weak/mid archived bots purely to thicken the lower field
 EXTRA = ["the_vulture", "susceptible_infected_recovered_model", "artificial_potential_fields",
          "minimax_fleet_allocation", "stigmergic_pheromone_routing"]
+# OFFICIAL kaggle_environments baselines (orbit_wars v1.0.9) — real low-end live opponents; passed
+# straight to env.run as built-in agent names (not file bots). 'starter' ≈ what new submissions run.
+BUILTINS = ["random", "starter"]
 
 
 def spearman(xs, ys):
@@ -77,6 +80,8 @@ def main():
         spec[n] = resolve(n, s)
     for n in EXTRA:
         spec[n] = resolve(n, None)
+    for n in BUILTINS:
+        spec[n] = n  # built-in agent name passed straight to env.run
     field = [n for n, s in spec.items() if s]
     missing = [n for n, s in spec.items() if not s]
     if missing:
