@@ -147,7 +147,11 @@ it to pass more bots — NOT "never fix a wrong one." When the gym disagrees wit
      on schmeekler, small sweep — if it doesn't clearly help on the gym, drop it. Do NOT build the full factorial.
    - **Format-aware static bonus (DEAD premise):** replays show no 4P ganging and no static over-commit. Skip
      unless idle.
-3. **Learned value function on Jetstream2 (150 CPU + A100).** V(state)→final-ship-fraction. **Train on DOWNLOADED
+3. **Learned value function on Jetstream2 (150 CPU + A100) — 🟢 IN PROGRESS as Track C** (`track-c-value-function`,
+   worktree `../orbit_wars-track-c`; spec in `handoffs/TRACK_C_value_function.md`). KEY refinement from Track B:
+   the VF must evaluate an EXPANDED candidate set (aggressive/floor-blocked moves the engine refuses) — re-ranking
+   the engine's 0–4 safe candidates is pointless. Fidelity probe on REAL episodes gates integration (gym-independent).
+   V(state)→final-ship-fraction. **Train on DOWNLOADED
    prize-zone episodes** (real outcomes, real opponent distribution), NOT pure self-play — its fidelity probe is
    then measurable on real data, **independent of the gym-under-audit**. Richer encoding than 12 global scalars
    (spatial structure matters). Composes with Track B as the MCTS leaf eval. The 1793-tier moonshot; A100 makes
