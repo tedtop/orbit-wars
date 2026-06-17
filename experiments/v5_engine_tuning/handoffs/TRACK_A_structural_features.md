@@ -55,9 +55,15 @@ Use the gauntlet. ALWAYS seat-swapped (2P has a seat-0 effect that fakes ~+14%):
 .venv/bin/python experiments/v5_engine_tuning/autoresearch/evaluate.py <bot> 50 POTENTIAL_WEIGHT=1.0
 ```
 It runs `<bot>` vs comet_reaper + the public panel (the-producer-v2, i-m-stronger, floor-matched, 1266-elo) and
-prints win% per opponent + overall. **A feature is a KEEP only if it beats schmeekler (the champion) outside the
-noise** (use n≥150 for the final call; ±~5% CI). Sweep the env knob to find the sweet spot (schmeekler's was
-1.0–1.5; ≥2.0 over-committed — expect similar "too much over-commits" shapes).
+prints win% per opponent + overall. Sweep the env knob to find the sweet spot (schmeekler's was 1.0–1.5; ≥2.0
+over-committed — expect similar "too much over-commits" shapes).
+
+**KEEP criterion — judge against the strong PUBLIC bots, not schmeekler.** schmeekler has never been on the real
+Kaggle ladder, so it's only a *relative* champion; the public panel is our ground-truth proxy, and
+**the-producer-v2 (the real top public lineage) + i-m-stronger are the ones that matter most.** A feature is a
+KEEP only if, at n≥150 (±~5% CI): (1) its **win% vs the public panel ≥ schmeekler's, ideally higher** (especially
+vs producer-v2 + i-m-stronger), and (2) it also holds its own head-to-head vs schmeekler. Always re-run schmeekler
+on the same panel in the same session so the comparison is apples-to-apples (arena noise drifts run to run).
 
 ## Bookkeeping (every iteration)
 - Append a row to `experiments/v5_engine_tuning/autoresearch/LOG.md` (hypothesis → gauntlet result → KEEP/DISCARD).

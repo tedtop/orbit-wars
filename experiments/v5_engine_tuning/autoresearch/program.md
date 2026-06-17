@@ -10,8 +10,15 @@ Climb comet_reaper (#144 / 1243) toward the ~1500 prize zone (#1 ≈ 1793).
 ## Fixed evaluator (the yardstick — do NOT make it easier mid-search)
 `autoresearch/evaluate.py <bot> [STATIC_BONUS=..] [..env knobs]` → **seat-rotated** win% vs comet_reaper +
 the public panel (the-producer-v2, i-m-stronger, floor-matched, 1266-elo), 2P + 4P, **n ≥ 150** (±~5% CI).
-A candidate is a "keep" only if it beats the current champion **outside the CI** AND stays within the
-**1 s/turn** budget. Always seat-swap (2P has a seat-0 effect that fakes ~+14%).
+Always seat-swap (2P has a seat-0 effect that fakes ~+14%).
+
+**Ground truth = the strong PUBLIC bots, not schmeekler.** schmeekler has never been on the real Kaggle ladder,
+so it's only a *relative* champion — don't gate on "beats schmeekler head-to-head" alone. The public panel is our
+proxy for real strength; **the-producer-v2 (the actual top public lineage) and i-m-stronger are the bots that
+matter most.** A candidate is a "keep" only if: (1) its **win% vs the public panel ≥ schmeekler's, ideally higher**
+(esp. vs producer-v2 + i-m-stronger), (2) it holds its own head-to-head vs schmeekler, and (3) it stays within the
+**1 s/turn** budget — all measured outside the CI at n ≥ 150. Re-baseline schmeekler on the same panel each run so
+the comparison is apples-to-apples.
 
 ## Hard constraints
 - Bots live in `agents/`; all logic in `main.py`; **never edit vendored `orbit_lite`** (shared-module

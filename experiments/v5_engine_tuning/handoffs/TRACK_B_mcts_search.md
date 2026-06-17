@@ -55,9 +55,15 @@ ALWAYS seat-swapped (2P seat-0 effect fakes ~+14%):
 ```
 .venv/bin/python experiments/v5_engine_tuning/autoresearch/evaluate.py comet_reaper_mcts 50 SEARCH_DEPTH=3 SEARCH_BEAM=8
 ```
-Runs the bot vs comet_reaper + the public panel; prints win% per opponent + overall. **A KEEP only if it beats
-the champion `schmeekler` outside the noise (n≥150 final, ±~5% CI) AND stays within the time budget.** Also
-report per-turn wall-clock — a search that wins but times out on Kaggle is worthless.
+Runs the bot vs comet_reaper + the public panel; prints win% per opponent + overall.
+
+**KEEP criterion — judge against the strong PUBLIC bots, not schmeekler.** schmeekler has never been on the real
+Kaggle ladder, so it's only a *relative* champion; the public panel is our ground-truth proxy, and
+**the-producer-v2 (the real top public lineage) + i-m-stronger matter most.** A KEEP only if, at n≥150 (±~5% CI):
+(1) **win% vs the public panel ≥ schmeekler's, ideally higher** (esp. vs producer-v2 + i-m-stronger), (2) it holds
+its own head-to-head vs schmeekler, AND (3) it stays within the ~800 ms/turn budget. Re-run schmeekler on the same
+panel each session for an apples-to-apples baseline. Also report per-turn wall-clock — a search that wins but
+times out on Kaggle is worthless.
 
 ## Bookkeeping (every iteration)
 - Append to `experiments/v5_engine_tuning/autoresearch/LOG.md` (design → gauntlet result + wall-clock → KEEP/DISCARD).
