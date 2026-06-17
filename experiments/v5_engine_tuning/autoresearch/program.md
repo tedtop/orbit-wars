@@ -96,14 +96,15 @@ it to pass more bots — NOT "never fix a wrong one." When the gym disagrees wit
 - ❌ **BC / RL / cloning** is a dead end (0–16 vs the engine; forum-confirmed). Aggression must be
   *calibrated* (naive aggression over-extends), which is what search/structure provides — not knob-lowering.
 
-- 🎯 **OPPORTUNITY — engine-wide COMET blind spot (replay-confirmed, 136 live games).** Both schmeekler and
-  comet_reaper systematically under-capture comets: 2P comet-capture **24% / 29%** while owning **65% / 63%** of
-  ships; 4P **0% / 8%**. Comets spawn on a KNOWN schedule (steps 50/150/250/350/450, 4/event, prod 1.0) and 2P
-  terminal score weights **production 5×** — so this is a plausible **field-wide inefficiency to exploit**, not a
-  schmeekler bug. Unproven that capturing more comets raises score (they're low-prod/transient — maybe a trap),
-  but it's the clearest behavioral divergence in the data → **build a comet-aware feature and test it.** Other
-  replay answers (23 games): no static over-commit (owns 40% static vs 45% rotating), no 4P ganging (share
-  27%→53%), **zero timeouts** (min overage 42/60s).
+- ❌ **COMET "blind spot" is a NON-opportunity (corrected by lifecycle analysis).** My earlier "24% capture vs
+  65% board" was a misleading ratio. Per-comet lifecycle (2P): schmeekler ever-owns **2%** of comets, opponents
+  **6%**, and **92% are NEVER captured by ANYONE** (96% of comet-steps neutral). comet_reaper (static_bonus=0)
+  is identical (2% / 94% neutral) → the static bonus is NOT suppressing comets; the **whole competitive field
+  ignores them** because ROI is poor: prod 1.0, radius 1.0, transient ~53 steps, **gone before the terminal 5×
+  production bonus**. When schmeekler does grab one it's fast (median 3 steps) → it's a *choice*, not a timing
+  miss. comet_riding's old 61%/7th was the weak 23-bot arena, not the orbit_lite field. **Comet-aware feature =
+  likely dead; one cheap confirmatory test at most.** (Other replay answers: no static over-commit, no 4P
+  ganging — share 27%→53%, **zero timeouts**.)
 
 - 🧱 **CHEAP-HYPOTHESIS SPACE IS EXHAUSTED (2026-06-17, both tracks).** Every bolt-on bonus (potential-field,
   interdiction, phase-sizing, format-aware) **DISCARDED at n=150**, and **2-ply exact-flow search is FINAL-dead**
@@ -133,15 +134,9 @@ it to pass more bots — NOT "never fix a wrong one." When the gym disagrees wit
    submission candidate **once the gym is shown to predict live** (don't submit on the proxy that just misled us).
 2. **More structural scoring features** (Track A): potential-field/future-positions, interdiction, phase-aware
    sizing; sweep each new knob.
-   - **★ Comet-aware targeting (NEW HIGH PRIORITY — replay-backed):** both bots under-capture comets (2P 24–29%
-     vs ~65% board share; see knowledge bullet). Add a scoring bonus for comet targets and/or pre-position ships
-     near the known spawn points (steps 50/150/250/350/450). **Build it ON TOP of schmeekler (don't replace the
-     static strategy) as a 2×2 FACTORIAL** — one bot `schmeekler_comet` carrying BOTH knobs (`STATIC_BONUS` +
-     `COMET_BONUS`), swept over four corners: baseline (0,0)=comet_reaper, static-only (1.5,0)=schmeekler,
-     comet-only (0,C), combined (1.5,C). Report all four so we read the **main effects AND the interaction**
-     (additive / synergistic / competing-for-ships). Engine-wide blind spot → could lift comet_reaper too.
-     Honest risk: comets may be correctly ignored (low-prod/transient). Caveat: gym over-credits static play +
-     understates CR's live margin → a combined gym win is a CANDIDATE, gate submission on a live case.
+   - **Comet-aware targeting (DOWNGRADED — likely dead).** Lifecycle analysis shows 92% of comets are never
+     captured by anyone (field-wide ignore, poor ROI). At most ONE cheap confirmatory test: a `COMET_BONUS` knob
+     on schmeekler, small sweep — if it doesn't clearly help on the gym, drop it. Do NOT build the full factorial.
    - **Format-aware static bonus (DEAD premise):** replays show no 4P ganging and no static over-commit. Skip
      unless idle.
 3. **Learned value function on Jetstream2 (150 CPU + A100).** V(state)→final-ship-fraction. **Train on DOWNLOADED
