@@ -386,37 +386,226 @@ def section_position_and_leaderboard():
                   delta_color="normal")
 
         if not hist.empty and len(hist) >= 2:
+            # Time-range filter pills — refilter hist before building all 3 charts
+            _range_opts = {"All": None, "7d": 7 * 24, "3d": 3 * 24, "24h": 24, "6h": 6}
+            _sel_range  = st.pills(
+                "Range", list(_range_opts.keys()), default="All",
+                label_visibility="collapsed", key="chart_range",
+            )
+            _cutoff_h = _range_opts.get(_sel_range or "All")
+            if _cutoff_h:
+                _t_max    = hist["time"].max()
+                hist_view = hist[hist["time"] >= _t_max - pd.Timedelta(hours=_cutoff_h)]
+            else:
+                hist_view = hist
+
+            # Submission annotation data
+            _subs_ann = load_submissions()
+            _ann_df   = pd.DataFrame()
+            if not _subs_ann.empty:
+                _a = _subs_ann[
+                    _subs_ann["submitted_at"].notna() &
+                    (_subs_ann["submitted_at"].astype(str).str.strip() != "")
+                ].copy()
+                if not _a.empty:
+                    _a["time"]  = pd.to_datetime(_a["submitted_at"], utc=True, errors="coerce")
+                    _a          = _a.dropna(subset=["time"])
+                    _a["label"] = _a["name"].str[:20]
+                    _ann_df     = _a[["time", "name", "label", "public_score"]].reset_index(drop=True)
+
+            # Stamp each snapshot with the submission that was active at that time
+            _sub_times = pd.DataFrame()
+            if not _subs_ann.empty:
+                _sub_times = (
+                    _subs_ann[_subs_ann["submitted_at"].notna()]
+                    .assign(sub_time=lambda d: pd.to_datetime(
+                        d["submitted_at"], utc=True, errors="coerce"))
+                    .dropna(subset=["sub_time"])
+                    .sort_values("sub_time")
+                    [["sub_time", "name"]]
+                    .reset_index(drop=True)
+                )
+
+            _hb = hist_view.copy()
+            if not _sub_times.empty:
+                _hb["bot_name"] = _sub_times.iloc[0]["name"]
+                for _, _sr in _sub_times.iterrows():
+                    _hb.loc[_hb["time"] >= _sr["sub_time"], "bot_name"] = _sr["name"]
+            else:
+                _hb["bot_name"] = "unknown"
+
+            # Stable bot color palette (consistent across all charts)
+            _BOT_PALETTE = {
+                "comet_reaper v1":                     "#f59e0b",  # amber/gold
+                "schmeekler@1.5":                      "#4c78a8",  # steel blue
+                "schmeekler_fmt":                      "#54a24b",  # green
+                "markowitz_portfolio_optimization v1": "#666",
+                "coordinated_strike_interceptor v1":   "#666",
+            }
+            _hb_names  = sorted(_hb["bot_name"].unique().tolist())
+            _c_domain  = _hb_names
+            _c_range   = [_BOT_PALETTE.get(n, "#888") for n in _hb_names]
+            _bot_color = alt.Color(
+                "bot_name:N",
+                scale=alt.Scale(domain=_c_domain, range=_c_range),
+                legend=alt.Legend(title=None, orient="bottom",
+                                  labelFontSize=10, symbolSize=100,
+                                  padding=2, rowPadding=2),
+            )
+            _x_enc = alt.X("time:T", title=None,
+                           axis=alt.Axis(format="%m/%d %H:%M"))
+
+            # Colored submission annotation rules + top-anchored labels
+            def _ann_layers(_h: int):
+                if _ann_df.empty or hist_view.empty:
+                    return []
+                _lo  = hist_view["time"].min()
+                _hi  = hist_view["time"].max()
+                _vis = _ann_df[(_ann_df["time"] >= _lo) & (_ann_df["time"] <= _hi)].copy()
+                if _vis.empty:
+                    return []
+                _rd  = _vis["name"].tolist()
+                _rr  = [_BOT_PALETTE.get(n, "#888") for n in _rd]
+                _ce  = alt.Color("name:N", scale=alt.Scale(domain=_rd, range=_rr), legend=None)
+                rules = (
+                    alt.Chart(_vis)
+                    .mark_rule(strokeDash=[5, 3], strokeWidth=2, opacity=0.9)
+                    .encode(
+                        x=alt.X("time:T"),
+                        color=_ce,
+                        tooltip=[
+                            alt.Tooltip("time:T",         format="%m/%d %H:%M", title="Submitted"),
+                            alt.Tooltip("name:N",         title="Bot"),
+                            alt.Tooltip("public_score:Q", format=".1f",         title="Score"),
+                        ],
+                    )
+                )
+                labels = (
+                    alt.Chart(_vis)
+                    .mark_text(angle=270, align="left", baseline="middle",
+                               fontSize=10, fontWeight="bold", dx=3)
+                    .encode(
+                        x=alt.X("time:T"),
+                        y=alt.value(12),
+                        text=alt.Text("label:N"),
+                        color=_ce,
+                    )
+                )
+                return [rules, labels]
+
+            # Reference lines: comet_reaper baseline + prize zone
+            _ref_df = pd.DataFrame([
+                {"y": 1234.7, "ref": "CR best (1234)"},
+                {"y": 1500,   "ref": "Prize zone (~1500)"},
+            ])
+            _ref_lines = (
+                alt.Chart(_ref_df)
+                .mark_rule(strokeDash=[3, 3], strokeWidth=1, opacity=0.45)
+                .encode(
+                    y=alt.Y("y:Q"),
+                    color=alt.Color(
+                        "ref:N",
+                        scale=alt.Scale(
+                            domain=["CR best (1234)", "Prize zone (~1500)"],
+                            range=["#f59e0b",          "#a855f7"],
+                        ),
+                        legend=alt.Legend(title=None, orient="bottom",
+                                          labelFontSize=9, symbolSize=50,
+                                          padding=0, rowPadding=0),
+                    ),
+                    tooltip=["ref:N", alt.Tooltip("y:Q", format=".0f")],
+                )
+            )
+
             st.caption("Score over time")
             st.altair_chart(
-                alt.Chart(hist).mark_line(point=True, color="#4c78a8").encode(
-                    x=alt.X("time:T", title=None, axis=alt.Axis(format="%m/%d %H:%M")),
-                    y=alt.Y("score:Q", title="Score", scale=alt.Scale(zero=False)),
-                    tooltip=[alt.Tooltip("time:T", format="%m/%d %H:%M"),
-                             alt.Tooltip("score:Q", format=".1f"),
-                             alt.Tooltip("rank:Q")],
-                ).properties(height=120), width="stretch")
+                alt.layer(
+                    alt.Chart(_hb).mark_line(strokeWidth=2).encode(
+                        x=_x_enc,
+                        y=alt.Y("score:Q", title="Score", scale=alt.Scale(zero=False, nice=True)),
+                        color=_bot_color,
+                        tooltip=[alt.Tooltip("time:T", format="%m/%d %H:%M"),
+                                 alt.Tooltip("score:Q",    format=".1f"),
+                                 alt.Tooltip("rank:Q"),
+                                 alt.Tooltip("bot_name:N", title="Bot")],
+                    ).properties(height=150),
+                    _ref_lines,
+                    *_ann_layers(150),
+                ),
+                use_container_width=True,
+            )
 
             st.caption("Rank over time (lower = better)")
             st.altair_chart(
-                alt.Chart(hist).mark_line(point=True, color="#f58518").encode(
-                    x=alt.X("time:T", title=None, axis=alt.Axis(format="%m/%d %H:%M")),
-                    y=alt.Y("rank:Q", title="Rank", scale=alt.Scale(reverse=True, zero=False)),
-                    tooltip=[alt.Tooltip("time:T", format="%m/%d %H:%M"),
-                             alt.Tooltip("rank:Q"),
-                             alt.Tooltip("score:Q", format=".1f")],
-                ).properties(height=120), width="stretch")
-
-            gap_df = hist.dropna(subset=["prize_score"]).copy()
-            if not gap_df.empty:
-                gap_df["gap"] = gap_df["prize_score"] - gap_df["score"]
-                st.caption("Gap to prize cutoff (rank #10)")
-                st.altair_chart(
-                    alt.Chart(gap_df).mark_line(point=True, color="#e45756").encode(
-                        x=alt.X("time:T", title=None, axis=alt.Axis(format="%m/%d %H:%M")),
-                        y=alt.Y("gap:Q", title="Points behind #10"),
+                alt.layer(
+                    alt.Chart(_hb).mark_line(strokeWidth=2).encode(
+                        x=_x_enc,
+                        y=alt.Y("rank:Q", title="Rank",
+                                scale=alt.Scale(reverse=True, zero=False, nice=True)),
+                        color=_bot_color,
                         tooltip=[alt.Tooltip("time:T", format="%m/%d %H:%M"),
-                                 alt.Tooltip("gap:Q", title="Gap", format=".1f")],
-                    ).properties(height=110), width="stretch")
+                                 alt.Tooltip("rank:Q"),
+                                 alt.Tooltip("score:Q",    format=".1f"),
+                                 alt.Tooltip("bot_name:N", title="Bot")],
+                    ).properties(height=130),
+                    *_ann_layers(130),
+                ),
+                use_container_width=True,
+            )
+
+            # Score by submission — bar chart of current public scores (bots > 800 only)
+            if not _subs_ann.empty:
+                _sub_bar = (
+                    _subs_ann[_subs_ann["public_score"].notna() &
+                              (_subs_ann["public_score"] > 800)]
+                    .sort_values("public_score", ascending=False)
+                    .copy()
+                )
+                if not _sub_bar.empty:
+                    _sb_dom   = _sub_bar["name"].tolist()
+                    _sb_range = [_BOT_PALETTE.get(n, "#888") for n in _sb_dom]
+                    _sb_color = alt.Color(
+                        "name:N", scale=alt.Scale(domain=_sb_dom, range=_sb_range), legend=None
+                    )
+                    _x_max = max(1550, float(_sub_bar["public_score"].max()) + 80)
+                    _bars = (
+                        alt.Chart(_sub_bar)
+                        .mark_bar(cornerRadiusEnd=4)
+                        .encode(
+                            x=alt.X("public_score:Q", title="Score",
+                                    scale=alt.Scale(domain=[900, _x_max])),
+                            y=alt.Y("name:N", title=None, sort="-x"),
+                            color=_sb_color,
+                            tooltip=["name:N", alt.Tooltip("public_score:Q", format=".1f", title="Score")],
+                        )
+                    )
+                    _bar_labels = (
+                        alt.Chart(_sub_bar)
+                        .mark_text(align="left", dx=5, fontSize=11, fontWeight="bold")
+                        .encode(
+                            x=alt.X("public_score:Q"),
+                            y=alt.Y("name:N", sort="-x"),
+                            text=alt.Text("public_score:Q", format=".0f"),
+                            color=_sb_color,
+                        )
+                    )
+                    _prize_rule = (
+                        alt.Chart(pd.DataFrame({"x": [1500], "ref": ["Prize zone"]}))
+                        .mark_rule(color="#a855f7", strokeDash=[4, 3], strokeWidth=1.5, opacity=0.6)
+                        .encode(x=alt.X("x:Q"), tooltip=["ref:N"])
+                    )
+                    _cr_rule = (
+                        alt.Chart(pd.DataFrame({"x": [1234.7], "ref": ["comet_reaper"]}))
+                        .mark_rule(color="#f59e0b", strokeDash=[4, 3], strokeWidth=1.5, opacity=0.6)
+                        .encode(x=alt.X("x:Q"), tooltip=["ref:N"])
+                    )
+                    st.caption("Score by submission (active & recent)")
+                    st.altair_chart(
+                        alt.layer(
+                            _bars, _bar_labels, _prize_rule, _cr_rule,
+                        ).properties(height=max(60, len(_sub_bar) * 30)),
+                        use_container_width=True,
+                    )
         else:
             st.info("No leaderboard history yet — run the pipeline.")
 
@@ -762,6 +951,40 @@ def _bot_summary_strip(sub_id: str, sub_eps: pd.DataFrame, public_score):
     c4.markdown(_m("Games / 24h", str(recent_count)), unsafe_allow_html=True)
 
 
+def _lazy_card_grid(sub_id: str, sub_eps: pd.DataFrame,
+                    auto_load: bool = False, page_size: int = 24):
+    """Render episode cards with lazy loading + pagination.
+
+    auto_load=True  → render immediately (top agent), paginated to page_size
+    auto_load=False → show a load button; only render after user clicks it
+    """
+    load_key = f"eps_loaded_{sub_id}"
+    page_key = f"eps_page_{sub_id}"
+
+    if not auto_load and not st.session_state.get(load_key, False):
+        st.button(
+            f"Load {len(sub_eps)} episode charts",
+            key=f"btn_load_{sub_id}",
+            on_click=lambda: st.session_state.update({load_key: True}),
+        )
+        return
+
+    if page_key not in st.session_state:
+        st.session_state[page_key] = page_size
+
+    shown = st.session_state[page_key]
+    # sub_eps is sorted ascending; tail gives the most-recent N
+    _render_card_grid(sub_eps.tail(shown))
+
+    if len(sub_eps) > shown:
+        remaining = len(sub_eps) - shown
+        st.button(
+            f"Show {remaining} more episodes",
+            key=f"more_{sub_id}",
+            on_click=lambda: st.session_state.update({page_key: shown + page_size}),
+        )
+
+
 def section_episodes():
     subs     = load_submissions()
     episodes = load_episodes()
@@ -770,10 +993,11 @@ def section_episodes():
     retired = subs[subs["status"] != "active"]
 
     st.subheader("Active Agents")
-    for _, sub in active.iterrows():
-        sub_id  = str(sub["submission_id"])
-        name    = sub.get("name", sub_id)
+    for i, (_, sub) in enumerate(active.iterrows()):
+        sub_id    = str(sub["submission_id"])
+        name      = sub.get("name", sub_id)
         pub_score = sub.get("public_score")
+        is_top    = (i == 0)
 
         sub_eps = (episodes[episodes["submission_id"] == sub_id]
                    .loc[lambda df: df["our_placement"].notna()]
@@ -796,13 +1020,13 @@ def section_episodes():
                 with st.expander(label, expanded=False):
                     st.code(desc, language=None)
 
-            _render_card_grid(sub_eps)
+            _lazy_card_grid(sub_id, sub_eps, auto_load=is_top)
 
     if not retired.empty:
         st.subheader("Retired Agents")
         for _, sub in retired.iterrows():
-            sub_id  = str(sub["submission_id"])
-            name    = sub.get("name", sub_id)
+            sub_id    = str(sub["submission_id"])
+            name      = sub.get("name", sub_id)
             pub_score = sub.get("public_score")
 
             sub_eps = (episodes[episodes["submission_id"] == sub_id]
@@ -810,10 +1034,268 @@ def section_episodes():
                        .sort_values("create_time", ascending=True)
                        if not episodes.empty else pd.DataFrame())
 
-            with st.expander(f"**{name}**  ·  {len(sub_eps)} episodes", expanded=True):
+            with st.expander(f"**{name}**  ·  {len(sub_eps)} episodes", expanded=False):
                 if not sub_eps.empty:
                     _bot_summary_strip(sub_id, sub_eps, pub_score)
-                _render_card_grid(sub_eps)
+                _lazy_card_grid(sub_id, sub_eps, auto_load=False)
+
+
+# ---------------------------------------------------------------------------
+# Autoresearch
+# ---------------------------------------------------------------------------
+
+# Registry of every experiment run — update as results land.
+# win_pct: "overall" win% vs public panel where measured; None = pending.
+# delta:   vs schmeekler n=150 baseline (66% overall). None = pending/N/A.
+_EXPERIMENTS = [
+    # --- epoch 1: overnight bolt-ons (seat-swapped, all parity) ---
+    dict(epoch=1, name="precog",          base="comet_reaper", track="A (pre)",  verdict="DISCARD",     win_pct=50,  delta=-16, category="Heuristic",        note="Parity vs CR seat-swapped; N≈50"),
+    dict(epoch=2, name="kingmaker",        base="comet_reaper", track="A (pre)",  verdict="DISCARD",     win_pct=50,  delta=-16, category="Heuristic",        note="Parity vs CR seat-swapped"),
+    dict(epoch=3, name="maestro",          base="comet_reaper", track="A (pre)",  verdict="DISCARD",     win_pct=50,  delta=-16, category="Heuristic",        note="Parity vs CR seat-swapped"),
+    dict(epoch=4, name="helmsman",         base="comet_reaper", track="A (pre)",  verdict="DISCARD",     win_pct=50,  delta=-16, category="Heuristic",        note="Parity vs CR seat-swapped"),
+    dict(epoch=5, name="oracle",           base="comet_reaper", track="A (pre)",  verdict="DISCARD",     win_pct=50,  delta=-16, category="Heuristic",        note="Parity vs CR seat-swapped"),
+    # --- epoch 2: Optuna config tuning ---
+    dict(epoch=6, name="comet_reaper_tuned", base="comet_reaper", track="Config", verdict="DISCARD",    win_pct=None, delta=None, category="Config tuning",   note="37 Optuna trials; best score 0.34 — base config is a tight optimum"),
+    # --- epoch 3: schmeekler (the breakthrough) ---
+    dict(epoch=7, name="schmeekler",       base="comet_reaper", track="A",        verdict="KEEP",        win_pct=74,  delta=+8,  category="Static bonus",     note="72% 2P vs CR; beats whole public panel; CHAMPION → submitted live"),
+    # --- epoch 4: Track A bonus features ---
+    dict(epoch=8, name="schmeekler_potential", base="schmeekler", track="A",      verdict="DISCARD",    win_pct=74,  delta=0,   category="Scoring bonus",    note="Noise ≈0pp — flow scorer already encodes ETA/position"),
+    dict(epoch=9, name="schmeekler_interdict", base="schmeekler", track="A",      verdict="DISCARD",    win_pct=48,  delta=-18, category="Scoring bonus",    note="−26pp CATASTROPHIC — overrides flow scorer; wins race, loses hold"),
+    dict(epoch=10, name="schmeekler_phase",   base="schmeekler", track="A",       verdict="DISCARD",    win_pct=22,  delta=-44, category="Phase sizing",     note="−52pp CATASTROPHIC — breaks ROI/floor/sizing interaction"),
+    dict(epoch=11, name="schmeekler_fmt",     base="schmeekler", track="A",       verdict="KEEP",       win_pct=66,  delta=0,   category="Format-aware",     note="2P identical at n=150; +3.72μ 4P; SUBMITTED live"),
+    # --- epoch 5: Track B search ---
+    dict(epoch=12, name="comet_reaper_search", base="comet_reaper", track="B",    verdict="DISCARD",    win_pct=50,  delta=-16, category="Search",           note="Rollout policy reproduces the 1-ply candidate moves exactly"),
+    dict(epoch=13, name="CR_mcts_v1",         base="comet_reaper", track="B",     verdict="DISCARD",    win_pct=75,  delta=+1,  category="Search",           note="n=50 parity — 0–4 candidates/turn, de-mean correction = 0"),
+    dict(epoch=14, name="CR_mcts_v2",         base="comet_reaper", track="B",     verdict="DISCARD",    win_pct=75,  delta=+1,  category="Search",           note="True depth-2 + state advance; still parity — candidate scarcity confirmed"),
+    # --- epoch 6: overnight (tonight) ---
+    dict(epoch=15, name="schmeekler_orbit",   base="schmeekler", track="B",       verdict="DISCARD",    win_pct=61,  delta=-5,  category="Orbit timing",     note="Hold fires 0% (threshold=0.6) or 42% turns causing passivity; capture floor independent of orbit position for neutrals; enemy floors INCREASE with delay"),
+    dict(epoch=16, name="schmeekler_comet",   base="schmeekler", track="A",       verdict="IN PROGRESS", win_pct=None, delta=None, category="Comet targeting", note="2×2 factorial — comet targeting bonus; evals running"),
+    dict(epoch=17, name="CR_comet",           base="comet_reaper", track="A",     verdict="IN PROGRESS", win_pct=None, delta=None, category="Comet targeting", note="2×2 factorial (comet on, static off); evals running"),
+    dict(epoch=18, name="CR_stochastic",      base="comet_reaper", track="Search", verdict="IN PROGRESS", win_pct=None, delta=None, category="Stochastic search", note="Boltzmann opponent model; 192 candidates; τ sweep pending"),
+    dict(epoch=19, name="comet_reaper_vf",    base="comet_reaper", track="C",     verdict="IN PROGRESS", win_pct=None, delta=None, category="Value function",  note="AUC=0.99 ✅ PASS — gym arena eval vs CR pending; 19ms/turn"),
+]
+
+_VERDICT_COLOR = {"KEEP": "#22c55e", "DISCARD": "#ef4444", "IN PROGRESS": "#f59e0b"}
+_TRACK_COLOR   = {"A": "#4c78a8", "A (pre)": "#6b8dbf", "B": "#72b7b2",
+                  "Config": "#b279a2", "Search": "#f58518", "C": "#e45756"}
+
+
+def _autoresearch_scatter() -> alt.Chart:
+    """Scatter: epoch × delta-vs-baseline, colored by verdict."""
+    rows = []
+    for e in _EXPERIMENTS:
+        rows.append({
+            "epoch":   e["epoch"],
+            "name":    e["name"],
+            "delta":   e["delta"] if e["delta"] is not None else 0,
+            "pending": e["delta"] is None,
+            "verdict": e["verdict"],
+            "track":   e["track"],
+            "note":    e["note"],
+            "category": e["category"],
+            "win_pct": e["win_pct"] if e["win_pct"] is not None else 0,
+        })
+    df = pd.DataFrame(rows)
+
+    color_scale = alt.Scale(
+        domain=list(_VERDICT_COLOR.keys()),
+        range=list(_VERDICT_COLOR.values()),
+    )
+    shape_scale = alt.Scale(
+        domain=["KEEP", "DISCARD", "IN PROGRESS"],
+        range=["circle", "cross", "square"],
+    )
+
+    base = alt.Chart(df).encode(
+        x=alt.X("epoch:Q", title="Experiment #", axis=alt.Axis(tickMinStep=1)),
+        y=alt.Y("delta:Q", title="Δ vs schmeekler baseline (pp)",
+                scale=alt.Scale(domain=[-55, 15]),
+                axis=alt.Axis(gridColor="#333")),
+        color=alt.Color("verdict:N", scale=color_scale,
+                        legend=alt.Legend(title="Verdict", orient="top-left")),
+        shape=alt.Shape("verdict:N", scale=shape_scale),
+        tooltip=[
+            alt.Tooltip("epoch:Q", title="#"),
+            alt.Tooltip("name:N",  title="Bot"),
+            alt.Tooltip("category:N", title="Category"),
+            alt.Tooltip("delta:Q", title="Δ vs baseline (pp)"),
+            alt.Tooltip("win_pct:Q", title="Overall win%"),
+            alt.Tooltip("track:N",  title="Track"),
+            alt.Tooltip("note:N",   title="Finding"),
+        ],
+    )
+
+    points = base.mark_point(size=100, strokeWidth=2, filled=True).encode(
+        opacity=alt.condition(
+            alt.datum.pending == True,
+            alt.value(0.4),
+            alt.value(0.9),
+        )
+    )
+
+    labels = base.mark_text(dy=-12, fontSize=9, angle=0).encode(
+        text=alt.Text("name:N"),
+        opacity=alt.condition(
+            alt.datum.verdict == "KEEP",
+            alt.value(1.0),
+            alt.value(0.0),
+        )
+    )
+
+    zero_line = alt.Chart(pd.DataFrame({"y": [0]})).mark_rule(
+        color="#aaa", strokeDash=[4, 4], strokeWidth=1
+    ).encode(y="y:Q")
+
+    return (
+        alt.layer(zero_line, points, labels)
+        .properties(height=280, title=alt.TitleParams(
+            "Δ win% vs schmeekler (n=150 baseline = 66% overall)",
+            fontSize=11, color="#aaa"
+        ))
+        .configure_view(strokeWidth=0)
+    )
+
+
+def _live_score_bar() -> alt.Chart:
+    """Horizontal bar chart of live submission scores + prize zone reference."""
+    data = pd.DataFrame([
+        {"bot": "comet_reaper",  "score": 1234.7, "status": "Inactive (score preserved)", "color": "#4c78a8"},
+        {"bot": "schmeekler",    "score": 1083.0, "status": "Active · converging ↑",      "color": "#22c55e"},
+        {"bot": "schmeekler_fmt","score": 1040.7, "status": "Active · cold-start",         "color": "#f59e0b"},
+    ])
+    bars = alt.Chart(data).mark_bar(cornerRadiusEnd=4).encode(
+        y=alt.Y("bot:N", sort="-x", title=None, axis=alt.Axis(labelFontSize=12)),
+        x=alt.X("score:Q", title="Live Kaggle score",
+                scale=alt.Scale(domain=[800, 1800]),
+                axis=alt.Axis(gridColor="#333")),
+        color=alt.Color("color:N", scale=None, legend=None),
+        tooltip=["bot:N", alt.Tooltip("score:Q", format=".1f"), "status:N"],
+    )
+    prize_line = alt.Chart(pd.DataFrame({"x": [1500]})).mark_rule(
+        color="#e45756", strokeDash=[5, 4], strokeWidth=1.5
+    ).encode(x="x:Q")
+    prize_label = alt.Chart(pd.DataFrame({"x": [1500], "y": ["schmeekler_fmt"], "label": ["🎯 Prize zone ~1500"]})).mark_text(
+        align="left", dx=6, dy=-6, fontSize=10, color="#e45756"
+    ).encode(x="x:Q", y=alt.Y("y:N"), text="label:N")
+    producer_line = alt.Chart(pd.DataFrame({"x": [1259]})).mark_rule(
+        color="#b279a2", strokeDash=[3, 3], strokeWidth=1
+    ).encode(x="x:Q")
+    producer_label = alt.Chart(pd.DataFrame({"x": [1259], "y": ["schmeekler"], "label": ["Producer ~1259"]})).mark_text(
+        align="left", dx=6, dy=-6, fontSize=10, color="#b279a2"
+    ).encode(x="x:Q", y=alt.Y("y:N"), text="label:N")
+    return (
+        alt.layer(bars, prize_line, prize_label, producer_line, producer_label)
+        .properties(height=130, title=alt.TitleParams("Live scores (Jun 17 poll)", fontSize=11, color="#aaa"))
+        .configure_view(strokeWidth=0)
+    )
+
+
+def _lineage_html() -> str:
+    """SVG-based bot lineage tree."""
+    return """
+<div style="font-family:monospace;font-size:12px;line-height:1.7;color:#ccc;background:#111;
+            padding:14px 16px;border-radius:8px;border:1px solid #2a2a2a;overflow-x:auto">
+<div style="color:#888;font-size:10px;margin-bottom:8px;letter-spacing:1px">BOT LINEAGE</div>
+<span style="color:#6b8dbf">orbit_lite engine</span><br>
+└── <span style="color:#4c78a8;font-weight:600">comet_reaper</span>
+    <span style="color:#22c55e;font-size:10px"> ✅ live 1234.7</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:#ef4444">precog / kingmaker / maestro / helmsman / oracle</span>
+    <span style="color:#555;font-size:10px"> ❌ all ≈parity</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:#ef4444">comet_reaper_tuned</span>
+    <span style="color:#555;font-size:10px"> ❌ Optuna 37 trials — tight optimum</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:#ef4444">comet_reaper_search</span>
+    <span style="color:#555;font-size:10px"> ❌ rollout reproduces 1-ply moves</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:#ef4444">CR_mcts_v1 → v2</span>
+    <span style="color:#555;font-size:10px"> ❌ 2-ply dead — 0–4 candidates/turn, nothing to re-rank</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:#f59e0b">CR_stochastic</span>
+    <span style="color:#f59e0b;font-size:10px"> 🔄 Boltzmann 2-ply, 192 cands — τ sweep running</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:#f59e0b">CR_comet</span>
+    <span style="color:#f59e0b;font-size:10px"> 🔄 2×2 factorial (comet on, static off)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:#e45756;font-weight:600">comet_reaper_vf</span>
+    <span style="color:#22c55e;font-size:10px"> 🧠 AUC=0.99 ✅ — gym arena eval pending</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;└── <span style="color:#22c55e;font-weight:600">schmeekler</span>
+    <span style="color:#22c55e;font-size:10px"> ✅ CHAMPION · live 1083 ↑</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:#ef4444">schmeekler_potential</span>
+    <span style="color:#555;font-size:10px"> ❌ ≈0pp — scorer already encodes ETA</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:#ef4444">schmeekler_interdict</span>
+    <span style="color:#555;font-size:10px"> ❌ −26pp — overrides scorer</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:#ef4444">schmeekler_phase</span>
+    <span style="color:#555;font-size:10px"> ❌ −52pp — breaks ROI/floor interaction</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:#ef4444">schmeekler_orbit</span>
+    <span style="color:#555;font-size:10px"> ❌ floor independent of orbit position; delay → more expensive</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:#f59e0b">schmeekler_comet</span>
+    <span style="color:#f59e0b;font-size:10px"> 🔄 2×2 factorial (comet on, static on)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── <span style="color:#22c55e">schmeekler_fmt</span>
+    <span style="color:#22c55e;font-size:10px"> ✅ KEEP · live 1040 cold-start ↑</span>
+</div>
+"""
+
+
+def section_autoresearch():
+    # ── headline KPIs ──────────────────────────────────────────────────────
+    keep  = sum(1 for e in _EXPERIMENTS if e["verdict"] == "KEEP")
+    done  = sum(1 for e in _EXPERIMENTS if e["verdict"] != "IN PROGRESS")
+    prog  = sum(1 for e in _EXPERIMENTS if e["verdict"] == "IN PROGRESS")
+    k1, k2, k3, k4, k5 = st.columns(5)
+    k1.metric("Experiments done",  str(done))
+    k2.metric("KEEP rate",         f"{keep}/{done}  ({keep/done*100:.0f}%)")
+    k3.metric("Running overnight", str(prog))
+    k4.metric("Track C AUC",       "0.99 ✅",  delta=">> 0.65 threshold")
+    k5.metric("Deadline",          "6 days",   delta="Jun 23 23:59 UTC", delta_color="off")
+
+    st.divider()
+
+    # ── live scores + lineage ───────────────────────────────────────────────
+    lcol, rcol = st.columns([0.44, 0.56])
+    with lcol:
+        st.caption("**Bot lineage** — every experiment forked from the base")
+        st.html(_lineage_html())
+    with rcol:
+        st.caption("**Experiment results** — Δ win% vs schmeekler n=150 baseline (66% overall)")
+        st.altair_chart(_autoresearch_scatter(), use_container_width=True)
+
+    st.divider()
+
+    # ── live ladder ────────────────────────────────────────────────────────
+    st.caption("**Live ladder** — current Kaggle scores")
+    st.altair_chart(_live_score_bar(), use_container_width=True)
+
+    st.divider()
+
+    # ── active track status ────────────────────────────────────────────────
+    st.caption("**Active tracks — overnight status**")
+    t1, t2, t3, t4 = st.columns(4)
+
+    with t1:
+        st.markdown("**🧠 Track C — ValueNet**")
+        st.markdown("Phase A ✅ labeler\nPhase B ✅ encoder\nPhase D ✅ AUC=**0.99**\nPhase E 🔄 gym arena")
+        st.progress(0.85, text="85% — awaiting gym rating")
+
+    with t2:
+        st.markdown("**🎲 Search — Stochastic**")
+        st.markdown("Bot built ✅\nτ sweep 🔄 running\nn=30 directional ⏳\nn=150 ⏳")
+        st.progress(0.25, text="25% — τ sweep in progress")
+
+    with t3:
+        st.markdown("**☄️ Comet 2×2**")
+        st.markdown("schmeekler_comet ✅\nCR_comet ✅\nEvals 🔄 running\nVerdict ⏳")
+        st.progress(0.40, text="40% — evals running")
+
+    with t4:
+        st.markdown("**📡 Live calibration**")
+        st.markdown("schmeekler 1083 ↑\nschmeekler_fmt 1040 cold\ncomet_reaper 1234 (inactive)\nConvergence ⏳")
+        st.progress(0.55, text="schmeekler converging")
+
+    # ── mechanistic insight box ────────────────────────────────────────────
+    st.divider()
+    st.info(
+        "**🔑 Core mechanistic finding** — The orbit_lite engine collapses to **0–4 candidates/turn** via "
+        "`capture_floor`/`clears_floor` filters. This is why every shallow re-ranker (bonuses, 2-ply exact "
+        "search, orbit timing) lands at parity: there is nothing to re-rank. **The only untested lever is "
+        "EXPANDING the candidate set to aggressive/floor-blocked moves and judging them by learned outcome "
+        "(Track C VF) or stochastic EV (stochastic search).** Track C AUC=0.99 suggests the VF has real "
+        "discriminative power — gym arena will tell us if this translates to a rating gain."
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -823,9 +1305,13 @@ def section_episodes():
 def main():
     section_header()
     st.divider()
-    section_position_and_leaderboard()
-    st.divider()
-    section_episodes()
+    tab_pos, tab_eps, tab_ar = st.tabs(["📊 Position & Ladder", "📡 Episodes", "🔬 Autoresearch"])
+    with tab_pos:
+        section_position_and_leaderboard()
+    with tab_eps:
+        section_episodes()
+    with tab_ar:
+        section_autoresearch()
 
 
 if __name__ == "__main__":

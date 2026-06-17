@@ -1,6 +1,6 @@
 # ORCHESTRATOR STATE — snapshot for continuity (re-paste into a fresh session if context degrades)
 
-_Last updated: 2026-06-17 ~12:00 MT (day 4). Deadline: **2026-06-23 23:59 UTC** (~6 days)._
+_Last updated: 2026-06-17 ~16:30 MT (day 4). Deadline: **2026-06-23 23:59 UTC** (~6 days)._
 _This is the durable memory. Canonical detail lives in `program.md` (knowledge + queue) and `LOG.md` (ledger)._
 
 ## 🔻 IMMEDIATE NEXT (incoming orchestrator: read this first)
@@ -18,29 +18,39 @@ _This is the durable memory. Canonical detail lives in `program.md` (knowledge +
 - Poll ~hourly (tool caps 1h); WAKE TED only on: fmt converges / Track C fidelity probe lands / catastrophe.
 
 ## Live ladder (ground truth — poll `.venv/bin/kaggle competitions submissions orbit-wars`)
-- **comet_reaper — 1245** — orbit_lite engine clone. **OUR BEST. Stays in slot 1. Do not touch.**
-- **schmeekler — ~1075** — comet_reaper + static-planet bonus. Plateaued ~170 below CR. Gym oversold it.
+- **comet_reaper — 1234.7** (sub 53707586) — OUR BEST score but **currently INACTIVE (bumped, 3rd slot)**. Intentional — using slots for live-calibration + Track C training data. Resubmit strong descendant before Jun 23.
+- **schmeekler — 1096.2** (sub 53770052) — active, 53 eps, still converging slowly.
+- **schmeekler_fmt — 1143.8** (sub 53785483) — active, 30 eps, **↑ +17.8 this tick** — still rising. 91 pts below comet_reaper.
 - The Producer (best public) ≈ 1259. #1 ≈ 1793. Prize zone ≈ 1500.
-- **Dashboard (localhost:8501, 46 live episodes):** schmeekler official **1069.5** · 2P **57% (17-13)** · 4P avg
-  place **2.38** (6×1st/2×2nd/4×3rd/4×4th) · 46 games/24h. Episode graphs plot **planet-count divergence over the
-  game**.
+- **Active slots: {schmeekler_fmt, schmeekler}** — comet_reaper bumped per strategy (intentional).
+- 🔎 **DIAGNOSTIC (from episode graphs):** in several LOSSES schmeekler builds a planet lead mid-game then
+  **COLLAPSES late** (over-extends, can't hold). A value function on FINAL outcomes would penalize it → reinforces Track C bet.
 - 🔎 **DIAGNOSTIC (from episode graphs):** in several LOSSES schmeekler builds a planet lead mid-game then
   **COLLAPSES late** (over-extends, can't hold). The 1-ply scorer is blind to this; a value function on FINAL
   outcomes would penalize it → reinforces the Track C bet. (Worth a proper replay measure: peak→final planet share.)
 
 ## Active tracks (4 git worktrees; orchestrator = this session on `v5-engine-tuning`)
-- **Track A** (`track-a-structural-features`) — **CLOSED & merged to root.** Best output: `schmeekler_fmt`
-  (≥ schmeekler: 2P-identical, +3.72μ 4P) — now at `agents/schmeekler_fmt/`. Comet 2×2 kill-test was NOT run
-  (deprioritized — replays showed comets a field-wide non-opportunity). All other bolt-ons DISCARDED.
-- **Track B** (`../orbit_wars-track-b`) — COMPLETE. 2-ply search dead. Its search shell = Track C's Phase-E target.
-- **Track C** (`../orbit_wars-track-c`, `track-c-value-function`) — THE moonshot, launching. Learned value function.
+- **Track A worktree** (`../orbit_wars-track-a`, branch `track-b-stochastic-search`) — **REPURPOSED OVERNIGHT.**
+  Building `comet_reaper_stochastic`: Boltzmann opponent model + 192-candidate EV depth-2 search. The 2-ply
+  argmax "oracle" failure ≠ structural impossibility — stochastic model fixes it. τ sweep [0.5,1,2,5] at n=30,
+  then n=150 on best. This is the correct 2-player MDP Bellman equation.
+- **Track B** (`../orbit_wars-track-b`, `track-b-mcts-search`) — Building `schmeekler_orbit`: orbit timing
+  (delay launch until planet is closer/cheaper). Orthogonal to stochastic model. n=30 directional, then n=150.
+- **Track C** (`../orbit_wars-track-c`, `track-c-value-function`) — VF moonshot: labeler → encoder → fidelity
+  probe (AUC ≥ 0.65 gates integration). Eventually plugs into Track A's stochastic search shell as leaf eval.
+
+## REVISED UNDERSTANDING (2026-06-17 evening)
+- 2-ply dead end was argmax oracle failure, NOT structural impossibility
+- Stochastic Boltzmann opponent = proper Bellman; 192 candidates; EV naturally penalizes bad attacks
+- Track A/B/C are now THREE parallel overnight bets
+- Optuna un-shelved for ONE purpose only: τ tuning in stochastic model (not general config)
 
 ## Exhausted hypotheses — DO NOT REVIVE (one-line reasons)
 - ❌ Optuna config tuning — 37 trials, best 0.34; base config is a tight optimum.
 - ❌ BC / cloning top players — 0–16 vs engine; forum-confirmed.
 - ❌ Potential-field, interdiction, phase-sizing bonuses — all DISCARD at n=150 (additive bonuses override the scorer).
 - ❌ 2-ply shallow search (comet_reaper_mcts v1/v2) — n=50 parity. **Provably ≈ schmeekler — do NOT submit it.**
-- ❌ Comet-aware — replays: 92% of comets never captured by ANYONE (field-wide non-opportunity). Kill-test running to confirm.
+- ❌ Comet-aware — CONFIRMED DISCARD (2×2 kill-test, n=50): schmeekler_comet=74%=baseline (+0pp); comet_reaper_comet=61% (regresses). Flow scorer already handles comet valuation; flat bonus is noise.
 
 ## THE mechanistic insight (shapes everything)
 orbit_lite's `capture_floor`/`clears_floor` collapse each turn to **0–4 candidates (0–1 most turns)** → nothing to

@@ -146,10 +146,62 @@ short time window). COMET bonus sweep (0.5/1.0/2.0) not run; verdict: DISCARD.
 
 ---
 
+## 2026-06-17 — Track C value function: NULL RESULT (submittable), V model preserved
+
+Built `comet_reaper_vf`: bolt-on value function trained on 746K (obs, outcome) pairs from 2937 prize-zone episodes.
+
+**What worked:**
+- V model (MLP 2×128, DeepSets encoding): AUC=0.9835, Pearson=0.917 — genuinely predictive of game outcomes
+- Integration gate (15ms/turn) well within the 800ms budget
+
+**What didn't:**
+- Phase E arena 2P: 17-17-6 **parity** vs comet_reaper — both bots use the same engine, so base moves are identical; VF aggressive expansions add noise, not signal
+- Phase E arena 4P: 12 vs 23 firsts — **HURT** — aggressive moves from secondary sources expose the bot to 3-opponent counter-attacks simultaneously
+
+**Insight:** Bolt-on VF (add extra candidates if V improves) is the wrong integration strategy. The right path: replace `score_candidates` inside orbit_lite with V-based scoring (policy-level, not post-planning). That requires a deep refactor with ~6 days to deadline — not feasible.
+
+**Preserved:** `track_c/data/value_probe.pt` (trained V model) — genuinely accurate, useful if we revisit next season.
+
+**Only remaining offensive bet: `comet_reaper_stochastic` (Boltzmann opponent model, τ sweep running).**
+
+---
+
+## 2026-06-17 — Track B Boltzmann stochastic search: NULL RESULT
+
+Built `comet_reaper_stochastic`: Boltzmann 2-ply opponent search on top of comet_reaper base.
+
+**Design:** P(R1_j) ∝ exp(orbit_lite_score_j / τ); EV(W1) = Σ_j P_j × competitive_score(W1+R1_j).
+Z-score correction: `score = 1ply_score + EV_BONUS * (ev - ev_mean) / ev_std` (EV_BONUS=2.0).
+
+**5 correctness bugs fixed during development** (summary in TRACK_B_NOTES.md).
+
+**Results (n=20/opp, seat-swapped, panel=comet_reaper+4 opponents):**
+
+τ=2.0 (EV_BONUS=2.0, N_CAND=192, TOP_K_OPP=5):
+```
+vs comet_reaper      10-10  (50%)
+vs the-producer-v2   11-9   (55%)
+vs i-m-stronger      12-8   (60%)
+vs floor-matched     12-8   (60%)
+vs 1266-elo          16-4   (80%)
+OVERALL: 61/100 = 61%
+```
+
+schmeekler baseline (same panel, same n):
+```
+OVERALL: 78/100 = 78%
+```
+
+**VERDICT: DISCARD** — stochastic 61% < schmeekler 78%; did not clear +3pp threshold.
+
+**Key insight:** Stochastic search excels vs hard opponents (80% vs 1266-elo, +20pp over schmeekler)
+but fails vs comet_reaper (50%). Root cause: base is plain comet_reaper which already loses 80-20
+to schmeekler. EV corrections can't overcome base strength gap vs aggressive opponents.
+
+**Next idea:** Apply Boltzmann search on top of schmeekler base (with static bonus). Unlikely to pursue
+before deadline — time better spent on submission strategy.
+
 ## Open questions / next directions
 
-- Multi-knob config search (CMA-ES / Optuna) over the engine's ~20 knobs vs a fixed
-  gauntlet — the most promising untried lever.
-- Proper seat-rotated 4P meta-play.
-- Add the engine itself as a self-play league opponent (selfplay currently only loads
-  neural opponents).
+- schmeekler_fmt asymptote vs comet_reaper: if fmt converges well above 1143, re-evaluate whether to replace comet_reaper slot
+- Stochastic search on schmeekler base: if Track B Phase 2 is worth trying, must be implemented before 2026-06-23
