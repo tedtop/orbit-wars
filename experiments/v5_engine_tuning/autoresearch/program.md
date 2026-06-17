@@ -112,10 +112,13 @@ it to pass more bots — NOT "never fix a wrong one." When the gym disagrees wit
      ✅ DONE — replays show live PARITY (gym overstated, didn't invert; see knowledge bullet). schmeekler still
      soaking; watch whether it converges to ~comet_reaper (parity confirmed) or above.
    - **Gauntlet v2 = rating-style DIVERSE field** (`gauntlet_v2.py`, OpenSkill, mixed 2P/4P, placement-scored).
-     **v0.1 (200g): Spearman 0.60 — coarse-right (strong≫weak) but still inverts schmeekler>comet_reaper.**
-     v2.1 calibrates against **10 STABLE anchors** (opponents encode live scores in their names: 1266/1259/1248/
-     1224/1200/1110/1000/958/566/524) so the target isn't schmeekler's still-moving rating. Iterate field/format/
-     metric until Spearman>0.8, THEN trust it. **Don't tune to schmeekler** while its live rating is converging.
+     **DATA-QUALITY TRAP found:** 4 name-anchored opponents (lb-max-1224, lb-1000-svf, heuristic-1110, lb-958)
+     emit **zero actions locally** (74/74 empty no-op) — pulled from Kaggle notebooks, don't run in our harness —
+     and poisoned v2.1's Spearman (0.43). **Always verify an opponent actually acts before using it as an anchor.**
+     On VALID anchors Spearman ≈ **0.60**: the ~1250 trio clusters top, the ~550 pair bottom (good); it just can't
+     resolve near-ties (fine). **Residual that matters: gym still ranks schmeekler > comet_reaper** while live
+     schmeekler is ~170 BELOW — likely the 40% 4P weight letting schmeekler farm weak bots for placement. **Next
+     gym iteration: lower p4 and/or strength-weight opponents** until comet_reaper > schmeekler. Then trust it.
    - Replay-sample any new candidate's live games via the pipeline once submitted (poll is now unrestricted).
 1. **Track B MCTS** (`comet_reaper_mcts`, 2-ply + exact flow-scorer leaf, ~7 ms/turn) — validate n≥150; it's a
    submission candidate **once the gym is shown to predict live** (don't submit on the proxy that just misled us).

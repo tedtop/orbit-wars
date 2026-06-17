@@ -31,11 +31,11 @@ ANCHORS = {
     "1266-elo":                         (f"{OPP}/1266-elo-the-v44-agent-100-self-contained/main.py", 1266),
     "the-producer-v2":                  (f"{OPP}/the-producer-v2/main.py", 1259),
     "comet_reaper":                     (None, 1248),
-    "lb-max-1224":                      (f"{OPP}/orbit-star-wars-lb-max-1224/main.py", 1224),
     "lyonel-1200":                      (f"{OPP}/agent-lyonel-1200lb/main.py", 1200),
-    "heuristic-1110":                   (f"{OPP}/orbit-wars-heuristic-lb-1110/main.py", 1110),
-    "lb-1000-svf":                      (f"{OPP}/lb-highest-1000-search-learned-value-function/main.py", 1000),
-    "lb-958-reinforce":                 (f"{OPP}/lb-958-1-orbit-wars-2026-reinforce/main.py", 958),
+    # DROPPED — these 4 emit ZERO actions locally (74/74 empty, no-op losses); they don't run
+    # in our harness (pulled from Kaggle notebooks) and poisoned the v2.1 calibration:
+    #   orbit-star-wars-lb-max-1224, lb-highest-1000-search-learned-value-function,
+    #   orbit-wars-heuristic-lb-1110, lb-958-1-orbit-wars-2026-reinforce
     "markowitz_portfolio_optimization": (None, 566),
     "coordinated_strike_interceptor":   (None, 524),
 }
