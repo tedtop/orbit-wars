@@ -87,6 +87,15 @@ it to pass more bots — NOT "never fix a wrong one." When the gym disagrees wit
 - ❌ **BC / RL / cloning** is a dead end (0–16 vs the engine; forum-confirmed). Aggression must be
   *calibrated* (naive aggression over-extends), which is what search/structure provides — not knob-lowering.
 
+- 🎯 **OPPORTUNITY — engine-wide COMET blind spot (replay-confirmed, 136 live games).** Both schmeekler and
+  comet_reaper systematically under-capture comets: 2P comet-capture **24% / 29%** while owning **65% / 63%** of
+  ships; 4P **0% / 8%**. Comets spawn on a KNOWN schedule (steps 50/150/250/350/450, 4/event, prod 1.0) and 2P
+  terminal score weights **production 5×** — so this is a plausible **field-wide inefficiency to exploit**, not a
+  schmeekler bug. Unproven that capturing more comets raises score (they're low-prod/transient — maybe a trap),
+  but it's the clearest behavioral divergence in the data → **build a comet-aware feature and test it.** Other
+  replay answers (23 games): no static over-commit (owns 40% static vs 45% rotating), no 4P ganging (share
+  27%→53%), **zero timeouts** (min overage 42/60s).
+
 ## Ranked hypothesis queue (re-ranked 2026-06-17 after the GYM≠LIVE finding)
 0. **🚨 Validate + (if needed) rebuild the evaluator — gates everything (see Meta-loop).** Poll schmeekler's
    live publicScore vs comet_reaper's 1249.8 (it began ~800, climbing; watch the SLOPE flatten, not the absolute).
@@ -101,9 +110,14 @@ it to pass more bots — NOT "never fix a wrong one." When the gym disagrees wit
    submission candidate **once the gym is shown to predict live** (don't submit on the proxy that just misled us).
 2. **More structural scoring features** (Track A): potential-field/future-positions, interdiction, phase-aware
    sizing; sweep each new knob.
-   - **Format-aware static bonus (downgraded — cheap test, not high-prio):** replays did NOT confirm 4P ganging
-     (schmeekler 4/7 firsts in 4P; comet_reaper only 29%). Still worth a quick check (static-off-in-4P), but the
-     "4P pathology" premise is unsupported — don't over-invest.
+   - **★ Comet-aware targeting (NEW HIGH PRIORITY — replay-backed):** both bots under-capture comets (2P 24–29%
+     vs ~65% board share; see knowledge bullet). Add a scoring bonus for comet targets and/or pre-position ships
+     near the known spawn points (steps 50/150/250/350/450) just before they appear. Env knob `COMET_BONUS`;
+     sweep. Test on the gauntlet AND, ideally, validate live (it's an engine-wide blind spot → could lift
+     comet_reaper too). Honest risk: comets may be correctly ignored (low-prod/transient) — that's what the test
+     decides.
+   - **Format-aware static bonus (DEAD premise):** replays show no 4P ganging and no static over-commit. Skip
+     unless idle.
 3. **Learned value function on Jetstream2 (150 CPU + A100).** V(state)→final-ship-fraction. **Train on DOWNLOADED
    prize-zone episodes** (real outcomes, real opponent distribution), NOT pure self-play — its fidelity probe is
    then measurable on real data, **independent of the gym-under-audit**. Richer encoding than 12 global scalars
