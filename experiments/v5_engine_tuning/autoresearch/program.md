@@ -126,10 +126,13 @@ it to pass more bots — NOT "never fix a wrong one." When the gym disagrees wit
    sizing; sweep each new knob.
    - **★ Comet-aware targeting (NEW HIGH PRIORITY — replay-backed):** both bots under-capture comets (2P 24–29%
      vs ~65% board share; see knowledge bullet). Add a scoring bonus for comet targets and/or pre-position ships
-     near the known spawn points (steps 50/150/250/350/450) just before they appear. Env knob `COMET_BONUS`;
-     sweep. Test on the gauntlet AND, ideally, validate live (it's an engine-wide blind spot → could lift
-     comet_reaper too). Honest risk: comets may be correctly ignored (low-prod/transient) — that's what the test
-     decides.
+     near the known spawn points (steps 50/150/250/350/450). **Build it ON TOP of schmeekler (don't replace the
+     static strategy) as a 2×2 FACTORIAL** — one bot `schmeekler_comet` carrying BOTH knobs (`STATIC_BONUS` +
+     `COMET_BONUS`), swept over four corners: baseline (0,0)=comet_reaper, static-only (1.5,0)=schmeekler,
+     comet-only (0,C), combined (1.5,C). Report all four so we read the **main effects AND the interaction**
+     (additive / synergistic / competing-for-ships). Engine-wide blind spot → could lift comet_reaper too.
+     Honest risk: comets may be correctly ignored (low-prod/transient). Caveat: gym over-credits static play +
+     understates CR's live margin → a combined gym win is a CANDIDATE, gate submission on a live case.
    - **Format-aware static bonus (DEAD premise):** replays show no 4P ganging and no static over-commit. Skip
      unless idle.
 3. **Learned value function on Jetstream2 (150 CPU + A100).** V(state)→final-ship-fraction. **Train on DOWNLOADED
