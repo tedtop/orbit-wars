@@ -34,6 +34,21 @@ matter most.** A candidate is a "keep" only if: (1) its **win% vs the public pan
 **1 s/turn** budget — all measured outside the CI at n ≥ 150. Re-baseline schmeekler on the same panel each run so
 the comparison is apples-to-apples.
 
+## Meta-loop — the evaluator is itself under research (calibrate it against live)
+The gym is **fixed within an inner-loop epoch** (don't move goalposts mid-search) but is **itself a research
+target in an outer loop**: it must *predict the live ladder*. "Don't change the evaluator" means don't *loosen*
+it to pass more bots — NOT "never fix a wrong one." When the gym disagrees with live, build a better gauntlet,
+**version it, and re-baseline the champion + recent candidates on it** so comparisons stay valid.
+- **Calibration metric = gym↔live rank-agreement.** Live points so far: comet_reaper (gym baseline → live 1249.8),
+  schmeekler (gym +72% → live ~1057, converging). If schmeekler's asymptote < 1249, the gym **inverted the rank**
+  and gauntlet v2 must reproduce comet_reaper > schmeekler.
+- **Why the gym likely mis-predicts → what v2 changes:** (1) field mismatch — panel is 5 *strong* bots vs the
+  live mix of hundreds at all skill levels; (2) format mismatch — live is likely 4P FFA where a periphery
+  static-grabber gets *ganged*, vs our 2P-heavy gym; (3) metric mismatch — binary win-rate vs placement/margin.
+- **Calibrate on REAL data, not more submissions** (each live point costs a slot + ~overnight). Use downloaded
+  prize-zone episodes; a value function trained on real outcomes is itself a candidate "better gauntlet."
+- **Diagnostic feeding v2:** analyze schmeekler's live replays → identify what the gym is blind to → encode it.
+
 ## Hard constraints
 - Bots live in `agents/`; all logic in `main.py`; **never edit vendored `orbit_lite`** (shared-module
   collision would corrupt A/B). Each bot crash-guarded (a Kaggle error/timeout = instant loss).
@@ -61,10 +76,13 @@ the comparison is apples-to-apples.
   *calibrated* (naive aggression over-extends), which is what search/structure provides — not knob-lowering.
 
 ## Ranked hypothesis queue (re-ranked 2026-06-17 after the GYM≠LIVE finding)
-0. **🚨 Validate the gym against the live ladder (gates everything).** Poll schmeekler's live publicScore vs
-   comet_reaper's 1249.8 over the next several hours. Converges up → gym is trustworthy, proceed. Plateaus
-   ~1050 → the gym is misleading; fixing the evaluator (make the opponent panel/format match the live field)
-   becomes priority #1 before any submission or compute spend.
+0. **🚨 Validate + (if needed) rebuild the evaluator — gates everything (see Meta-loop).** Poll schmeekler's
+   live publicScore vs comet_reaper's 1249.8 (it began ~800, climbing; watch the SLOPE flatten, not the absolute).
+   - Converges **above 1249** → gym predicts live, proceed with the inner loop.
+   - Plateaus **below 1249** → gym inverted the rank → **build gauntlet v2**: weight 4P FFA like live, broaden the
+     opponent field (add weaker bots so rating dynamics match), score by placement/margin not binary win-rate;
+     **validate v2 reproduces comet_reaper > schmeekler** before trusting it; then re-baseline all candidates.
+   - In parallel (cheap, now): **diagnose schmeekler's live replays** to see *why* (static-grab ganged in 4P?).
 1. **Track B MCTS** (`comet_reaper_mcts`, 2-ply + exact flow-scorer leaf, ~7 ms/turn) — validate n≥150; it's a
    submission candidate **once the gym is shown to predict live** (don't submit on the proxy that just misled us).
 2. **More structural scoring features** (Track A): potential-field/future-positions, interdiction, phase-aware
