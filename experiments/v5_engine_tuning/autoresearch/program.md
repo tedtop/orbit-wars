@@ -111,9 +111,11 @@ it to pass more bots — NOT "never fix a wrong one." When the gym disagrees wit
    - Converges **above 1249** → gym predicts live, proceed with the inner loop.
      ✅ DONE — replays show live PARITY (gym overstated, didn't invert; see knowledge bullet). schmeekler still
      soaking; watch whether it converges to ~comet_reaper (parity confirmed) or above.
-   - **Gauntlet v2 = rating-style DIVERSE field** (the confirmed fix): score candidates by placement/margin vs a
-     broad field of bots at MIXED strength (not just the 5 strong ones), in both 2P and 4P, so the metric tracks
-     field rating rather than a head-to-head quirk. Validate v2 ranks comet_reaper ≈ schmeekler (matching live).
+   - **Gauntlet v2 = rating-style DIVERSE field** (`gauntlet_v2.py`, OpenSkill, mixed 2P/4P, placement-scored).
+     **v0.1 (200g): Spearman 0.60 — coarse-right (strong≫weak) but still inverts schmeekler>comet_reaper.**
+     v2.1 calibrates against **10 STABLE anchors** (opponents encode live scores in their names: 1266/1259/1248/
+     1224/1200/1110/1000/958/566/524) so the target isn't schmeekler's still-moving rating. Iterate field/format/
+     metric until Spearman>0.8, THEN trust it. **Don't tune to schmeekler** while its live rating is converging.
    - Replay-sample any new candidate's live games via the pipeline once submitted (poll is now unrestricted).
 1. **Track B MCTS** (`comet_reaper_mcts`, 2-ply + exact flow-scorer leaf, ~7 ms/turn) — validate n≥150; it's a
    submission candidate **once the gym is shown to predict live** (don't submit on the proxy that just misled us).
