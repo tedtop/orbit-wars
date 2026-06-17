@@ -12,7 +12,9 @@ import re
 import subprocess
 import sys
 
-ROOT = "/Users/Ted/src/orbit_wars"
+# Repo root resolved relative to THIS file, so it works inside a git worktree
+# (each Track session runs in its own worktree — must test its OWN agents/, not the main checkout).
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 PANEL = {
     "comet_reaper": "comet_reaper",
     "the-producer-v2": "agents/opponents/the-producer-v2/main.py",
