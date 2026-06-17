@@ -40,6 +40,14 @@ the comparison is apples-to-apples.
 - Validate on the gauntlet BEFORE submitting. comet_reaper/schmeekler are config-driven (no weights/RL).
 
 ## Accumulated knowledge (what works / what doesn't) — UPDATE EACH ITERATION
+- 🚨 **GYM ≠ LIVE (under audit).** schmeekler dominates the gym (72% vs comet_reaper; beats the whole panel) but
+  its **live Kaggle publicScore = 1057.4** (submitted 2026-06-17 08:53 UTC, ~1–2h old → likely still converging)
+  vs comet_reaper's mature **1249.8**. **Until schmeekler's live score converges, treat ALL gym win% as
+  UNVALIDATED proxy signal** — do NOT assume gym gains → ladder gains, and do NOT optimize Jetstream2 compute
+  against the gym until it's shown to predict live. Ground truth = the live ladder; the gym is a proxy on probation.
+- ✅ **MCTS dead-end unblocked WITHOUT a net (Track B).** `comet_reaper_mcts` (2-ply opponent lookahead + the
+  engine's **EXACT flow scorer** as the leaf eval, not a self-reproducing rollout) hits gym ~80% / producer-v2 85%
+  at **~7 ms/turn** (800 ms budget → 100× headroom). Strong — but SAME proxy caveat; must validate live.
 - ✅ **Structural scoring features WIN.** `schmeekler` (bonus for capturing static/non-rotating planets
   first) beats comet_reaper **72% 2P / best-in-pod 4P** at bonus 1.0–1.5 (≥2.0 over-commits). **Current
   champion.** → *the productive direction is more schmeekler-style features.*
@@ -52,15 +60,23 @@ the comparison is apples-to-apples.
 - ❌ **BC / RL / cloning** is a dead end (0–16 vs the engine; forum-confirmed). Aggression must be
   *calibrated* (naive aggression over-extends), which is what search/structure provides — not knob-lowering.
 
-## Ranked hypothesis queue (the self-improving part — re-rank by EV each iteration)
-1. **More structural scoring features** (combine with schmeekler):
-   - Potential-field target value using **future** planet positions (favor planets rotating toward us).
-   - Enemy-fleet **interdiction** (race to contested neutrals).
-   - **Phase-aware** dynamic ship sizing (early 1.2× → finishing 3.0×) + speed-bracket sizing.
-   - Tune schmeekler's bonus jointly with aggression knobs (a NEW Optuna study, now that structure helps).
-2. **Proper MCTS** — tree over our move sequences + a heuristic **value function** (use the engine's flow
-   scorer as the leaf eval, NOT a self-reproducing rollout). The path to the 1793 tier; big, uncertain.
-3. **4P meta-play** (coalition / weakest-enemy / don't-be-leader), validated seat-rotated.
+## Ranked hypothesis queue (re-ranked 2026-06-17 after the GYM≠LIVE finding)
+0. **🚨 Validate the gym against the live ladder (gates everything).** Poll schmeekler's live publicScore vs
+   comet_reaper's 1249.8 over the next several hours. Converges up → gym is trustworthy, proceed. Plateaus
+   ~1050 → the gym is misleading; fixing the evaluator (make the opponent panel/format match the live field)
+   becomes priority #1 before any submission or compute spend.
+1. **Track B MCTS** (`comet_reaper_mcts`, 2-ply + exact flow-scorer leaf, ~7 ms/turn) — validate n≥150; it's a
+   submission candidate **once the gym is shown to predict live** (don't submit on the proxy that just misled us).
+2. **More structural scoring features** (Track A): potential-field/future-positions, interdiction, phase-aware
+   sizing; sweep each new knob.
+3. **Learned value function on Jetstream2 (150 CPU + A100).** V(state)→final-ship-fraction. **Train on DOWNLOADED
+   prize-zone episodes** (real outcomes, real opponent distribution), NOT pure self-play — its fidelity probe is
+   then measurable on real data, **independent of the gym-under-audit**. Richer encoding than 12 global scalars
+   (spatial structure matters). Composes with Track B as the MCTS leaf eval. The 1793-tier moonshot; A100 makes
+   training trivial, so the risk is encoding/coverage, not compute time. Gate the build behind item 0.
+4. **4P meta-play** (coalition / weakest-enemy / don't-be-leader), validated seat-rotated.
+
+**Resources:** Jetstream2 = 150 CPU cores + 1× A100 (data-gen is CPU-bound, ValueNet training GPU-bound → minutes).
 
 ## Ratchet rule (split across roles)
 - **Worker (track session):** pick the top untried hypothesis for your track → build `agents/<name>/` (main.py
