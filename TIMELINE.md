@@ -201,7 +201,58 @@ to schmeekler. EV corrections can't overcome base strength gap vs aggressive opp
 **Next idea:** Apply Boltzmann search on top of schmeekler base (with static bonus). Unlikely to pursue
 before deadline — time better spent on submission strategy.
 
-## Open questions / next directions
+## 2026-06-17 — schmeekler_elim: DISCARD (bug found + fixed, still below baseline)
 
-- schmeekler_fmt asymptote vs comet_reaper: if fmt converges well above 1143, re-evaluate whether to replace comet_reaper slot
-- Stochastic search on schmeekler base: if Track B Phase 2 is worth trying, must be implemented before 2026-06-23
+Tested elimination mode bolt-on to schmeekler_fmt: when opponent has ≤3 planets + we own more, add +8.0 enemy planet score bonus and lower ROI threshold to 1.0.
+
+**Bug found:** Original threshold=3 fires at game START (opponent always starts with 1-2 planets → immediate overaggression). Fixed with dominance guard (`n_my_planets > n_enemy_planets`).
+
+**Full panel results (n=150, post-fix):**
+
+| Opponent | schmeekler_elim | schmeekler_fmt baseline |
+|---|---|---|
+| comet_reaper | 56.7% | ~80% |
+| the-producer-v2 | 57.3% | ~85% |
+| i-m-stronger | 70.0% | ~80% |
+| floor-matched | 69.3% | ~85% |
+| 1266-elo | **72.0%** | ~60% ← only win |
+| **OVERALL** | **65.1%** | **~78%** |
+
+Direct matchup vs schmeekler_fmt (n=20): 9-11 (45%) — ELIM LOSES TO ITS OWN BASE.
+
+**Key insight:** Both elim (+12pp) and stochastic (+20pp, prior track) add edge specifically vs the 1266-elo opponent, but hurt vs the rest. orbit_lite greedy 1-ply is suboptimal in close/late-game vs skilled opponents. The fix (elim or EV) over-corrects and destroys medium-game performance.
+
+**Preserved:** `agents/schmeekler_elim/main.py` for reference. schmeekler_fmt remains best gym bot.
+
+---
+
+## 2026-06-17 — Track D multi-fleet coordination: DISCARD
+
+Tested coordinated 2-source attacks on targets neither fleet can take alone (4 implementations: crude ETA → tensor intercept_angle with accurate ETAs via orbit_lite's `intercept_angle`).
+
+Economic analysis of 438 combo decisions: average value = -75.6 ships. 95% of combos negative EV. With strict filter (prod≥3, combined_ships≤40, turns≥10): only 0.8 profitable combos per game.
+
+Root cause: staggered arrival (first fleet softens, second finishes) destroys the first fleet as attrition. The action-space gap is real (orbit_lite's `clears_floor` gate blocks multi-source attacks), but exploiting it requires simultaneous arrival (same-turn), not sequential. Simultaneous arrival needs L=2 LaunchSet in `plan_lite_waves` — invasive, didn't pursue.
+
+**VERDICT: DISCARD.** `comet_reaper_combo` preserved with COMBO_ENABLED=0 (identical to comet_reaper).
+
+---
+
+## 2026-06-18 — v5 CLOSED — Full RL/PPO pivot for final 5 days
+
+**v5 Engine Tuning is complete.** All tracks exhausted. Crystallized finding:
+
+> orbit_lite's `capture_floor`/`clears_floor` collapses each turn to 0–4 candidates (0–1 most turns). Every bolt-on intervention (potential fields, EV scoring, elim bonus, 2-ply search, VF re-rank) lands at parity or hurts because there is nothing meaningful to re-rank at depth=1. The fix requires either (a) replacing the decision architecture entirely or (b) training a learned policy.
+
+**Summary of 20+ experiments across 4 tracks:**
+- Track A (structural features): all DISCARD — additive bonuses override flow scorer
+- Track B (search/lookahead): all DISCARD — 2-ply exact search ≈ parity; stochastic EV incompatible with static-grab
+- Track C (value function bolt-on): AUC=0.9835 pass, Phase E HURT in 4P. V model preserved.
+- Track D (multi-fleet coordination): DISCARD — staggered combos negative EV
+- Config tuning (Optuna, 37 trials): DISCARD — base config is a tight optimum
+
+**Live situation at pivot:** comet_reaper=1234.7 (best, inactive), schmeekler_fmt~1125 (active, converging), schmeekler~1098 (active). Gap to prize zone (~1500): 265 pts. Heuristic ceiling confirmed at ~1240.
+
+**Forum intel gathered (2026-06-18):** Lin Myat Ko (#1, 1793 elo) = JAX env + PPO self-play 600M steps (~$150). Radek (68th) = 1303 LB in $15 on GH200 in 6.5hrs. Mendrika (48th) = 1420 LB pure BC per-planet fire heads. Abhyuday (31st) = RL beat heuristic in 1 day. `orbit-wars-torch` (MIT) = complete PyTorch GPU batched env + PPO. Fanghhhh's notebook = complete working PPO loop.
+
+**v6 plan:** PPO self-play, per-planet action heads, kaggle_environments (8K SPS target), train on Jetstream2/GH200, 2P first then optionally 4P. New branch: `v6-rl-selfplay`.
