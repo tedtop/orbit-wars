@@ -1362,19 +1362,362 @@ def section_autoresearch():
 
 
 # ---------------------------------------------------------------------------
+# RL Training Monitor
+# ---------------------------------------------------------------------------
+
+RL_RUNS_DIR  = ROOT / "agents" / "rl_ppo" / "runs"
+RL_LOG_PATH  = RL_RUNS_DIR / "train_local.log"
+
+_GATE_TARGETS = {
+    "clip_frac":          (0.05, 0.30, "0.05–0.30"),
+    "explained_variance": (0.10, 1.00, "rising (>0.10)"),
+    "entropy":            (0.50, 5.00, ">0.5 (not collapsed)"),
+}
+
+def _parse_log_file(path: Path, run_name: str) -> list[dict]:
+    import re
+    pat = re.compile(
+        r"U\s*(\d+)\s*\|\s*S:\s*([\d,]+)\s*\|\s*L:([-\d.]+)\s*\|\s*CF:([\d.]+)"
+        r"(?:\s*\|\s*EV:([-\d.]+))?(?:\s*\|\s*Ent:([-\d.]+))?"
+        r"\s*\|\s*EP:(\d+)\s*\|\s*SPS:([\d.]+)"
+    )
+    rows = []
+    try:
+        for line in path.read_text().splitlines():
+            m = pat.search(line)
+            if m:
+                rows.append({
+                    "run":       run_name,
+                    "update":    int(m.group(1)),
+                    "steps":     int(m.group(2).replace(",", "")),
+                    "loss":      float(m.group(3)),
+                    "clip_frac": float(m.group(4)),
+                    "explained_variance": float(m.group(5)) if m.group(5) else None,
+                    "entropy":   float(m.group(6)) if m.group(6) else None,
+                    "ep_count":  int(m.group(7)),
+                    "sps":       float(m.group(8)),
+                })
+    except Exception:
+        pass
+    return rows
+
+@st.cache_data(ttl=15)
+def load_rl_metrics() -> pd.DataFrame:
+    rows = []
+    seen_runs = set()
+
+    # 1. Structured JSONL files from all per-run subdirectories (local + remote synced)
+    for jsonl in sorted(RL_RUNS_DIR.rglob("metrics.jsonl")):
+        run_name = jsonl.parent.name
+        seen_runs.add(run_name)
+        try:
+            for line in jsonl.read_text().splitlines():
+                r = json.loads(line)
+                r.setdefault("run", run_name)
+                rows.append(r)
+        except Exception:
+            pass
+
+    # 2. Plain .log files for runs not already covered by JSONL
+    for log in sorted(RL_RUNS_DIR.rglob("*.log")):
+        run_name = log.stem
+        if run_name in seen_runs:
+            continue
+        rows.extend(_parse_log_file(log, run_name))
+
+    # 3. Legacy flat log at runs/train_local.log
+    if RL_LOG_PATH.exists() and "train_local" not in seen_runs:
+        rows.extend(_parse_log_file(RL_LOG_PATH, "train_local (legacy)"))
+
+    if not rows:
+        return pd.DataFrame()
+    df = pd.DataFrame(rows).sort_values(["run", "update"]).reset_index(drop=True)
+    return df
+
+
+def _gate_badge(value, lo, hi, label):
+    if value is None:
+        return f'<span style="color:#888">⬜ {label}: no data</span>'
+    ok = lo <= value <= hi
+    icon  = "🟢" if ok else "🔴"
+    color = "#22c55e" if ok else "#ef4444"
+    return (f'<span style="color:{color}">{icon} {label}: '
+            f'<strong>{value:.3f}</strong></span>')
+
+
+def _status_dot(cf):
+    """Return (icon, color) for a clip_frac value."""
+    if cf is None or pd.isna(cf):
+        return "⬜", "#555"
+    if 0.05 <= cf <= 0.30:
+        return "🟢", "#22c55e"
+    if cf < 0.01:
+        return "🔴", "#ef4444"
+    return "🟡", "#f59e0b"
+
+
+def section_rl_training():
+    df = load_rl_metrics()
+
+    if df.empty:
+        st.warning("No training metrics yet — run `bash agents/rl_ppo/deploy_all.sh` to start.")
+        return
+
+    # ── Fleet summary ────────────────────────────────────────────────────────
+    runs = sorted(df["run"].unique()) if "run" in df.columns else ["(all)"]
+    n_runs  = len(runs)
+    last_per_run = (
+        df.sort_values("update").groupby("run").last().reset_index()
+        if "run" in df.columns else df.tail(1)
+    )
+    total_steps_fleet = int(last_per_run["steps"].sum())
+    avg_sps = float(last_per_run["sps"].mean()) if "sps" in last_per_run.columns else 0
+    fleet_sps = avg_sps * n_runs
+
+    fc1, fc2, fc3, fc4 = st.columns(4)
+    fc1.metric("Active runs", str(n_runs), delta="32 target (8 machines × 4)")
+    fc2.metric("Fleet SPS", f"{fleet_sps:,.0f}", delta=f"{avg_sps:.0f} avg/run")
+    fc3.metric("Total env-steps", f"{total_steps_fleet/1e6:.2f}M")
+    hours_to_100M = max(0, (100e6 - total_steps_fleet) / max(fleet_sps, 1) / 3600)
+    fc4.metric("ETA to 100M steps", f"{hours_to_100M:.1f}h", delta="at current fleet SPS")
+
+    st.divider()
+
+    # ── Gate status — use best run's last row ────────────────────────────────
+    st.subheader("Correctness Gate")
+    last = last_per_run.sort_values("clip_frac", ascending=False).iloc[0] \
+        if "clip_frac" in last_per_run.columns else df.iloc[-1]
+
+    gate_cols = st.columns(3)
+    for i, (key, (lo, hi, label)) in enumerate(_GATE_TARGETS.items()):
+        val = last.get(key)
+        val = float(val) if val is not None and not pd.isna(val) else None
+        gate_cols[i].markdown(_gate_badge(val, lo, hi, label), unsafe_allow_html=True)
+
+    any_cf_ok  = any(
+        0.05 <= float(r["clip_frac"]) <= 0.30
+        for _, r in last_per_run.iterrows()
+        if not pd.isna(r.get("clip_frac", float("nan")))
+    ) if "clip_frac" in last_per_run.columns else False
+    gate_color = "#22c55e" if any_cf_ok else "#ef4444"
+    gate_text  = "GREEN — learning signal detected" if any_cf_ok else "RED — CF~0, reward signal too weak"
+    run_label  = last.get("run", "")
+    st.markdown(
+        f'<div style="padding:8px 14px;background:rgba(0,0,0,0.3);border-left:4px solid {gate_color};'
+        f'border-radius:4px;margin:8px 0">'
+        f'<strong style="color:{gate_color}">Gate: {gate_text}</strong>'
+        f'<span style="color:#888;font-size:0.82rem;margin-left:16px">'
+        f'Best run: {run_label} · U={int(last["update"])} · {int(last["steps"]):,} steps</span>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.divider()
+
+    # ── Per-run fleet status table ───────────────────────────────────────────
+    st.subheader("Fleet Status")
+    st.caption("One row per training run — green CF = in 0.05–0.30 band (learning). "
+               "Sync remotes: `bash agents/rl_ppo/sync_checkpoints.sh`")
+
+    table_rows = []
+    for _, row in last_per_run.sort_values("run").iterrows():
+        cf   = float(row["clip_frac"]) if not pd.isna(row.get("clip_frac", float("nan"))) else None
+        ev   = float(row["explained_variance"]) if "explained_variance" in row and not pd.isna(row.get("explained_variance", float("nan"))) else None
+        ent  = float(row["entropy"]) if "entropy" in row and not pd.isna(row.get("entropy", float("nan"))) else None
+        sps  = float(row["sps"]) if "sps" in row and not pd.isna(row.get("sps", float("nan"))) else 0
+        dot, _ = _status_dot(cf)
+        table_rows.append({
+            "Status":  dot,
+            "Run":     str(row.get("run", "?")),
+            "U":       int(row["update"]),
+            "Steps":   f'{int(row["steps"])/1e6:.2f}M',
+            "CF":      f"{cf:.4f}" if cf is not None else "—",
+            "EV":      f"{ev:.3f}"  if ev  is not None else "—",
+            "Ent":     f"{ent:.2f}" if ent is not None else "—",
+            "SPS":     f"{sps:.0f}",
+        })
+
+    if table_rows:
+        st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
+
+    st.divider()
+
+    # ── Step budget estimate ─────────────────────────────────────────────────
+    if fleet_sps > 0:
+        budget_cols = st.columns(3)
+        for col, (target_M, lbl) in zip(budget_cols, [(100, "100M"), (500, "500M"), (1000, "1B")]):
+            remaining = max(0, target_M * 1_000_000 - total_steps_fleet)
+            h_fleet = remaining / fleet_sps / 3600
+            col.metric(f"ETA to {lbl} steps", f"{h_fleet:.1f}h",
+                       delta=f"{fleet_sps:,.0f} fleet SPS", delta_color="off")
+
+    st.divider()
+
+    # ── Training charts ──────────────────────────────────────────────────────
+    _x        = alt.X("update:Q", title="Update #")
+    _multi    = "run" in df.columns and df["run"].nunique() > 1
+    _color_enc = alt.Color("run:N", legend=alt.Legend(title="Run", orient="bottom",
+                            labelFontSize=9, symbolSize=60, columns=4))
+
+    def _make_chart(field, title, color, ref_lo=None, ref_hi=None, domain=None, h=160):
+        _df = df[df[field].notna()].copy() if field in df.columns else pd.DataFrame()
+        if _df.empty:
+            return None
+        kwargs = {"domain": domain, "zero": False} if domain else {"zero": False}
+        _enc = dict(
+            x=_x,
+            y=alt.Y(f"{field}:Q", title=title, scale=alt.Scale(**kwargs)),
+            tooltip=([alt.Tooltip("run:N", title="Run")] if _multi else []) + [
+                alt.Tooltip("update:Q", title="Update"),
+                alt.Tooltip(f"{field}:Q", title=title, format=".4f"),
+                alt.Tooltip("steps:Q", title="Steps", format=","),
+            ],
+        )
+        if _multi:
+            _enc["color"] = _color_enc
+            _enc["opacity"] = alt.value(0.55)
+        else:
+            _enc["color"] = alt.value(color)
+
+        chart = (alt.Chart(_df).mark_line(strokeWidth=1.5).encode(**_enc)
+                 .properties(height=h))
+        layers = [chart]
+        for ref, c in [(ref_lo, "#22c55e"), (ref_hi, "#22c55e")]:
+            if ref is not None:
+                layers.append(
+                    alt.Chart(pd.DataFrame({"y": [ref]}))
+                    .mark_rule(color=c, strokeDash=[4, 3], strokeWidth=1, opacity=0.6)
+                    .encode(y="y:Q")
+                )
+        return alt.layer(*layers)
+
+    c1, c2 = st.columns(2)
+    with c1:
+        st.caption("Clip Fraction — target 0.05–0.30")
+        ch = _make_chart("clip_frac", "Clip Fraction", "#f59e0b", ref_lo=0.05, ref_hi=0.30,
+                         domain=[-0.01, 0.5])
+        if ch: st.altair_chart(ch, use_container_width=True)
+        else:  st.info("No clip_frac data yet")
+
+    with c2:
+        st.caption("Explained Variance — should rise toward 1.0")
+        ch = _make_chart("explained_variance", "Explained Variance", "#4c78a8",
+                         ref_lo=0.10, domain=[-1.1, 1.1])
+        if ch: st.altair_chart(ch, use_container_width=True)
+        else:  st.info("No EV data yet")
+
+    c3, c4 = st.columns(2)
+    with c3:
+        st.caption("Policy Loss — should converge (less negative)")
+        ch = _make_chart("loss", "Loss", "#e45756")
+        if ch: st.altair_chart(ch, use_container_width=True)
+
+    with c4:
+        st.caption("Entropy — should decay gradually (not crash to 0)")
+        ch = _make_chart("entropy", "Entropy", "#72b7b2", ref_lo=0.5, domain=[0.0, 6.0])
+        if ch: st.altair_chart(ch, use_container_width=True)
+        else:  st.info("No entropy data yet")
+
+    # ── Eval vs greedy chart ─────────────────────────────────────────────────
+    eval_col = "eval_vs_greedy"
+    eval_df = df[df.get(eval_col, pd.Series(dtype=float)).notna()].copy() \
+        if eval_col in df.columns else pd.DataFrame()
+    if not eval_df.empty:
+        st.divider()
+        st.caption("Win% vs greedy — 50% = random; target >80% before submitting")
+        _eval_enc = dict(
+            x=_x,
+            y=alt.Y(f"{eval_col}:Q", title="Win rate vs greedy",
+                    scale=alt.Scale(domain=[0, 1.05], zero=False),
+                    axis=alt.Axis(format="%")),
+            tooltip=([alt.Tooltip("run:N", title="Run")] if _multi else []) + [
+                alt.Tooltip("update:Q", title="Update"),
+                alt.Tooltip(f"{eval_col}:Q", title="Win %", format=".1%"),
+                alt.Tooltip("steps:Q", title="Steps", format=","),
+            ],
+        )
+        if _multi:
+            _eval_enc["color"] = _color_enc
+        else:
+            _eval_enc["color"] = alt.value("#22c55e")
+
+        eval_line  = alt.Chart(eval_df).mark_line(strokeWidth=2, point=True).encode(**_eval_enc)
+        ref50  = alt.Chart(pd.DataFrame({"y": [0.5]})).mark_rule(
+            color="#888", strokeDash=[4, 3], strokeWidth=1).encode(y="y:Q")
+        ref80  = alt.Chart(pd.DataFrame({"y": [0.80]})).mark_rule(
+            color="#22c55e", strokeDash=[4, 3], strokeWidth=1, opacity=0.7).encode(y="y:Q")
+        lbl50  = alt.Chart(pd.DataFrame({"y": [0.5], "t": ["50% = random"]})).mark_text(
+            align="left", dx=6, dy=-6, fontSize=9, color="#888").encode(
+            y=alt.Y("y:Q"), text="t:N", x=alt.value(0))
+        lbl80  = alt.Chart(pd.DataFrame({"y": [0.80], "t": ["80% target"]})).mark_text(
+            align="left", dx=6, dy=-6, fontSize=9, color="#22c55e").encode(
+            y=alt.Y("y:Q"), text="t:N", x=alt.value(0))
+        st.altair_chart(
+            alt.layer(ref50, ref80, lbl50, lbl80, eval_line).properties(height=180),
+            use_container_width=True,
+        )
+
+    # ── SPS sparkline ────────────────────────────────────────────────────────
+    st.divider()
+    st.caption("Steps-per-second — throughput per run")
+    sps_df = df[df["sps"].notna() & (df["sps"] > 0)].copy() if "sps" in df.columns else pd.DataFrame()
+    if not sps_df.empty:
+        _sps_enc = dict(
+            x=_x,
+            y=alt.Y("sps:Q", title="SPS", scale=alt.Scale(zero=False)),
+            tooltip=["update:Q", alt.Tooltip("sps:Q", format=".0f")],
+        )
+        if _multi:
+            _sps_enc["color"] = _color_enc
+            _sps_enc["opacity"] = alt.value(0.5)
+        else:
+            _sps_enc["color"] = alt.value("#b279a2")
+        st.altair_chart(
+            alt.Chart(sps_df).mark_line(strokeWidth=1.2).encode(**_sps_enc).properties(height=100),
+            use_container_width=True,
+        )
+
+    # ── Raw table (last 20 rows of best run) ────────────────────────────────
+    with st.expander("Raw metrics (last 20 updates, best run)"):
+        _best_run = last_per_run.sort_values("clip_frac", ascending=False).iloc[0]["run"] \
+            if "run" in last_per_run.columns else None
+        _show_df = df[df["run"] == _best_run] if _best_run else df
+        show_cols = [c for c in ["run", "update", "steps", "loss", "clip_frac",
+                                  "explained_variance", "entropy", "ep_count", "sps",
+                                  "eval_vs_greedy"]
+                     if c in _show_df.columns]
+        st.dataframe(_show_df[show_cols].tail(20).reset_index(drop=True), use_container_width=True)
+
+    # ── AgileRL note ────────────────────────────────────────────────────────
+    st.divider()
+    st.info(
+        "**AgileRL** (github.com/AgileRL/AgileRL) is a candidate for Population-Based Training "
+        "(PBT) hyperparameter search over the PPO config. It has built-in IPPO for multi-agent "
+        "and PettingZoo integration. Requires wrapping orbit_wars as a PettingZoo env and a "
+        "custom policy extractor for per-planet heads — estimate 1 day of integration work. "
+        "The immediate win is fixing `reward_scale` (H1); AgileRL becomes relevant once "
+        "the gate is green and we want to sweep lr / clip_eps / ent_coef at scale on GPU."
+    )
+
+
+# ---------------------------------------------------------------------------
 # App
 # ---------------------------------------------------------------------------
 
 def main():
     section_header()
     st.divider()
-    tab_pos, tab_eps, tab_ar = st.tabs(["📊 Position & Ladder", "📡 Episodes", "🔬 Autoresearch"])
+    tab_pos, tab_eps, tab_ar, tab_rl = st.tabs(
+        ["📊 Position & Ladder", "📡 Episodes", "🔬 Autoresearch", "🤖 RL Training"]
+    )
     with tab_pos:
         section_position_and_leaderboard()
     with tab_eps:
         section_episodes()
     with tab_ar:
         section_autoresearch()
+    with tab_rl:
+        section_rl_training()
 
 
 if __name__ == "__main__":

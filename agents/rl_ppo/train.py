@@ -11,7 +11,7 @@ Design choices (informed by forum intel):
 - Submission inference: pure numpy (no torch import at runtime).
 """
 
-import math, os, time, copy, random
+import json, math, os, time, copy, random
 import numpy as np
 import torch
 import torch.nn as nn
@@ -21,6 +21,12 @@ from kaggle_environments import make
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Device: {DEVICE}")
+
+def log_metrics(row: dict, run_dir: str):
+    os.makedirs(run_dir, exist_ok=True)
+    path = os.path.join(run_dir, "metrics.jsonl")
+    with open(path, "a") as f:
+        f.write(json.dumps(row) + "\n")
 
 # ── Observation constants ──────────────────────────────────────────────────────
 MAX_PLANETS = 20
@@ -45,15 +51,15 @@ CFG = dict(
     gamma           = 0.99,
     gae_lambda      = 0.95,
     clip_eps        = 0.2,
-    ent_coef        = 0.05,
+    ent_coef        = 0.001,  # was 0.05 — entropy bonus 50× game signal, kept policy random
     vf_coef         = 0.5,
     grad_clip       = 1.0,
     weight_decay    = 1e-4,
     total_updates   = 10000,
-    eval_every      = 200,
-    save_every      = 500,
-    checkpoint_every= 1000,   # add checkpoint to opponent pool
-    reward_scale    = 0.001,
+    eval_every      = 100,
+    save_every      = 200,
+    checkpoint_every= 1000,
+    reward_scale    = 0.01,   # was 0.001 — too small vs entropy bonus
     terminal_bonus  = 1.0,
 )
 
@@ -244,6 +250,34 @@ def make_launches(obs, per_planet_actions):
     return launches
 
 
+def greedy_planet_actions(obs_list):
+    """
+    Greedy heuristic opponent: each owned planet fires 100% ships at the
+    nearest non-owned planet. Returns same format as collect_planet_actions
+    so it can be passed directly to vec_env.step as P1 actions.
+
+    Used as cold-start opponent while the self-play pool is empty, so that
+    P1 fires from step 0 and creates combat signal for the training policy.
+    """
+    all_actions = [[] for _ in range(len(obs_list))]
+    for env_i, obs in enumerate(obs_list):
+        if not isinstance(obs, dict):
+            obs = {"player": obs.player, "planets": obs.planets}
+        player  = int(obs.get("player", 0))
+        planets = obs.get("planets", [])
+        targets = [p for p in planets if p[1] != player]
+        for src_idx, src in enumerate(planets[:MAX_PLANETS]):
+            if src[1] != player or src[5] < MIN_SHIPS:
+                continue
+            if not targets:
+                all_actions[env_i].append((src_idx, False, 0, 3))
+                continue
+            tgt = min(targets, key=lambda p: math.hypot(p[2]-src[2], p[3]-src[3]))
+            tgt_idx = planets.index(tgt) if tgt in planets else 0
+            all_actions[env_i].append((src_idx, True, tgt_idx, 3))  # frac=1.0
+    return all_actions
+
+
 # ── Vectorized environment ─────────────────────────────────────────────────────
 
 class VecEnv:
@@ -267,33 +301,37 @@ class VecEnv:
 
     def step(self, actions_p0, actions_p1):
         """
-        actions_p0/p1: list of length n, each = list of per_planet_actions
+        actions_p0: list[list[(src_idx, fire, tgt_idx, frac_idx)]] per env
+        actions_p1: same format, OR a callable agent(obs)->[[planet,angle,ships]]
         Returns: rewards (2,n), dones (2,n), new_obs_p0, new_obs_p1
         """
+        p1_callable = callable(actions_p1)
         rewards = np.zeros((2, self.n), dtype=np.float32)
         dones   = np.zeros((2, self.n), dtype=np.float32)
         obs_p0, obs_p1 = [], []
 
         for i in range(self.n):
-            launches0 = make_launches(self.obs[i], actions_p0[i])
-            # For p1, we need p1's obs — stored separately
-            pass  # handled below
-
-        # We step each env once, passing both agents' actions
-        # kaggle_environments needs callable agents
-        for i in range(self.n):
             env = self.envs[i]
             l0 = actions_p0[i]
-            l1 = actions_p1[i]
+
+            # If env is done (episode finished last step but training loop
+            # hasn't processed it yet), reset so we don't crash on step.
+            if env.state and env.state[0].status not in ("ACTIVE", "IDLE", ""):
+                self.reset_env(i)
+                env = self.envs[i]
 
             obs0_pre = self.obs[i]
-            # Get p1's current obs from env state
             obs1_pre_raw = env.state[1].observation
 
             def _agent0(obs, l=l0, o=obs0_pre):
                 return make_launches(o, l)
-            def _agent1(obs, l=l1, o=obs1_pre_raw):
-                return make_launches(o, l)
+            if p1_callable:
+                def _agent1(obs, fn=actions_p1):
+                    return fn(obs)
+            else:
+                l1 = actions_p1[i]
+                def _agent1(obs, l=l1, o=obs1_pre_raw):
+                    return make_launches(o, l)
 
             env.step([_agent0, _agent1])
 
@@ -483,43 +521,101 @@ def ppo_update(policy, optimizer, buffer, cfg):
             total_loss += loss.item()
             n_mb += 1
 
-    return total_loss / max(n_mb, 1), clip_frac_total / max(n_mb, 1)
+    # Compute explained variance and mean entropy over full batch (no grad needed)
+    with torch.no_grad():
+        o_all  = torch.from_numpy(obs_np).to(DEVICE)
+        pf_all = torch.from_numpy(pf_np).to(DEVICE)
+        mk_all = torch.from_numpy(mask_np).bool().to(DEVICE)
+        ret_all = torch.from_numpy(ret_np).to(DEVICE)
+        fd, td, frd, v_all = policy(o_all, pf_all, mk_all)
+        ent_mean = (fd.entropy() + td.entropy() + frd.entropy()).mean().item()
+        residual_var = torch.var(ret_all - v_all)
+        total_var    = torch.var(ret_all)
+        ev = (1.0 - residual_var / (total_var + 1e-8)).item()
+
+    return total_loss / max(n_mb, 1), clip_frac_total / max(n_mb, 1), ev, ent_mean
 
 
 # ── GAE computation ────────────────────────────────────────────────────────────
 
-def compute_gae(buffer, cfg):
-    """Attach adv and ret to each buffer entry in-place."""
-    # Group by env_i, preserving order
-    from collections import defaultdict
-    env_entries = defaultdict(list)
-    for k, e in enumerate(buffer):
-        env_entries[e["env_i"]].append((k, e))
+def compute_gae(buffer, cfg, bootstrap_vals=None):
+    """Attach adv and ret to each buffer entry in-place.
 
-    for env_i, entries in env_entries.items():
-        vals  = np.array([e["val"]  for _, e in entries], dtype=np.float32)
-        rews  = np.array([e["rew"]  for _, e in entries], dtype=np.float32)
-        dones = np.array([e["done"] for _, e in entries], dtype=np.float32)
-        T = len(entries)
+    Bug fix: buffer entries are per-planet decisions, not per-timestep.
+    Multiple planets fire per env per step — grouping by env_i alone and
+    treating them as sequential steps causes the bootstrapped next-value
+    to come from the NEXT PLANET at the same step instead of the next
+    environmental state. Fix: tag each entry with step_i (rollout step
+    index), group by (env_i, step_i) to get true timesteps, compute one
+    advantage per timestep, broadcast to all planets at that step.
+    """
+    from collections import defaultdict
+
+    # Map (env_i, step_i) -> list of buffer indices
+    step_planet_idx = defaultdict(list)
+    for k, e in enumerate(buffer):
+        step_planet_idx[(e["env_i"], e["step_i"])].append(k)
+
+    # Per-env: sorted list of step indices (true timestep sequence)
+    env_steps = defaultdict(list)
+    for (env_i, step_i) in step_planet_idx:
+        env_steps[env_i].append(step_i)
+
+    for env_i, steps in env_steps.items():
+        steps = sorted(steps)
+        T = len(steps)
+
+        # All planets at the same (env_i, step_i) share the same value
+        # (val_head depends only on global obs, not per-planet features).
+        # Use the first planet's val/rew/done as the canonical timestep values.
+        first_k = [step_planet_idx[(env_i, s)][0] for s in steps]
+        vals  = np.array([buffer[k]["val"]  for k in first_k], dtype=np.float32)
+        rews  = np.array([buffer[k]["rew"]  for k in first_k], dtype=np.float32)
+        dones = np.array([buffer[k]["done"] for k in first_k], dtype=np.float32)
+
+        # V(s_T): value of the state AFTER the last rollout step for this env.
+        # Needed when the episode is still running at rollout boundary.
+        boot_v = (bootstrap_vals or {}).get(env_i, 0.0)
 
         gae = 0.0
         adv = np.zeros(T, dtype=np.float32)
         for t in reversed(range(T)):
-            nv = 0.0 if dones[t] or t == T-1 else vals[t+1]
+            if dones[t]:
+                nv = 0.0
+            elif t == T - 1:
+                nv = boot_v  # use bootstrap instead of 0
+            else:
+                nv = vals[t + 1]
             delta = rews[t] + cfg["gamma"] * nv * (1 - dones[t]) - vals[t]
-            gae = delta + cfg["gamma"] * cfg["gae_lambda"] * (1 - dones[t]) * gae
+            gae   = delta + cfg["gamma"] * cfg["gae_lambda"] * (1 - dones[t]) * gae
             adv[t] = gae
 
-        ret = adv + vals
-        for t, (k, e) in enumerate(entries):
-            buffer[k]["adv"] = adv[t]
-            buffer[k]["ret"] = ret[t]
+        # Broadcast one advantage + return to all planets at each step
+        for t, step_i in enumerate(steps):
+            ret_t = adv[t] + vals[t]
+            for k in step_planet_idx[(env_i, step_i)]:
+                buffer[k]["adv"] = adv[t]
+                buffer[k]["ret"] = ret_t
+
+
+# ── Fixed opponent loader (comet_reaper cold-start) ──────────────────────────
+
+def _load_fixed_opponent():
+    """Load comet_reaper as a callable agent(obs)->launches for P1 cold-start."""
+    import importlib.util, sys as _sys
+    here = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.join(here, "..", "comet_reaper", "main.py")
+    spec = importlib.util.spec_from_file_location("_comet_opp", path)
+    mod  = importlib.util.module_from_spec(spec)
+    _sys.modules["_comet_opp"] = mod   # required before @dataclass resolves __module__
+    spec.loader.exec_module(mod)
+    return mod.agent
 
 
 # ── Evaluation vs greedy ──────────────────────────────────────────────────────
 
 @torch.no_grad()
-def evaluate_vs_greedy(policy, n_games=20):
+def evaluate_vs_greedy(policy, n_games=200):
     def greedy_agent(obs):
         d = obs if isinstance(obs, dict) else {
             "player": obs.player, "planets": obs.planets, "fleets": obs.fleets}
@@ -543,25 +639,48 @@ def evaluate_vs_greedy(policy, n_games=20):
         actions, _ = collect_planet_actions(policy, [d])
         return make_launches(d, actions[0])
 
-    wins = 0
-    for seed in range(n_games):
+    # Seat-balanced eval: alternate RL as P0 and P1
+    wins_as_p0 = wins_as_p1 = 0
+    half = n_games // 2
+    for seed in range(half):
         env = make("orbit_wars", debug=False,
                    configuration={"seed": seed, "episodeSteps": TOTAL_STEPS})
         env.run([rl_agent, greedy_agent])
         r0 = env.steps[-1][0].reward or 0
         r1 = env.steps[-1][1].reward or 0
         if r0 > r1:
-            wins += 1
-    return wins / n_games
+            wins_as_p0 += 1
+    for seed in range(half, n_games):
+        env = make("orbit_wars", debug=False,
+                   configuration={"seed": seed, "episodeSteps": TOTAL_STEPS})
+        env.run([greedy_agent, rl_agent])
+        r0 = env.steps[-1][0].reward or 0
+        r1 = env.steps[-1][1].reward or 0
+        if r1 > r0:
+            wins_as_p1 += 1
+    wr = (wins_as_p0 + wins_as_p1) / n_games
+    return wr, wins_as_p0 / half, wins_as_p1 / half
 
 
 # ── Training loop ─────────────────────────────────────────────────────────────
 
 def train():
+    run_dir = CFG.get("run_dir", os.path.join(os.path.dirname(__file__), "runs", "default"))
+    os.makedirs(run_dir, exist_ok=True)
+
     optimizer    = torch.optim.Adam(policy.parameters(), lr=CFG["lr"],
                                     weight_decay=CFG["weight_decay"])
     opponent_pool= OpponentPool()
     vec_env      = VecEnv(CFG["num_envs"], seed0=0)
+
+    # Cold-start opponent: comet_reaper fires at us from update 1,
+    # providing combat signal before the self-play pool has any checkpoints.
+    _fixed_opp = None
+    try:
+        _fixed_opp = _load_fixed_opponent()
+        print("  [Opponent] comet_reaper loaded as P1 cold-start opponent")
+    except Exception as e:
+        print(f"  [Opponent] comet_reaper unavailable ({e}), greedy fallback")
 
     # Track current obs for both seats
     obs_p0 = [vec_env.envs[i].state[0].observation for i in range(vec_env.n)]
@@ -574,6 +693,18 @@ def train():
     best_wr    = 0.0
     t0         = time.time()
 
+    # Auto-resume from latest checkpoint if one exists
+    ckpt_path = os.path.join(run_dir, "latest.pt")
+    if os.path.exists(ckpt_path):
+        ckpt = torch.load(ckpt_path, map_location=DEVICE)
+        policy.load_state_dict(ckpt["state"])
+        if "optimizer" in ckpt:
+            optimizer.load_state_dict(ckpt["optimizer"])
+        update      = ckpt.get("update", 0)
+        total_steps = ckpt.get("steps", 0)
+        best_wr     = ckpt.get("best_wr", 0.0)
+        print(f"  [Resume] Loaded checkpoint from U{update} ({total_steps:,} steps)")
+
     print(f"{'='*64}")
     print(f"PPO Self-Play | {DEVICE} | {CFG['num_envs']} envs")
     print(f"{'='*64}\n")
@@ -582,34 +713,55 @@ def train():
         buffer   = []
         ep_count = 0
 
-        for _ in range(CFG["rollout_steps"]):
-            # Decide which policy controls p1 (self or pool)
-            use_pool = len(opponent_pool.checkpoints) > 0 and random.random() < 0.5
-            opp_policy = opponent_pool.sample() if use_pool else policy
+        for step_i in range(CFG["rollout_steps"]):
+            # P1 opponent selection:
+            #   - Pool empty → comet_reaper (fires from step 1, breaks cold start)
+            #   - Pool has checkpoints → 50% self-play, 50% pool sample
+            pool_ready = len(opponent_pool.checkpoints) > 0
+            if not pool_ready:
+                acts_p1 = _fixed_opp if _fixed_opp is not None \
+                          else greedy_planet_actions(obs_p1)
+            elif random.random() < 0.5:
+                acts_p1, _ = collect_planet_actions(opponent_pool.sample(), obs_p1)
+            else:
+                acts_p1, _ = collect_planet_actions(policy, obs_p1)
 
             with torch.no_grad():
-                acts_p0, exp_p0 = collect_planet_actions(policy,    obs_p0)
-                acts_p1, _      = collect_planet_actions(opp_policy, obs_p1)
+                acts_p0, exp_p0 = collect_planet_actions(policy, obs_p0)
 
             rewards, dones, new_obs_p0, new_obs_p1 = vec_env.step(acts_p0, acts_p1)
 
-            # Compute shaped rewards
+            # Snapshot BOTH old and new advantages before the loop.
+            # new_adv_snap must be captured now — the reset branch overwrites
+            # new_obs_p0[env_i] mid-loop, corrupting delta for 2nd+ planets
+            # of a done env if we call ship_advantage() inside the loop.
+            baseline_snap = list(prev_adv_p0)
+            new_adv_snap  = [ship_advantage(new_obs_p0[i]) for i in range(vec_env.n)]
+            reset_this_step = set()
+
             for exp in exp_p0:
                 env_i = exp["env_i"]
-                my0, en0 = prev_adv_p0[env_i]
-                my1, en1 = ship_advantage(new_obs_p0[env_i])
+                my0, en0 = baseline_snap[env_i]
+                my1, en1 = new_adv_snap[env_i]
                 delta = (my1 - en1) - (my0 - en0)
                 r = delta * CFG["reward_scale"]
                 if dones[0, env_i]:
                     r += rewards[0, env_i] * CFG["terminal_bonus"]
-                    ep_count += 1
-                    vec_env.reset_env(env_i)
-                    new_obs_p0[env_i] = vec_env.envs[env_i].state[0].observation
-                    new_obs_p1[env_i] = vec_env.envs[env_i].state[1].observation
-                    prev_adv_p0[env_i] = ship_advantage(new_obs_p0[env_i])
-                    prev_adv_p1[env_i] = ship_advantage(new_obs_p1[env_i])
-                exp["rew"]  = r
-                exp["done"] = dones[0, env_i]
+                    if env_i not in reset_this_step:  # reset exactly once per done env
+                        ep_count += 1
+                        vec_env.reset_env(env_i)
+                        new_obs_p0[env_i] = vec_env.envs[env_i].state[0].observation
+                        new_obs_p1[env_i] = vec_env.envs[env_i].state[1].observation
+                        prev_adv_p0[env_i] = ship_advantage(new_obs_p0[env_i])
+                        prev_adv_p1[env_i] = ship_advantage(new_obs_p1[env_i])
+                        reset_this_step.add(env_i)
+                else:
+                    # Update baseline every step so delta = one-step improvement,
+                    # not cumulative drift from episode start
+                    prev_adv_p0[env_i] = (my1, en1)
+                exp["rew"]    = r
+                exp["done"]   = dones[0, env_i]
+                exp["step_i"] = step_i
                 buffer.append(exp)
 
             obs_p0 = new_obs_p0
@@ -619,37 +771,75 @@ def train():
         if not buffer:
             continue
 
-        compute_gae(buffer, CFG)
-        loss, cf = ppo_update(policy, optimizer, buffer, CFG)
+        # Bootstrap: get V(s_T) for envs whose episode is still running at rollout end.
+        # Without this, the last step of every rollout sets nv=0 and underestimates
+        # future value for ~1/rollout_steps fraction of the buffer.
+        with torch.no_grad():
+            _, boot_exp = collect_planet_actions(policy, obs_p0)
+        bootstrap_vals = {}
+        for e in boot_exp:
+            if e["env_i"] not in bootstrap_vals:
+                bootstrap_vals[e["env_i"]] = e["val"]
+
+        compute_gae(buffer, CFG, bootstrap_vals)
+        loss, cf, ev, ent = ppo_update(policy, optimizer, buffer, CFG)
         update += 1
 
         sps = total_steps / (time.time() - t0)
+        log_metrics({
+            "update": update, "steps": total_steps, "loss": round(loss, 5),
+            "clip_frac": round(cf, 4), "explained_variance": round(ev, 4),
+            "entropy": round(ent, 4), "ep_count": ep_count,
+            "sps": round(sps, 1), "elapsed_h": round((time.time() - t0) / 3600, 3),
+            "ts": int(time.time()),
+        }, run_dir)
         if update % 10 == 0:
             print(f"U{update:5d} | S:{total_steps:>10,d} | L:{loss:.4f} | CF:{cf:.3f} "
-                  f"| EP:{ep_count} | SPS:{sps:.0f} | {(time.time()-t0)/3600:.1f}h")
+                  f"| EV:{ev:.3f} | Ent:{ent:.3f} | EP:{ep_count} | SPS:{sps:.0f} | {(time.time()-t0)/3600:.1f}h")
 
         if update % CFG["eval_every"] == 0:
-            wr = evaluate_vs_greedy(20)
-            print(f"  -> Eval vs greedy: {wr:.0%}")
+            wr, wr_p0, wr_p1 = evaluate_vs_greedy(policy)
+            print(f"  -> Eval vs greedy: {wr:.0%}  (as P0: {wr_p0:.0%}  as P1: {wr_p1:.0%})")
+            log_metrics({"update": update, "steps": total_steps,
+                         "eval_vs_greedy": round(wr, 4),
+                         "eval_as_p0": round(wr_p0, 4), "eval_as_p1": round(wr_p1, 4),
+                         "ts": int(time.time())}, run_dir)
             if wr > best_wr:
                 best_wr = wr
                 torch.save({"state": policy.state_dict(), "update": update,
-                            "steps": total_steps}, "best_model.pt")
+                            "steps": total_steps}, os.path.join(run_dir, "best_model.pt"))
                 print(f"  *** New best: {wr:.0%} ***")
 
         if update % CFG["checkpoint_every"] == 0:
             opponent_pool.add(policy)
             torch.save({"state": policy.state_dict(), "update": update,
-                        "steps": total_steps}, f"ckpt_{update}.pt")
+                        "steps": total_steps}, os.path.join(run_dir, f"ckpt_{update}.pt"))
 
         if update % CFG["save_every"] == 0:
-            torch.save({"state": policy.state_dict(), "update": update,
-                        "steps": total_steps}, "latest.pt")
+            torch.save({"state": policy.state_dict(), "optimizer": optimizer.state_dict(),
+                        "update": update, "steps": total_steps, "best_wr": best_wr},
+                       os.path.join(run_dir, "latest.pt"))
 
     torch.save({"state": policy.state_dict(), "update": update,
-                "steps": total_steps}, "final_model.pt")
+                "steps": total_steps}, os.path.join(run_dir, "final_model.pt"))
     print(f"\nDone. Total steps: {total_steps:,d}")
 
 
 if __name__ == "__main__":
+    import argparse
+    p = argparse.ArgumentParser()
+    p.add_argument("--num_envs",      type=int,   default=None)
+    p.add_argument("--total_updates", type=int,   default=None)
+    p.add_argument("--lr",            type=float, default=None)
+    p.add_argument("--reward_scale",  type=float, default=None)
+    p.add_argument("--run_name",      type=str,   default="default")
+    args = p.parse_args()
+    if args.num_envs      is not None: CFG["num_envs"]      = args.num_envs
+    if args.total_updates is not None: CFG["total_updates"]  = args.total_updates
+    if args.lr            is not None: CFG["lr"]             = args.lr
+    if args.reward_scale  is not None: CFG["reward_scale"]   = args.reward_scale
+
+    RUN_DIR = os.path.join(os.path.dirname(__file__), "runs", args.run_name)
+    os.makedirs(RUN_DIR, exist_ok=True)
+    CFG["run_dir"] = RUN_DIR
     train()

@@ -256,3 +256,47 @@ Root cause: staggered arrival (first fleet softens, second finishes) destroys th
 **Forum intel gathered (2026-06-18):** Lin Myat Ko (#1, 1793 elo) = JAX env + PPO self-play 600M steps (~$150). Radek (68th) = 1303 LB in $15 on GH200 in 6.5hrs. Mendrika (48th) = 1420 LB pure BC per-planet fire heads. Abhyuday (31st) = RL beat heuristic in 1 day. `orbit-wars-torch` (MIT) = complete PyTorch GPU batched env + PPO. Fanghhhh's notebook = complete working PPO loop.
 
 **v6 plan:** PPO self-play, per-planet action heads, kaggle_environments (8K SPS target), train on Jetstream2/GH200, 2P first then optionally 4P. New branch: `v6-rl-selfplay`.
+
+---
+
+## 2026-06-18 — v6 PPO GAE Bug Found and Fixed (session 2)
+
+**v6 RL training is now running correctly on 8 Jetstream2 instances.**
+
+### Experiment log
+
+| Exp | Config | Result | Verdict |
+|-----|--------|--------|---------|
+| v6-baseline | reward_scale=0.001, pure self-play | CF≈0, eval=25% at U=200 | ❌ DISCARD |
+| v6-H1 | reward_scale=0.01, pure self-play | CF=0.052 at U=91 (EP spike), eval=25% at U=200 | ❌ DISCARD |
+| v6-H1-remote | reward_scale=0.01, 32 remote jobs | CF=0.04-0.06 at U=10 (promising) | ❌ KILLED (GAE bug) |
+
+### Root cause diagnosis (GAE structural bug)
+
+`compute_gae()` grouped all per-planet decisions by `env_i` and treated them as sequential timesteps. With N owned planets per turn, planets 0..N-2 got `nv = V(same_state)` → delta ≈ r_t (no bootstrapping). Only the last planet per turn got a real TD advantage. ~70-80% of buffer entries had near-zero advantages regardless of reward_scale. Direct explanation for CF≈0 and entropy stuck at 5.0 for 1.2M steps.
+
+**Smoking gun:** entropy never decayed across 300 updates and two separate runs — a learning policy always shows entropy decay.
+
+### Fix implemented
+
+- Tagged each buffer entry with `step_i` (rollout step index, 0..rollout_steps-1)
+- Rewrote `compute_gae` to group by `(env_i, step_i)` → true timestep sequence
+- Broadcast one advantage per timestep to all planet decisions at that step
+- Validation: CF=0.17/0.08/0.16 at U=1-3 with EP=0, entropy decaying (5.00→4.92)
+
+### Other changes this session
+
+- **Comet_reaper as P1 cold-start opponent**: loads via importlib, fires from step 1, provides combat signal before self-play pool has checkpoints
+- **Fleet monitoring**: tmux_fleet.sh (8-pane, per-instance tables), monitor.sh (refreshing CF/EV/Ent/EP/SPS display, color-coded)
+- **VecEnv callable P1**: step() accepts callable agent(obs)->launches alongside per-planet tuple lists
+
+### Fleet status (as of 2026-06-18 19:15 MT)
+
+8 Jetstream2 instances relaunched with fixed train.py:
+- 5× m3.2xl (64 CPU, 250 GB): 149.165.174.18/133/171.142/170.73/171.248
+- 3× m3.xl (32 CPU, 125 GB): 149.165.175.105/170.84/175.177
+- 32 parallel runs total (4 per machine)
+
+### Next gate
+
+With GAE fix, expect CF=0.05-0.3 sustained from U=1 (not just at terminal spikes). Gate passes when: CF in-band + EV rising + entropy decaying — all three, not just CF.
