@@ -93,7 +93,7 @@ for mf in glob.glob(os.path.join(runs_dir, "*/metrics.jsonl")):
             if "eval_vs_greedy" in d:
                 wr = d["eval_vs_greedy"]
                 u  = d.get("update", 0)
-                cr = d.get("eval_vs_cr")
+                cr = d.get("vs_comet_reaper_WR")
                 if best_wr is None or wr > best_wr:
                     best_wr = wr; best_u = u
                     eval_map[run] = (wr, u, cr)
@@ -202,7 +202,7 @@ try:
     ver   = ls.get("champion_version", 0)
     u     = ls.get("champion_u", "?")
     wr    = ls.get("champion_wr_greedy")
-    comet = ls.get("vs_comet_wr")
+    comet = ls.get("vs_comet_reaper_WR")
     prom  = ls.get("last_promoted_at") or "never"
     pool  = ls.get("pool_size", 0)
     wr_s  = f"{wr:.0%}" if wr is not None else "?"

@@ -944,7 +944,7 @@ def train():
                          "terminal_win_pct": round(ev["terminal_win_pct"], 4),
                          "mean_ep_win": round(ev["mean_ep_win"], 1),
                          "mean_ep_loss": round(ev["mean_ep_loss"], 1),
-                         "eval_vs_cr": round(cr_wr, 4) if cr_wr is not None else None,
+                         "vs_comet_reaper_WR": round(cr_wr, 4) if cr_wr is not None else None,
                          "ts": int(time.time())}, run_dir)
             if wr > best_wr:
                 best_wr = wr

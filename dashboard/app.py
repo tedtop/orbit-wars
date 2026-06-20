@@ -1491,7 +1491,7 @@ def _league_header():
 
     champ_u   = ls.get("champion_u", "?")
     champ_wr  = ls.get("champion_wr_greedy")
-    comet_wr  = ls.get("vs_comet_wr")
+    comet_wr  = ls.get("vs_comet_reaper_WR")
     pool      = ls.get("pool_size", 0)
     version   = ls.get("champion_version", 0)
     promoted  = ls.get("last_promoted_at") or "never"

@@ -244,7 +244,7 @@ print(data[start:end] if start >= 0 and end > start else '')
         if "$PYTHON" -c "exit(0 if float('$COMET_WR') > 0.50 else 1)" 2>/dev/null; then
             echo "  *** ALERT: Champion beats comet_reaper ($COMET_WR)! Consider submission."
         fi
-        COMET_RESULT="vs_comet_WR=${COMET_WR}"
+        COMET_RESULT="vs_comet_reaper_WR=${COMET_WR}"
     else
         echo "  comet_reaper eval skipped (not yet loadable via this interface)"
         COMET_RESULT="vs_comet=skipped"
@@ -301,7 +301,7 @@ state = {
     'champion_label':     chall_label,
     'champion_version':   champ_ver,
     'pool_size':          pool_size,
-    'vs_comet_wr':        comet_wr,
+    'vs_comet_reaper_WR': comet_wr,
     'last_promoted_at':   None,
     'last_sync_ts':       int(time.time()),
     'last_sync_label':    sync_label,

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Orbit Wars fleet monitor — 9 panes (3×3 grid), one per Jetstream instance.
+# v7 fleet: 9× m3.xl (homogeneous for clean A/B)
 # Usage:    bash agents/rl_ppo/tmux_fleet.sh
 # Reattach: tmux attach -t orbit_fleet
 # Detach:   Ctrl-b d  |  Zoom: Ctrl-b z  |  Navigate: Ctrl-b arrow
@@ -8,16 +9,17 @@ SESSION="orbit_fleet"
 SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=15 -o ServerAliveInterval=20"
 
 # label:IP  (no spaces around colon)
+# All m3.xl — 9 of 9 instances ready
 REMOTES=(
-    "m3.quad:149.165.175.182"
-    "m3.2xl-1:149.165.174.18"
-    "m3.2xl-2:149.165.174.133"
-    "m3.2xl-3:149.165.171.142"
-    "m3.2xl-4:149.165.170.73"
-    "m3.2xl-5:149.165.171.248"
-    "m3.xl-1:149.165.175.105"
-    "m3.xl-2:149.165.170.84"
-    "m3.xl-3:149.165.175.177"
+    "ppo-1:149.165.175.228"
+    "ppo-2:149.165.175.188"
+    "ppo-3:149.165.172.107"
+    "ppo-4:149.165.159.11"
+    "ppo-5:149.165.174.192"
+    "ppo-6:149.165.169.105"
+    "ppo-7:149.165.174.44"
+    "ppo-8:149.165.150.186"
+    "ppo-9:149.165.169.255"
 )
 
 # Build the per-pane command: SSH with auto-reconnect so the pane never dies
@@ -60,7 +62,7 @@ tmux set -t "$SESSION" status-interval 15
 
 tmux select-pane -t "$SESSION:fleet.0"
 
-echo "=== orbit_fleet: 9 panes 3×3 (1× m3.quad + 5× m3.2xl + 3× m3.xl) ==="
+echo "=== orbit_fleet: 9 panes 3×3 (9× m3.xl homogeneous — v7 A/B fleet) ==="
 echo "  Ctrl-b d  detach    Ctrl-b z  zoom pane"
 echo "  Ctrl-b o  next      Ctrl-b ;  last active"
 echo ""
