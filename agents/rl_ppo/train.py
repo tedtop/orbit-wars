@@ -51,14 +51,14 @@ CFG = dict(
     gamma           = 0.99,
     gae_lambda      = 0.95,
     clip_eps        = 0.2,
-    ent_coef        = 0.001,  # was 0.05 — entropy bonus 50× game signal, kept policy random
+    ent_coef        = 0.001,  # back to working value; overfitting fix is via mixed opponents
     vf_coef         = 0.5,
     grad_clip       = 1.0,
     weight_decay    = 1e-4,
-    total_updates   = 10000,
+    total_updates   = 3000,
     eval_every      = 100,
     save_every      = 200,
-    checkpoint_every= 1000,
+    checkpoint_every= 300,   # faster self-play pool (was 1000)
     reward_scale    = 0.01,   # was 0.001 — too small vs entropy bonus
     terminal_bonus  = 1.0,
 )
@@ -435,19 +435,49 @@ def collect_planet_actions(policy, obs_list):
 # ── Opponent pool ──────────────────────────────────────────────────────────────
 
 class OpponentPool:
-    """Holds frozen checkpoint policies. Returns one policy per call."""
+    """
+    Holds frozen checkpoint policies for opponent sampling.
+    Sources:
+      1. In-memory snapshots: added via add() every checkpoint_every updates.
+      2. External champions: loaded from checkpoints/champion.pt at startup and
+         refreshed each sync cycle (pushed by sync_checkpoints.sh after promotion).
+    This ensures training always samples from the best cross-seed champion, not
+    just the current job's own history.
+    """
     def __init__(self):
-        self.checkpoints = []  # list of state_dicts
+        self.checkpoints = []   # list of state_dicts (in-memory history)
+        self._champion  = None  # latest cross-seed champion state_dict
 
     def add(self, policy):
         sd = copy.deepcopy(policy.state_dict())
         self.checkpoints.append(sd)
-        print(f"  [OpponentPool] {len(self.checkpoints)} checkpoints")
+        print(f"  [OpponentPool] history={len(self.checkpoints)} checkpoints")
+
+    def load_champion(self, path):
+        """Load or refresh cross-seed champion from sync_checkpoints.sh output."""
+        if not os.path.exists(path):
+            return
+        try:
+            ckpt = torch.load(path, map_location=DEVICE)
+            self._champion = ckpt["state"]
+            u = ckpt.get("update", "?")
+            print(f"  [OpponentPool] cross-seed champion loaded (U{u})")
+        except Exception as e:
+            print(f"  [OpponentPool] champion load failed: {e}")
 
     def sample(self):
-        if not self.checkpoints:
+        """Sample an opponent. 50% from cross-seed champion, 50% from own history."""
+        pool = list(self.checkpoints)
+        if self._champion is not None:
+            # Weight champion at 50%, rest across own history
+            if random.random() < 0.5 or not pool:
+                sd = self._champion
+            else:
+                sd = random.choice(pool)
+        elif pool:
+            sd = random.choice(pool)
+        else:
             return None
-        sd = random.choice(self.checkpoints)
         p = ActorCritic().to(DEVICE)
         p.load_state_dict(sd)
         p.eval()
@@ -612,6 +642,48 @@ def _load_fixed_opponent():
     return mod.agent
 
 
+# ── Evaluation vs comet_reaper ────────────────────────────────────────────────
+
+@torch.no_grad()
+def evaluate_vs_comet_reaper(policy, n_games=100):
+    """Seat-balanced eval vs comet_reaper (the training target). n_games=100 for speed."""
+    try:
+        cr_agent = _load_fixed_opponent()
+    except Exception as e:
+        print(f"  [Eval CR] unavailable: {e}")
+        return None
+
+    def rl_agent(obs):
+        d = obs if isinstance(obs, dict) else {
+            "player": obs.player, "planets": obs.planets,
+            "fleets": obs.fleets, "step": getattr(obs, "step", 0)}
+        actions, _ = collect_planet_actions(policy, [d])
+        return make_launches(d, actions[0])
+
+    wins_as_p0 = wins_as_p1 = 0
+    half = n_games // 2
+    for seed in range(half):
+        env = make("orbit_wars", debug=False,
+                   configuration={"seed": seed + 50000, "episodeSteps": TOTAL_STEPS})
+        env.run([rl_agent, cr_agent])
+        r0 = env.steps[-1][0].reward or 0
+        r1 = env.steps[-1][1].reward or 0
+        if r0 > r1:
+            wins_as_p0 += 1
+    for seed in range(half, n_games):
+        env = make("orbit_wars", debug=False,
+                   configuration={"seed": seed + 50000, "episodeSteps": TOTAL_STEPS})
+        env.run([cr_agent, rl_agent])
+        r0 = env.steps[-1][0].reward or 0
+        r1 = env.steps[-1][1].reward or 0
+        if r1 > r0:
+            wins_as_p1 += 1
+    wr    = (wins_as_p0 + wins_as_p1) / n_games
+    wr_p0 = wins_as_p0 / half
+    wr_p1 = wins_as_p1 / half
+    return {"wr": wr, "wr_p0": wr_p0, "wr_p1": wr_p1}
+
+
 # ── Evaluation vs greedy ──────────────────────────────────────────────────────
 
 @torch.no_grad()
@@ -640,26 +712,68 @@ def evaluate_vs_greedy(policy, n_games=200):
         return make_launches(d, actions[0])
 
     # Seat-balanced eval: alternate RL as P0 and P1
+    # Reports Baran-format fields: slot symmetry, seat consistency, ep length, terminal pct
     wins_as_p0 = wins_as_p1 = 0
+    slot0_wins = slot1_wins = 0   # who wins each slot regardless of agent identity
+    terminal_wins = ep_len_wins = ep_len_losses = 0
+    n_wins = n_losses = 0
     half = n_games // 2
+
     for seed in range(half):
         env = make("orbit_wars", debug=False,
                    configuration={"seed": seed, "episodeSteps": TOTAL_STEPS})
         env.run([rl_agent, greedy_agent])
         r0 = env.steps[-1][0].reward or 0
         r1 = env.steps[-1][1].reward or 0
+        ep_len = len(env.steps)
+        planets = getattr(env.steps[-1][0].observation, 'planets',
+                          (env.steps[-1][0].observation or {}).get('planets', []) if isinstance(
+                              env.steps[-1][0].observation, dict) else [])
+        owners = set(int(p[1]) for p in (planets or []) if p[1] is not None)
+        is_term = len(owners) <= 1
         if r0 > r1:
-            wins_as_p0 += 1
+            wins_as_p0 += 1; slot0_wins += 1
+            ep_len_wins += ep_len; n_wins += 1
+            if is_term: terminal_wins += 1
+        elif r1 > r0:
+            slot1_wins += 1; ep_len_losses += ep_len; n_losses += 1
+
     for seed in range(half, n_games):
         env = make("orbit_wars", debug=False,
                    configuration={"seed": seed, "episodeSteps": TOTAL_STEPS})
         env.run([greedy_agent, rl_agent])
         r0 = env.steps[-1][0].reward or 0
         r1 = env.steps[-1][1].reward or 0
+        ep_len = len(env.steps)
+        planets = getattr(env.steps[-1][0].observation, 'planets',
+                          (env.steps[-1][0].observation or {}).get('planets', []) if isinstance(
+                              env.steps[-1][0].observation, dict) else [])
+        owners = set(int(p[1]) for p in (planets or []) if p[1] is not None)
+        is_term = len(owners) <= 1
         if r1 > r0:
-            wins_as_p1 += 1
-    wr = (wins_as_p0 + wins_as_p1) / n_games
-    return wr, wins_as_p0 / half, wins_as_p1 / half
+            wins_as_p1 += 1; slot1_wins += 1
+            ep_len_wins += ep_len; n_wins += 1
+            if is_term: terminal_wins += 1
+        elif r0 > r1:
+            slot0_wins += 1; ep_len_losses += ep_len; n_losses += 1
+
+    wr      = (wins_as_p0 + wins_as_p1) / n_games
+    wr_p0   = wins_as_p0 / half
+    wr_p1   = wins_as_p1 / half
+    slot0_wr = slot0_wins / n_games
+    slot1_wr = slot1_wins / n_games
+    term_pct = terminal_wins / max(n_wins, 1)
+    mean_ep_win  = ep_len_wins  / max(n_wins, 1)
+    mean_ep_loss = ep_len_losses / max(n_losses, 1)
+    sym_ok = abs(slot0_wr - slot1_wr) < 0.10
+
+    return {
+        "wr": wr, "wr_p0": wr_p0, "wr_p1": wr_p1,
+        "slot0_wr": slot0_wr, "slot1_wr": slot1_wr,
+        "sym_ok": sym_ok,
+        "terminal_win_pct": term_pct,
+        "mean_ep_win": mean_ep_win, "mean_ep_loss": mean_ep_loss,
+    }
 
 
 # ── Training loop ─────────────────────────────────────────────────────────────
@@ -673,8 +787,14 @@ def train():
     opponent_pool= OpponentPool()
     vec_env      = VecEnv(CFG["num_envs"], seed0=0)
 
+    # Load cross-seed champion at startup (written by sync_checkpoints.sh after promotion)
+    _champion_path = os.path.join(os.path.dirname(__file__), "checkpoints", "champion.pt")
+    opponent_pool.load_champion(_champion_path)
+
     # Cold-start opponent: comet_reaper fires at us from update 1,
     # providing combat signal before the self-play pool has any checkpoints.
+    # eval_fix_test confirmed: comet_reaper cold-start → 40% eval vs greedy at U=100.
+    # Greedy cold-start was tried (v6_greedy): peaked 21.5% at U=200, dead by U=500.
     _fixed_opp = None
     try:
         _fixed_opp = _load_fixed_opponent()
@@ -715,12 +835,16 @@ def train():
 
         for step_i in range(CFG["rollout_steps"]):
             # P1 opponent selection:
-            #   - Pool empty → comet_reaper (fires from step 1, breaks cold start)
+            #   - Pool empty → comet_reaper cold-start (strong signal, eval_fix_test=40%)
             #   - Pool has checkpoints → 50% self-play, 50% pool sample
             pool_ready = len(opponent_pool.checkpoints) > 0
             if not pool_ready:
-                acts_p1 = _fixed_opp if _fixed_opp is not None \
-                          else greedy_planet_actions(obs_p1)
+                # Mixed cold-start: 50% comet_reaper / 50% greedy — prevents style overfitting
+                # to a single opponent while still providing strong combat signal
+                if _fixed_opp is not None and random.random() < 0.5:
+                    acts_p1 = _fixed_opp
+                else:
+                    acts_p1 = greedy_planet_actions(obs_p1)
             elif random.random() < 0.5:
                 acts_p1, _ = collect_planet_actions(opponent_pool.sample(), obs_p1)
             else:
@@ -798,22 +922,55 @@ def train():
                   f"| EV:{ev:.3f} | Ent:{ent:.3f} | EP:{ep_count} | SPS:{sps:.0f} | {(time.time()-t0)/3600:.1f}h")
 
         if update % CFG["eval_every"] == 0:
-            wr, wr_p0, wr_p1 = evaluate_vs_greedy(policy)
-            print(f"  -> Eval vs greedy: {wr:.0%}  (as P0: {wr_p0:.0%}  as P1: {wr_p1:.0%})")
+            ev = evaluate_vs_greedy(policy, n_games=30)
+            wr, wr_p0, wr_p1 = ev["wr"], ev["wr_p0"], ev["wr_p1"]
+            sym_flag = "✓" if ev["sym_ok"] else "⚠ SLOT BIAS"
+            print(f"  -> Eval vs greedy: {wr:.0%}  "
+                  f"(P0:{wr_p0:.0%} P1:{wr_p1:.0%})  "
+                  f"slot0:{ev['slot0_wr']:.2f} slot1:{ev['slot1_wr']:.2f} {sym_flag}  "
+                  f"term:{ev['terminal_win_pct']:.0%}  "
+                  f"ep_win:{ev['mean_ep_win']:.0f} ep_loss:{ev['mean_ep_loss']:.0f}")
+            ev_cr = evaluate_vs_comet_reaper(policy, n_games=20)
+            cr_wr = ev_cr["wr"] if ev_cr else None
+            if ev_cr:
+                print(f"  -> Eval vs comet_reaper: {ev_cr['wr']:.0%}  "
+                      f"(P0:{ev_cr['wr_p0']:.0%} P1:{ev_cr['wr_p1']:.0%})")
             log_metrics({"update": update, "steps": total_steps,
                          "eval_vs_greedy": round(wr, 4),
                          "eval_as_p0": round(wr_p0, 4), "eval_as_p1": round(wr_p1, 4),
+                         "slot0_wr": round(ev["slot0_wr"], 4),
+                         "slot1_wr": round(ev["slot1_wr"], 4),
+                         "sym_ok": ev["sym_ok"],
+                         "terminal_win_pct": round(ev["terminal_win_pct"], 4),
+                         "mean_ep_win": round(ev["mean_ep_win"], 1),
+                         "mean_ep_loss": round(ev["mean_ep_loss"], 1),
+                         "eval_vs_cr": round(cr_wr, 4) if cr_wr is not None else None,
                          "ts": int(time.time())}, run_dir)
             if wr > best_wr:
                 best_wr = wr
                 torch.save({"state": policy.state_dict(), "update": update,
-                            "steps": total_steps}, os.path.join(run_dir, "best_model.pt"))
-                print(f"  *** New best: {wr:.0%} ***")
+                            "steps": total_steps, "best_wr": wr,
+                            "cr_wr": cr_wr if cr_wr is not None else 0.0},
+                           os.path.join(run_dir, "best_model.pt"))
+                print(f"  *** New best: {wr:.0%} (vs greedy); vs CR: {cr_wr:.0%} ***" if cr_wr else f"  *** New best: {wr:.0%} ***")
 
         if update % CFG["checkpoint_every"] == 0:
             opponent_pool.add(policy)
             torch.save({"state": policy.state_dict(), "update": update,
                         "steps": total_steps}, os.path.join(run_dir, f"ckpt_{update}.pt"))
+            # Refresh cross-seed champion (sync_checkpoints.sh may have pushed a new one)
+            opponent_pool.load_champion(_champion_path)
+            # Log the champion reload so the dashboard can show OPP version per job
+            try:
+                champ_meta = torch.load(_champion_path, map_location="cpu") if os.path.exists(_champion_path) else {}
+                opp_event = {"ts": int(time.time()), "update": update,
+                             "event": "champion_reload",
+                             "champion_u": champ_meta.get("update", "?"),
+                             "champion_wr": champ_meta.get("best_wr", None)}
+                with open(os.path.join(run_dir, "opp_log.jsonl"), "a") as _f:
+                    _f.write(json.dumps(opp_event) + "\n")
+            except Exception:
+                pass
 
         if update % CFG["save_every"] == 0:
             torch.save({"state": policy.state_dict(), "optimizer": optimizer.state_dict(),

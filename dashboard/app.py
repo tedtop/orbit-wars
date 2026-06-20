@@ -1456,12 +1456,98 @@ def _status_dot(cf):
     return "🟡", "#f59e0b"
 
 
+LEAGUE_STATE_PATH = ROOT / "agents" / "rl_ppo" / "checkpoints" / "league_state.json"
+OPP_LOG_GLOB      = ROOT / "agents" / "rl_ppo" / "runs"
+
+
+@st.cache_data(ttl=15)
+def load_league_state() -> dict:
+    try:
+        return json.loads(LEAGUE_STATE_PATH.read_text())
+    except Exception:
+        return {}
+
+
+@st.cache_data(ttl=15)
+def load_opp_logs() -> dict[str, dict]:
+    """Return {run_name: last_opp_event} from all opp_log.jsonl files."""
+    result = {}
+    for p in sorted(OPP_LOG_GLOB.rglob("opp_log.jsonl")):
+        run = p.parent.name
+        try:
+            lines = [l for l in p.read_text().splitlines() if l.strip()]
+            if lines:
+                result[run] = json.loads(lines[-1])
+        except Exception:
+            pass
+    return result
+
+
+def _league_header():
+    ls = load_league_state()
+    if not ls:
+        st.info("No league_state.json yet — run `bash agents/rl_ppo/sync_checkpoints.sh` once.")
+        return
+
+    champ_u   = ls.get("champion_u", "?")
+    champ_wr  = ls.get("champion_wr_greedy")
+    comet_wr  = ls.get("vs_comet_wr")
+    pool      = ls.get("pool_size", 0)
+    version   = ls.get("champion_version", 0)
+    promoted  = ls.get("last_promoted_at") or "never"
+    last_sync = ls.get("last_sync_label", "?")
+
+    wr_str    = f"{champ_wr:.0%}" if champ_wr is not None else "?"
+    comet_str = f"{comet_wr:.0%}" if comet_wr is not None else "?"
+    comet_col = "#22c55e" if (comet_wr or 0) > 0 else "#f59e0b" if comet_wr == 0 else "#888"
+    champ_ver = f"v{version}"
+
+    promotions = ls.get("promotions", [])
+    last_event = promotions[-1] if promotions else None
+
+    header_html = (
+        f'<div style="padding:12px 16px;background:rgba(0,0,0,0.35);border-left:4px solid #7c3aed;'
+        f'border-radius:6px;margin-bottom:12px;font-family:monospace">'
+        f'<div style="color:#a78bfa;font-weight:700;font-size:0.95rem;margin-bottom:6px">'
+        f'🏆 LEAGUE STATUS</div>'
+        f'<div style="display:flex;gap:28px;flex-wrap:wrap;font-size:0.88rem">'
+        f'<span style="color:#e2e8f0">Champion: <strong style="color:#fff">{champ_ver}</strong>'
+        f' U={champ_u} WR={wr_str}</span>'
+        f'<span style="color:{comet_col}">vs comet: <strong>{comet_str}</strong></span>'
+        f'<span style="color:#94a3b8">Pool: {pool} archived</span>'
+        f'<span style="color:#64748b">Last promoted: {promoted}</span>'
+        f'<span style="color:#334155;font-size:0.78rem">sync: {last_sync}</span>'
+        f'</div>'
+    )
+    if last_event:
+        header_html += (
+            f'<div style="margin-top:6px;font-size:0.82rem;color:#a78bfa">'
+            f'Last promotion: {last_event["ts"]} — {last_event.get("label","?")} '
+            f'U={last_event.get("u","?")} beat prev champion {last_event.get("wr",0):.0%}</div>'
+        )
+    header_html += '</div>'
+    st.markdown(header_html, unsafe_allow_html=True)
+
+    # Event log
+    if promotions:
+        with st.expander(f"📋 Promotion event log ({len(promotions)} events)", expanded=False):
+            for ev in reversed(promotions[-20:]):
+                st.markdown(
+                    f'`{ev["ts"]}` promote: **{ev.get("label","?")}** '
+                    f'U={ev.get("u","?")} beat champion {ev.get("wr",0):.0%} → **{champ_ver}**'
+                )
+
+
 def section_rl_training():
     df = load_rl_metrics()
 
     if df.empty:
         st.warning("No training metrics yet — run `bash agents/rl_ppo/deploy_all.sh` to start.")
         return
+
+    # ── League status header (Item 1 of 3) ────────────────────────────────────
+    _league_header()
+    st.divider()
 
     # ── Fleet summary ────────────────────────────────────────────────────────
     runs = sorted(df["run"].unique()) if "run" in df.columns else ["(all)"]
@@ -1514,10 +1600,14 @@ def section_rl_training():
 
     st.divider()
 
-    # ── Per-run fleet status table ───────────────────────────────────────────
+    # ── Per-run fleet status table (Item 2 of 3: OPP column) ───────────────────
     st.subheader("Fleet Status")
-    st.caption("One row per training run — green CF = in 0.05–0.30 band (learning). "
+    st.caption("One row per training run — OPP = current training opponent (champ-vN flips on promotion). "
                "Sync remotes: `bash agents/rl_ppo/sync_checkpoints.sh`")
+
+    opp_logs  = load_opp_logs()
+    ls_state  = load_league_state()
+    champ_ver = ls_state.get("champion_version", 0)
 
     table_rows = []
     for _, row in last_per_run.sort_values("run").iterrows():
@@ -1526,19 +1616,51 @@ def section_rl_training():
         ent  = float(row["entropy"]) if "entropy" in row and not pd.isna(row.get("entropy", float("nan"))) else None
         sps  = float(row["sps"]) if "sps" in row and not pd.isna(row.get("sps", float("nan"))) else 0
         dot, _ = _status_dot(cf)
+
+        # OPP: derive from opp_log (last champion reload), or infer from update count
+        run_name = str(row.get("run", "?"))
+        opp_ev   = opp_logs.get(run_name)
+        if opp_ev:
+            opp_u = opp_ev.get("champion_u", "?")
+            opp_label = f"champ-v{champ_ver} (U{opp_u})"
+        else:
+            cur_u = int(row.get("update", 0))
+            if cur_u == 0:
+                opp_label = "init"
+            elif cur_u < 300:
+                opp_label = f"champ-v{champ_ver}↑"  # from startup load, not yet reloaded
+            else:
+                opp_label = f"champ-v{champ_ver}"
+
         table_rows.append({
-            "Status":  dot,
-            "Run":     str(row.get("run", "?")),
+            "St":      dot,
+            "Run":     run_name,
             "U":       int(row["update"]),
             "Steps":   f'{int(row["steps"])/1e6:.2f}M',
             "CF":      f"{cf:.4f}" if cf is not None else "—",
             "EV":      f"{ev:.3f}"  if ev  is not None else "—",
             "Ent":     f"{ent:.2f}" if ent is not None else "—",
             "SPS":     f"{sps:.0f}",
+            "OPP":     opp_label,
         })
 
     if table_rows:
         st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
+
+    # ── Event log (Item 3 of 3) ───────────────────────────────────────────────
+    promotions = ls_state.get("promotions", [])
+    if promotions:
+        st.subheader("League Event Log")
+        for ev in reversed(promotions[-10:]):
+            n_hosts = len([h for h in ["149.165.174.18","149.165.174.133","149.165.171.142",
+                                       "149.165.170.73","149.165.171.248","149.165.175.105",
+                                       "149.165.170.84","149.165.175.177"] if True])
+            st.markdown(
+                f'`{ev["ts"]}` **promote:** `{ev.get("label","?")}` '
+                f'U={ev.get("u","?")} beat champion {ev.get("wr",0):.0%} → '
+                f'**champ-v{ev.get("version","?")}** '
+                f'_(pushed to {n_hosts} hosts — watch OPP column flip)_'
+            )
 
     st.divider()
 

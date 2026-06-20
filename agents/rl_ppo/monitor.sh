@@ -4,6 +4,8 @@
 LABEL="${1:-$(hostname -s)}"
 IP="${2:-}"
 LOGDIR="$HOME/orbit_wars/agents/rl_ppo/runs"
+CKPT_DIR="$HOME/orbit_wars/agents/rl_ppo/checkpoints"
+LEAGUE_JSON="$CKPT_DIR/league_state.json"
 
 # Set tmux pane title
 printf '\033]2;%s\033\\' "$LABEL"
@@ -42,25 +44,86 @@ ev_color() {
 
 show() {
     clear
-    # Title: label + time only (no IP — saves 18 chars, panes are narrow)
+
+    # ── Title ──────────────────────────────────────────────────────────────────
     printf '\033[1;36m%-12s\033[0m  \033[2m%s\033[0m\n' "$LABEL" "$(date +%H:%M:%S)"
-    printf '\033[2m%-4s  %4s  %5s  %5s  %5s  %4s  %3s  %4s\033[0m\n' \
-        "JOB" "U" "STEPS" "CF" "EV" "ENT" "EP" "SPS"
-    printf '\033[2m%s\033[0m\n' "───────────────────────────────────────────────"
+
+    # ── Table header — OPP column shows current training opponent ──────────────
+    printf '\033[2m%-4s  %4s  %5s  %5s  %5s  %4s  %3s  %4s  %-8s\033[0m\n' \
+        "JOB" "U" "STEPS" "CF" "EV" "ENT" "EP" "SPS" "OPP"
+    printf '\033[2m%s\033[0m\n' "─────────────────────────────────────────────────────"
+
+    # Get OPP map + eval data in one Python call
+    # OPP: which champion each job last loaded (from opp_log.jsonl)
+    # eval: latest greedy WR per job (from metrics.jsonl)
+    eval "$( python3 - << 'PYEOF'
+import json, os, glob
+
+runs_dir = os.path.expanduser("~/orbit_wars/agents/rl_ppo/runs")
+opp_map  = {}
+eval_map = {}
+
+# League state for champion version
+league_json = os.path.expanduser("~/orbit_wars/agents/rl_ppo/checkpoints/league_state.json")
+champ_ver = 0
+champ_u   = "?"
+try:
+    ls = json.load(open(league_json))
+    champ_ver = ls.get("champion_version", 0)
+    champ_u   = ls.get("champion_u", "?")
+except:
+    pass
+
+for opp_path in glob.glob(os.path.join(runs_dir, "*/opp_log.jsonl")):
+    run = os.path.basename(os.path.dirname(opp_path))
+    try:
+        lines = [l for l in open(opp_path).read().splitlines() if l.strip()]
+        if lines:
+            ev = json.loads(lines[-1])
+            opp_map[run] = str(ev.get("champion_u", "?"))
+    except:
+        pass
+
+for mf in glob.glob(os.path.join(runs_dir, "*/metrics.jsonl")):
+    run = os.path.basename(os.path.dirname(mf))
+    best_wr = None; best_u = 0
+    try:
+        for line in open(mf):
+            d = json.loads(line)
+            if "eval_vs_greedy" in d:
+                wr = d["eval_vs_greedy"]
+                u  = d.get("update", 0)
+                cr = d.get("eval_vs_cr")
+                if best_wr is None or wr > best_wr:
+                    best_wr = wr; best_u = u
+                    eval_map[run] = (wr, u, cr)
+    except:
+        pass
+
+# Emit as shell assignments
+print(f"CHAMP_VER={champ_ver}")
+for k, v in opp_map.items():
+    safe_k = k.replace("-", "_").replace(".", "_")
+    print(f"OPP_{safe_k}={v}")
+for k, (wr, u, cr) in eval_map.items():
+    safe_k = k.replace("-", "_").replace(".", "_")
+    cr_s = f"{cr:.0%}" if cr is not None else ""
+    print(f"EVAL_{safe_k}={wr:.0%}@U{u}_{cr_s}")
+PYEOF
+    )" 2>/dev/null || true
 
     for f in "$LOGDIR"/*.log; do
         [ -f "$f" ] || continue
-        job=$(basename "$f" .log | grep -o 'job[0-9]*' | sed 's/job/j/' || basename "$f" .log | cut -c1-4)
+        job=$(basename "$f" .log | grep -o 'job[0-9]*' | sed 's/job/j/' 2>/dev/null || basename "$f" .log | cut -c1-4)
         line=$(grep '^U' "$f" 2>/dev/null | tail -1)
         if [ -z "$line" ]; then
             printf "%-4s  starting...\n" "${job:-?}"
             continue
         fi
-        # Parse: "U   20 | S:    81,920 | L:... | CF:... | EV:... | Ent:... | EP:... | SPS:..."
         read -r u s cf ev ent ep sps <<< "$(echo "$line" | awk '
         {
-            if($1 == "U")              { u=$2 }          # "U   20 |" space-padded
-            else if($1 ~ /^U[0-9]+$/) { gsub("U","",$1); u=$1 }  # "U0020 |" zero-padded
+            if($1 == "U")              { u=$2 }
+            else if($1 ~ /^U[0-9]+$/) { gsub("U","",$1); u=$1 }
             for(i=1;i<=NF;i++){
                 if($i == "S:")          { gsub(",","",$( i+1)); s=$(i+1) }
                 if($i ~ /^CF:/)  { split($i,a,":"); cf=a[2] }
@@ -73,16 +136,90 @@ show() {
             printf "%s %.1fM %s %s %s %s %s", u, steps_m, cf, ev, ent, ep, sps
         }')"
         ent_short=$(awk "BEGIN{printf \"%.2f\", ${ent:-0}+0}" 2>/dev/null || echo "?")
+
+        # OPP label: look up which champion this job last loaded
+        run_name=$(basename "$f" .log)
+        safe_run=$(echo "$run_name" | tr '-.' '_')
+        opp_champ_u_var="OPP_${safe_run}"
+        opp_champ_u="${!opp_champ_u_var}"
+        if [ -n "$opp_champ_u" ]; then
+            OPP_LABEL="v${CHAMP_VER:-0}@${opp_champ_u}"
+        elif [ "${u:-0}" -lt 300 ] 2>/dev/null; then
+            OPP_LABEL="v${CHAMP_VER:-0}^"  # startup load, not yet reloaded
+        else
+            OPP_LABEL="v${CHAMP_VER:-0}?"
+        fi
+
         printf "%-4s  %4s  %5s  " "${job:-?}" "U${u:-?}" "${s:-0.0M}"
         cf_color "${cf:-0}"
         printf "  "
         ev_color "${ev:-0}"
-        printf "  %4s  %3s  %4s\n" "$ent_short" "${ep:-?}" "${sps:-?}"
+        printf "  %4s  %3s  %4s  \033[35m%-8s\033[0m\n" \
+            "$ent_short" "${ep:-?}" "${sps:-?}" "$OPP_LABEL"
     done
 
-    eval_line=$(grep 'Eval vs greedy' "$LOGDIR"/*.log 2>/dev/null | tail -1 | grep -o '[0-9]*%')
-    [ -n "$eval_line" ] && printf '\033[2m─────────────────────────────────────────\033[0m\n' && \
-        printf 'eval → \033[1;35m%s\033[0m vs greedy\n' "$eval_line"
+    # ── Evals ──────────────────────────────────────────────────────────────────
+    EVAL_LINES=""
+    for run_dir in "$LOGDIR"/*/; do
+        [ -d "$run_dir" ] || continue
+        mf="$run_dir/metrics.jsonl"
+        [ -f "$mf" ] || continue
+        run_name=$(basename "$run_dir")
+        job_num=$(echo "$run_name" | grep -o 'job[0-9]*' | sed 's/job//' 2>/dev/null)
+        [ -z "$job_num" ] && continue
+        # Get best eval from this run
+        ev_data=$(python3 -c "
+import json
+best = None; best_u = 0
+for line in open('$mf'):
+    try:
+        d = json.loads(line)
+        if 'eval_vs_greedy' in d:
+            wr = d['eval_vs_greedy']; u = d.get('update', 0)
+            if best is None or wr > best: best=wr; best_u=u
+    except: pass
+if best is not None:
+    print(f'j$job_num U={best_u}: \033[1;35m{best:.0%}\033[0m')
+" 2>/dev/null)
+        [ -n "$ev_data" ] && EVAL_LINES="$EVAL_LINES$ev_data"$'\n'
+    done
+
+    if [ -n "$EVAL_LINES" ]; then
+        printf '\033[2m─────────────────────────────────────────────────────\033[0m\n'
+        printf '\033[2mEvals (best per job):\033[0m\n'
+        echo "$EVAL_LINES" | sort -t'j' -k2 -n 2>/dev/null | while IFS= read -r el; do
+            [ -n "$el" ] && printf '  %b\n' "$el"
+        done
+    fi
+
+    # ── League status (bottom — always visible after table) ────────────────────
+    printf '\033[2m─────────────────────────────────────────────────────\033[0m\n'
+    if [ -f "$LEAGUE_JSON" ]; then
+        python3 - << 'PYEOF'
+import json
+try:
+    ls = json.load(open("/home/exouser/orbit_wars/agents/rl_ppo/checkpoints/league_state.json"))
+    ver   = ls.get("champion_version", 0)
+    u     = ls.get("champion_u", "?")
+    wr    = ls.get("champion_wr_greedy")
+    comet = ls.get("vs_comet_wr")
+    prom  = ls.get("last_promoted_at") or "never"
+    pool  = ls.get("pool_size", 0)
+    wr_s  = f"{wr:.0%}" if wr is not None else "?"
+    cc    = "\033[1;32m" if (comet or 0) > 0 else "\033[0;33m"
+    comet_s = f"{comet:.0%}" if comet is not None else "?"
+    promos = ls.get("promotions", [])
+    last_p = promos[-1] if promos else None
+    prom_s = ""
+    if last_p:
+        prom_s = f" | last: {last_p.get('ts','?')[:16]} → v{last_p.get('version','?')}"
+    print(f"\033[1;35m🏆 champ-v{ver}\033[0m U={u} WR={wr_s} comet:{cc}{comet_s}\033[0m pool:{pool}{prom_s}")
+except Exception as e:
+    print(f"\033[2m[league: {e}]\033[0m")
+PYEOF
+    else
+        printf '\033[2m[league_state.json not yet pushed — run sync]\033[0m\n'
+    fi
 }
 
 while true; do

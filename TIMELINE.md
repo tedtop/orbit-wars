@@ -300,3 +300,85 @@ Root cause: staggered arrival (first fleet softens, second finishes) destroys th
 ### Next gate
 
 With GAE fix, expect CF=0.05-0.3 sustained from U=1 (not just at terminal spikes). Gate passes when: CF in-band + EV rising + entropy decaying — all three, not just CF.
+
+---
+
+## 2026-06-19 — v6 RL CLOSED: FAIL at pre-committed gate
+
+### Pre-committed failure condition (set ~20:00 MT 2026-06-18)
+At U=500: best seed < 25% vs greedy AND 0% vs comet_reaper → FAIL. Close v6 RL track.
+
+### Result
+- v6_cr4 (diverse cold-start: greedy + comet_reaper alternating) — final experiment
+- Greedy eval: 20%, 20%, 20%, 20%, 22% at U=100 through U=500. **Completely flat.**
+- vs comet_reaper: 0% at every checkpoint, confirmed by direct eval (not instrument artifact)
+- Three cold-start regimes tested: comet (v6_cr2), greedy, diverse (v6_cr4) — identical ~20% ceiling
+
+### Diagnosis
+Entropy decayed cleanly 4.84 → 2.1 across training. Policy committed — to a local optimum scoring 20% vs greedy. This is the worst-case pattern: not "still exploring," but "converged to something bad." Feature design or encoding changes won't un-commit a settled policy; the ceiling is structural given achievable depth (~11M steps by deadline, vs Radek's JAX pipeline at 15× throughput).
+
+### Bugs fixed during v6 (all resolved, no competitive value extracted)
+8 critical bugs found and fixed: GAE grouping, ent_coef (50× game signal), eval null-agent, eval n=20 noise, no checkpoint resume, shaped-reward drift, env reset logic, GAE rollout boundary bootstrap. First green gate: eval_fix_test U=100 → 40% vs greedy. But subsequent depth showed 40% was noise: plateau appears immediately at U=200 with all configs.
+
+### Infrastructure built (retains value)
+- eval_checkpoints.py: seat-balanced RL vs RL eval, symmetry gate, JSON output
+- sync_checkpoints.sh: fleet champion promotion loop
+- Fleet: 9 Jetstream2 instances, 32 × 64-env + 4 × 8-env jobs, ~1,312 SPS
+- ORCHESTRATOR_STATE.md: structured session log
+
+### Decision
+**Pivot to Plan B: defend and harden comet_reaper (current live submission ~1235 Elo).**
+- Verify submission slot eligibility before 2026-06-23 deadline
+- Investigate #1047 trig inversion / [Y,X] coordinate transpose in orbit_lite engine
+- Lock comet_reaper as the active defended submission
+
+
+## 2026-06-19 — SECOND PROMOTION (v3 champion, U=400)
+
+**Champion v2 → v3: ppo-1-of-3_job1 U=400 (WR=36.7% vs greedy)**
+
+- 15:35 MT: v2 promoted (1000-game eval WR=0.753, pool_size=2)
+- 15:56 MT: v3 promoted same model, duplicate eval (WR=0.752 — bookkeeping quirk, concurrent sync)
+- Net: champion.pt is ppo-1-of-3_job1 U=400 WR=36.7% vs greedy
+- vs comet_reaper: 0.000 (still zero at U=400)
+- Champion pushed to all 9 fleet hosts ✓
+
+Trajectory of ppo-1-of-3_job1 inline evals (n=30 greedy):
+  U=100: 20%  U=200: 16%  U=300: 33% [v1]  U=400: 37% [v3]
+
+Upcoming: Phase 3 gate at U=500 (~16:30 MT) — greedy WR > 25% likely; comet WR > 0% is the stretch goal
+
+## 2026-06-19 21:07 MT — Phase 3 Gate: PASS (condition 1 only)
+
+**Trigger:** U=500 eval on 4 deep seeds (ppo-1-of-3_j1/j3, ppo-3-of-3_j3/j4)
+
+| Seed | greedy WR | comet WR | Pass? |
+|------|-----------|----------|-------|
+| j1 (1-of-3) | **36.7%** | 0.0% | ✓ cond 1 |
+| j3 (1-of-3) | 23.3% | 0.0% | ✗ collapsed |
+| j3 (3-of-3) | 30.0% | 0.0% | ✓ cond 1 |
+| j4 (3-of-3) | 26.7% | 0.0% | ✓ cond 1 |
+
+**Verdict:** Gate PASS (cond 1: greedy > 25%). Continue fleet.
+**Comet ceiling confirmed:** vs_comet_reaper = 0.000% across ALL seeds at ALL depths through U=500.
+**Strategic implication:** RL is learning (beats greedy at 37%) but shows no signal vs comet_reaper. June 22 re-submit trigger still in effect.
+**Fresh seeds ETA to eligibility:** ~21:45 MT (U=450 threshold) from ppo-2-of-3 (170.84) and ppo-1-of-3_j2/j4 (175.105).
+
+## 2026-06-19 22:19 MT — RL Ceiling Confirmed at U=500
+
+**All 4 deep seeds evaluated at U=500. No challengers. Track effectively closed.**
+
+| Seed | U=500 greedy WR | comet WR | best_model status |
+|------|----------------|----------|------------------|
+| ppo-1-of-3_j1 (champion) | 36.7% | 0.0% | stuck @ U=400 (no improvement) |
+| ppo-1-of-3_j3 (collapsed) | 23.3% | 0.0% | stuck @ U=300 |
+| ppo-3-of-3_j3 | 30.0% | 0.0% | stuck @ U=400 |
+| ppo-3-of-3_j4 | 27.0% | 0.0% | stuck @ U=300 |
+
+**Structural finding:** 32 seeds, 28 have inverted-U WR trend (peak U=100-200, decline after). Only j1 improved monotonically. n_games=30 variance causes spurious early saves that block later eligibility.
+
+**One remaining watch:** ppo-2-of-6_j2 (174.133) shows genuine improvement (28%→27%→33%→33%→37%) — the only fresh seed with an upward trend at U=400. At U=420, 33 SPS → ETA U=500 in ~2.5h (~01:00 MT June 20). Needs ≥40% at U=500 to save a new best_model and challenge.
+
+**comet ceiling:** 0.000% across all seeds, all depths — zero signal that RL can beat comet_reaper.
+
+**June 22 trigger still active.** Fleet continues but prognosis is bearish.
