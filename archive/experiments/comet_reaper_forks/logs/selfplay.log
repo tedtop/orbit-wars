@@ -360,3 +360,6 @@ iter  24: games=12 avg_place=1.67 win%=33 steps_collected=2954 loss=-0.6095
 iter  25: games=12 avg_place=1.67 win%=33 steps_collected=2470 loss=0.7845
 iter  26: games=12 avg_place=1.58 win%=50 steps_collected=2958 loss=-0.5233
 iter  27: games=12 avg_place=1.83 win%=17 steps_collected=2479 loss=-0.1116
+iter  28: games=12 avg_place=1.92 win%=8 steps_collected=2606 loss=0.3991
+iter  29: games=12 avg_place=1.83 win%=25 steps_collected=3241 loss=-1.3180
+Saved /Users/Ted/src/orbit_wars/training/selfplay_overnight.pt

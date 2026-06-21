@@ -13,8 +13,10 @@ for arg in "$@"; do
 done
 STREAMLIT_STDERR=$([[ $VERBOSE -eq 1 ]] && echo "/dev/stderr" || echo "/dev/null")
 
-INTERVAL=900   # seconds between pipeline runs (15 min)
+INTERVAL=900        # seconds between pipeline runs (15 min)
+RL_SYNC_INTERVAL=600 # seconds between RL checkpoint syncs (10 min)
 LOCK_FILE="/tmp/orbit_wars_pipeline.last"
+RL_LOCK_FILE="/tmp/orbit_wars_rl_sync.last"
 
 # ---------------------------------------------------------------------------
 # Rate-limit helper: skip pipeline if it ran within the last $INTERVAL seconds.
@@ -38,6 +40,27 @@ run_pipeline_if_due() {
     echo "=== $(date '+%H:%M:%S') — pipeline ==="
     bash pipeline/run_pipeline.sh || echo "  [pipeline error, will retry next cycle]"
     date +%s > "$LOCK_FILE"
+}
+
+# ---------------------------------------------------------------------------
+# RL sync helper: pull metrics.jsonl + best_model.pt from fleet every 10 min
+# ---------------------------------------------------------------------------
+sync_rl_if_due() {
+    local now
+    now=$(date +%s)
+    if [[ -f "$RL_LOCK_FILE" ]]; then
+        local last age
+        last=$(cat "$RL_LOCK_FILE")
+        age=$(( now - last ))
+        if (( age < RL_SYNC_INTERVAL )); then
+            return
+        fi
+    fi
+    if [[ -f "agents/rl_ppo/sync_checkpoints.sh" ]]; then
+        echo "=== $(date '+%H:%M:%S') — RL sync ==="
+        bash agents/rl_ppo/sync_checkpoints.sh 2>/dev/null | grep -E 'synced|unreachable|Best' || true
+        date +%s > "$RL_LOCK_FILE"
+    fi
 }
 
 # ---------------------------------------------------------------------------
@@ -101,5 +124,6 @@ trap '
 # ---------------------------------------------------------------------------
 while true; do
     run_pipeline_if_due
+    sync_rl_if_due
     sleep 60   # check every minute; actual run only happens after INTERVAL seconds
 done

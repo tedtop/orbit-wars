@@ -10,3 +10,8 @@ agents/opponents
 episodes
 training
 agents/comet_reaper
+
+# v5 experiment runtime artifacts (resumable / re-pullable, not source)
+experiments/v5_engine_tuning/tuning/study.db
+experiments/v5_engine_tuning/logs/
+experiments/v5_engine_tuning/intel_kernels/
