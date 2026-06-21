@@ -1491,7 +1491,7 @@ def _league_header():
 
     champ_u   = ls.get("champion_u", "?")
     champ_wr  = ls.get("champion_wr_greedy")
-    comet_wr  = ls.get("vs_comet_reaper_WR")
+    comet_wr  = ls.get("comet_reaper_WR")
     pool      = ls.get("pool_size", 0)
     version   = ls.get("champion_version", 0)
     promoted  = ls.get("last_promoted_at") or "never"
@@ -1513,7 +1513,7 @@ def _league_header():
         f'<div style="display:flex;gap:28px;flex-wrap:wrap;font-size:0.88rem">'
         f'<span style="color:#e2e8f0">Champion: <strong style="color:#fff">{champ_ver}</strong>'
         f' U={champ_u} WR={wr_str}</span>'
-        f'<span style="color:{comet_col}">vs comet: <strong>{comet_str}</strong></span>'
+        f'<span style="color:{comet_col}">vs comet_reaper bot: <strong>{comet_str}</strong></span>'
         f'<span style="color:#94a3b8">Pool: {pool} archived</span>'
         f'<span style="color:#64748b">Last promoted: {promoted}</span>'
         f'<span style="color:#334155;font-size:0.78rem">sync: {last_sync}</span>'

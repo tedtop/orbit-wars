@@ -382,3 +382,85 @@ Upcoming: Phase 3 gate at U=500 (~16:30 MT) — greedy WR > 25% likely; comet WR
 **comet ceiling:** 0.000% across all seeds, all depths — zero signal that RL can beat comet_reaper.
 
 **June 22 trigger still active.** Fleet continues but prognosis is bearish.
+
+---
+
+## 2026-06-20 — v8 comet_reaper hardening audit: CLEAN, no changes made
+
+With 3 days to deadline and comet_reaper resubmitted as the protected floor (sub 53871873,
+~1235 Elo), ran a full correctness + latency audit before locking it.
+
+### Task 1: Latency audit
+
+Instrumented `run_turn` (the main planning call) across 5 seeds (2P, 500 steps each) and
+one 4P run:
+
+| Config | Median | p99 | Max (local) | Max × 5× (tournament est.) |
+|--------|--------|-----|-------------|----------------------------|
+| 2P (5 seeds) | 6–7 ms | ~8 ms | 85 ms† | ~425 ms |
+| 4P (seed 42) | 5.1 ms | 6.8 ms | 7.6 ms | ~38 ms |
+
+†The 85 ms max is a one-time PyTorch lazy kernel compilation spike (fires at most once per
+game, not every turn — confirmed by repeating the same game in the same process: zero spikes
+on runs 2 and 3). All other turns are under 10 ms.
+
+**Verdict: no latency issue.** Zero turns exceed 100 ms locally. At 5× tournament slowdown
+every turn is well under the 1 s budget. No fix needed.
+
+### Task 2: Coordinate-order check
+
+Checked `orbit_wars.py` (the live environment source) — line 8 declares:
+
+```
+# Planets and fleets share a common [id, owner, x, y, ...] prefix.
+Planet = ["id", "owner", "x", "y", "radius", "ships", "production"]
+```
+
+Index 2 = X, index 3 = Y — not Y-before-X. Traced the full stack:
+
+- `adapter.py`: unpacks `pid, owner, x, y, r, ships, prod = p[:7]` — correct
+- `obs.py`: `x = planets[..., 2]`, `y = planets[..., 3]` — correct
+- `intercept_aim.py`: `atan2(t0y − CENTER, t0x − CENTER)` — standard `atan2(Δy, Δx)` convention — correct
+
+**Verdict: no coordinate bug.**
+
+### Overall finding
+
+Bot is clean. No latency overage, no coordinate swap, no correctness bug found.
+Sub 53871873 locked as-is — do not touch before the 2026-06-23 deadline.
+
+---
+
+## 2026-06-20 — v7 Critic A/B: CLOSED FAIL
+
+**Hypothesis:** Dense per-step reward (reward_scale=0.01) adds noise to GAE returns,
+suppressing critic EV vs pure sparse ±1 terminal (reward_scale=0.0). Expected: var_a EV
+climbs to ≥0.90 while ctrl stays ~0.80.
+
+**Setup:** 8 jobs across ppo-1 + ppo-2 (4 ctrl, 4 var_a), 64 envs each, comet_reaper
+cold-start opponent, per-planet PPO. Branch: v7-critic-ab.
+
+**Result — both arms identical:**
+
+| U | ctrl greedy | var_a greedy | comet_reaper_WR | ctrl EV | var_a EV |
+|---|------------|-------------|-----------------|---------|---------|
+| 100 | 30–47% | 30–40% | 0% | 0.97 | 0.97 |
+| 200 | 33–43% | 27–47% | 0% | 0.93 | 0.93 |
+| 300 | 30–37% | 27–43% | 0% | 0.87 | 0.85 |
+| 400 | — | — | 0% | 0.65–0.97 | — |
+
+Entropy collapsed to 1.18–3.13 by U=390–400 (started ~4.9). Fleet killed at U=390–400.
+
+**Why hypothesis failed:** The "fast filter" (EV ≥ 0.90) was trivially met by both arms
+from U=10 onward — short 64-step rollouts mean the buffer is dominated by near-zero dense
+rewards, making the critic's job easy regardless of reward_scale. EV was not the real bottleneck.
+
+**Diagnosis:** RL from scratch at CPU scale (~67 SPS, ~1.6M steps) cannot close the
+comet_reaper gap. Policy peaks at U=100 (~40% greedy) then entropy-collapses. Same
+structural failure as v6 with a different config. comet_reaper_WR = 0% at every checkpoint
+across all 8 seeds.
+
+**Fleet:** ppo-1 (149.165.175.228) + ppo-2 (149.165.175.188) killed 2026-06-20 ~14:30 MT.
+
+**Next:** v8 — per-planet behavior cloning from top-ranked game replays (Mendrika's approach,
+1420 Elo with pure BC per-planet fire heads).

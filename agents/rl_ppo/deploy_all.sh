@@ -5,16 +5,16 @@
 set -e
 
 HOSTS=(
-    # v7 fleet — all m3.xl (32 CPU, homogeneous for clean A/B)
+    # v7 active fleet — ppo-3 through ppo-9 shelved (add back when unshelving for VARIANT-B)
     "149.165.175.228"  # ppo-1
     "149.165.175.188"  # ppo-2
-    "149.165.172.107"  # ppo-3
-    "149.165.159.11"   # ppo-4
-    "149.165.174.192"  # ppo-5
-    "149.165.169.105"  # ppo-6
-    "149.165.174.44"   # ppo-7
-    "149.165.150.186"  # ppo-8
-    "149.165.169.255"  # ppo-9
+    # "149.165.172.107"  # ppo-3 (shelved)
+    # "149.165.159.11"   # ppo-4 (shelved)
+    # "149.165.174.192"  # ppo-5 (shelved)
+    # "149.165.169.105"  # ppo-6 (shelved)
+    # "149.165.174.44"   # ppo-7 (shelved)
+    # "149.165.150.186"  # ppo-8 (shelved)
+    # "149.165.169.255"  # ppo-9 (shelved)
 )
 USER="exouser"
 REPO_DIR="/home/${USER}/orbit_wars"

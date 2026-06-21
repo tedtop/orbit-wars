@@ -16,7 +16,7 @@ sleep 2
 for JOB in 1 2; do
     RUN="var_a_job${JOB}"
     mkdir -p agents/rl_ppo/runs/${RUN}
-    nohup python agents/rl_ppo/train.py \
+    nohup python -u agents/rl_ppo/train.py \
         --run_name "${RUN}" \
         --num_envs 64 \
         --reward_scale 0.0 \

@@ -244,7 +244,7 @@ print(data[start:end] if start >= 0 and end > start else '')
         if "$PYTHON" -c "exit(0 if float('$COMET_WR') > 0.50 else 1)" 2>/dev/null; then
             echo "  *** ALERT: Champion beats comet_reaper ($COMET_WR)! Consider submission."
         fi
-        COMET_RESULT="vs_comet_reaper_WR=${COMET_WR}"
+        COMET_RESULT="comet_reaper_WR=${COMET_WR}"
     else
         echo "  comet_reaper eval skipped (not yet loadable via this interface)"
         COMET_RESULT="vs_comet=skipped"
@@ -301,7 +301,7 @@ state = {
     'champion_label':     chall_label,
     'champion_version':   champ_ver,
     'pool_size':          pool_size,
-    'vs_comet_reaper_WR': comet_wr,
+    'comet_reaper_WR': comet_wr,
     'last_promoted_at':   None,
     'last_sync_ts':       int(time.time()),
     'last_sync_label':    sync_label,
@@ -328,7 +328,7 @@ if promoted:
 
 with open(league_json, 'w') as f:
     json.dump(state, f, indent=2)
-print(f'league_state.json written (v{champ_ver}, U={champ_u}, comet={comet_wr})')
+print(f'league_state.json written (v{champ_ver}, U={champ_u}, comet_reaper_bot_WR={comet_wr})')
 PYEOF
 
 # Push league_state.json to all fleet hosts so monitor.sh can show league header

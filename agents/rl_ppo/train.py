@@ -888,6 +888,19 @@ def train():
                 exp["step_i"] = step_i
                 buffer.append(exp)
 
+            # Catch envs that terminated while player-0 had 0 planets (no exp entries
+            # for that env_i, so the exp loop above never triggered the reset).
+            # Without this, the pre-check in VecEnv.step() silently swallows the done.
+            for env_i in range(vec_env.n):
+                if dones[0, env_i] and env_i not in reset_this_step:
+                    ep_count += 1
+                    vec_env.reset_env(env_i)
+                    new_obs_p0[env_i] = vec_env.envs[env_i].state[0].observation
+                    new_obs_p1[env_i] = vec_env.envs[env_i].state[1].observation
+                    prev_adv_p0[env_i] = ship_advantage(new_obs_p0[env_i])
+                    prev_adv_p1[env_i] = ship_advantage(new_obs_p1[env_i])
+                    reset_this_step.add(env_i)
+
             obs_p0 = new_obs_p0
             obs_p1 = new_obs_p1
             total_steps += CFG["num_envs"]
@@ -944,7 +957,7 @@ def train():
                          "terminal_win_pct": round(ev["terminal_win_pct"], 4),
                          "mean_ep_win": round(ev["mean_ep_win"], 1),
                          "mean_ep_loss": round(ev["mean_ep_loss"], 1),
-                         "vs_comet_reaper_WR": round(cr_wr, 4) if cr_wr is not None else None,
+                         "comet_reaper_WR": round(cr_wr, 4) if cr_wr is not None else None,
                          "ts": int(time.time())}, run_dir)
             if wr > best_wr:
                 best_wr = wr

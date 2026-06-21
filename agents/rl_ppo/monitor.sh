@@ -10,8 +10,8 @@ LEAGUE_JSON="$CKPT_DIR/league_state.json"
 # Set tmux pane title
 printf '\033]2;%s\033\\' "$LABEL"
 
-# Wait for training logs to appear
-until ls "$LOGDIR"/*.log 2>/dev/null | grep -q .; do
+# Wait for training logs to appear (logs live in per-run subdirs: runs/ctrl_job1/ctrl_job1.log)
+until find "$LOGDIR" -name "*.log" 2>/dev/null | grep -q .; do
     clear
     printf '\033[1;33m%-12s\033[0m  \033[2m%s\033[0m\n' "$LABEL" "$(date +%H:%M:%S)"
     printf '\033[2m  waiting for logs...\033[0m\n'
@@ -93,7 +93,7 @@ for mf in glob.glob(os.path.join(runs_dir, "*/metrics.jsonl")):
             if "eval_vs_greedy" in d:
                 wr = d["eval_vs_greedy"]
                 u  = d.get("update", 0)
-                cr = d.get("vs_comet_reaper_WR")
+                cr = d.get("comet_reaper_WR")
                 if best_wr is None or wr > best_wr:
                     best_wr = wr; best_u = u
                     eval_map[run] = (wr, u, cr)
@@ -112,7 +112,7 @@ for k, (wr, u, cr) in eval_map.items():
 PYEOF
     )" 2>/dev/null || true
 
-    for f in "$LOGDIR"/*.log; do
+    for f in "$LOGDIR"/*/*.log; do
         [ -f "$f" ] || continue
         job=$(basename "$f" .log | grep -o 'job[0-9]*' | sed 's/job/j/' 2>/dev/null || basename "$f" .log | cut -c1-4)
         line=$(grep '^U' "$f" 2>/dev/null | tail -1)
@@ -202,18 +202,18 @@ try:
     ver   = ls.get("champion_version", 0)
     u     = ls.get("champion_u", "?")
     wr    = ls.get("champion_wr_greedy")
-    comet = ls.get("vs_comet_reaper_WR")
+    cr_bot_wr = ls.get("comet_reaper_WR")
     prom  = ls.get("last_promoted_at") or "never"
     pool  = ls.get("pool_size", 0)
     wr_s  = f"{wr:.0%}" if wr is not None else "?"
-    cc    = "\033[1;32m" if (comet or 0) > 0 else "\033[0;33m"
-    comet_s = f"{comet:.0%}" if comet is not None else "?"
+    cc    = "\033[1;32m" if (cr_bot_wr or 0) > 0 else "\033[0;33m"
+    cr_s  = f"{cr_bot_wr:.0%}" if cr_bot_wr is not None else "?"
     promos = ls.get("promotions", [])
     last_p = promos[-1] if promos else None
     prom_s = ""
     if last_p:
         prom_s = f" | last: {last_p.get('ts','?')[:16]} → v{last_p.get('version','?')}"
-    print(f"\033[1;35m🏆 champ-v{ver}\033[0m U={u} WR={wr_s} comet:{cc}{comet_s}\033[0m pool:{pool}{prom_s}")
+    print(f"\033[1;35m🏆 champ-v{ver}\033[0m U={u} WR={wr_s} vs_cr_bot:{cc}{cr_s}\033[0m pool:{pool}{prom_s}")
 except Exception as e:
     print(f"\033[2m[league: {e}]\033[0m")
 PYEOF

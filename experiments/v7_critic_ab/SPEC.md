@@ -1,9 +1,10 @@
 # v7 — Critic A/B Experiment
 
 **Opened:** 2026-06-20  
+**Closed:** 2026-06-20 — FAIL  
 **Deadline:** 2026-06-21 18:00 MT  
 **Branch:** v7-critic-ab  
-**Fleet:** 9× m3.xl (ppo-1 through ppo-9, homogeneous for clean comparison)
+**Fleet:** 2 active (ppo-1, ppo-2); ppo-3 through ppo-9 shelved to save SUs — unshelve if VARIANT-B needed
 
 ---
 
@@ -36,9 +37,9 @@ the cumulative discounted return harder to predict than a pure sparse signal. Wi
 - Run name prefix: `var_a`
 - Launch: `bash experiments/v7_critic_ab/launch_variant_a.sh IP`
 
-### SPARE (ppo-5 through ppo-9)
-- Reserved for VARIANT-B (separate critic head) if VARIANT-A EV filter fails
-- Do not deploy until VARIANT-A fast filter result is known
+### SPARE (ppo-3 through ppo-9 — shelved)
+- Unshelve and deploy if VARIANT-B (separate critic head) is needed
+- Do not unshelve until VARIANT-A fast filter result is known
 
 ---
 
@@ -69,7 +70,31 @@ comet_reaper (sub 53871873) is the final submission.
 
 ## Results Log
 
-*(append here as cycle data comes in)*
+| Time | Arm | U | EV | greedy_WR | comet_reaper_WR | Notes |
+|------|-----|---|----|-----------|--------------------|-------|
+| 2026-06-20 07:xx | ctrl | 100 | 0.97 | 30–47% | 0% | ppo-1+2, 4 seeds |
+| 2026-06-20 09:xx | ctrl | 200 | 0.93 | 33–43% | 0% | regression from U=100 |
+| 2026-06-20 xx:xx | ctrl | 300 | 0.87 | 30–37% | 0% | continued regression |
+| 2026-06-20 07:xx | var_a | 100 | 0.97 | 30–40% | 0% | ppo-1+2, 4 seeds |
+| 2026-06-20 09:xx | var_a | 200 | 0.93 | 27–47% | 0% | mixed; one seed improved |
+| 2026-06-20 xx:xx | var_a | 300 | 0.85 | 27–43% | 0% | entropy collapsing |
+| 2026-06-20 14:xx | both | 390–400 | 0.65–0.97 | — | 0% | entropy 1.18–3.13; fleet killed |
 
-| Time | Arm | U | EV | vs_greedy_WR | vs_comet_reaper_WR | Notes |
-|------|-----|---|----|--------------|--------------------|-------|
+## Verdict: CLOSED FAIL
+
+**Fast filter:** Both arms hit EV ≥ 0.90 from U=10 onward — but this was trivially due to
+short rollouts (64 steps / 499-step game). Most buffer steps have near-zero dense reward,
+so the critic trivially predicts zero and achieves high EV. The fast filter was not a useful signal.
+
+**Slow gate:** comet_reaper_WR = 0% at every checkpoint (n=100 games) across all 8 seeds.
+No signal at U=100, 200, or 300.
+
+**Hypothesis verdict:** reward_scale made no difference. Both ctrl (0.01) and var_a (0.0)
+showed identical behavior: greedy WR peaks at U=100 (~40%), decays by U=300, entropy collapses
+by U=400. Same pattern as v6 with different config.
+
+**Root cause:** RL from scratch cannot close the gap to comet_reaper at this compute scale
+(~1.6M steps, ~67 SPS on CPU). The comet_reaper cold-start opponent provides no learning
+signal because the policy collapses to entropy=1 before accumulating enough experience.
+
+**Next:** v8 — per-planet behavior cloning from top-ranked game replays.
