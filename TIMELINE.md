@@ -464,3 +464,29 @@ across all 8 seeds.
 
 **Next:** v8 — per-planet behavior cloning from top-ranked game replays (Mendrika's approach,
 1420 Elo with pure BC per-planet fire heads).
+
+---
+
+## 2026-06-20 — v8 Per-Planet BC: OPENED
+
+**Branch:** v8-planet-bc | **Spec:** experiments/v8_planet_bc/SPEC.md
+
+**Hypothesis:** Mendrika (48th, ~1420 Elo) achieved their rating with pure behavior cloning
+using per-planet fire heads on top-ranked replays. Our current `ActorCritic` in train.py has
+exactly this architecture. Prior BC failure (Phase 4, lost 0–16) used a global `PlanetPolicy`
+(rl/policy.py), not per-planet heads. This combination has never been tested.
+
+**Plan:**
+1. Download prize-zone episodes: `pipeline/pull_topbot_episodes.py --require-rating 1400`
+2. Extract labeled moves: `pipeline/extract_moves.py --min-rating 1400 --out training/moves_v8.jsonl.gz`
+3. Train: `agents/rl_ppo/bc_train.py` (new script) — CE loss on fire/target/frac per owned planet
+4. Gate: `eval_checkpoints.py --vs-comet --n-games 200` — comet_reaper_WR > 0% → submit
+
+**Status:** CLOSED FAIL 2026-06-21.
+
+**Results:** 20 epochs on 982k per-planet examples from 1400+ Elo teams (2,650 episodes).
+fire=91%, tgt=19% (vs 5% chance), frac=79%. comet_reaper_WR=0/200, avg game 88/500 steps —
+crushed before midgame. BC ceiling confirmed: imitation captures *what* top players do,
+not *why*. orbit_lite exploits the gap immediately.
+
+**Final answer: comet_reaper (sub 53707586, ~1235 Elo).** Competition ends 2026-06-23.
