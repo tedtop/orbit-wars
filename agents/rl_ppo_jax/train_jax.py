@@ -3,19 +3,21 @@ PureJaxRL-style PPO for Orbit Wars — JAX/Flax on A100.
 
 Architecture: ActorCriticET (Entity Transformer) ported to Flax.
   - Same hyperparameters as train.py CFG
-  - Rollout: jax.lax.scan over steps, jax.vmap over N_ENVS parallel games
+  - Rollout: jax.vmap over N_ENVS parallel games (one GPU call per step)
+  - Self-play: P1 uses the same current policy params with obs from P1's perspective
   - Policy: 2-layer 64-dim 4-head Transformer, per-planet action heads, scalar value
   - Log format matches train.py so monitor.sh works unchanged
 
 Usage:
   python train_jax.py
-  python train_jax.py --num_envs 2048 --run_name v10_a100
+  python train_jax.py --num_envs 4096 --run_name v10_a100
 
 On fresh Jetstream2 A100 instance first run:
   bash setup_gpu.sh && python train_jax.py
 """
 
 import argparse
+import importlib.util
 import json
 import math
 import os
@@ -63,7 +65,7 @@ CFG = dict(
     checkpoint_every= 300,
     reward_scale    = 0.01,
     terminal_bonus  = 1.0,
-    pool_size       = 512,     # number of pre-generated reset states
+    pool_size       = 512,
     embed_dim       = 64,
     n_heads         = 4,
     n_layers        = 2,
@@ -72,6 +74,7 @@ CFG = dict(
 N_FRACS  = 4
 MIN_SHIPS = 3.0
 FRAC_BINS = jnp.array([0.25, 0.5, 0.75, 1.0])
+FRAC_BINS_NP = np.array([0.25, 0.5, 0.75, 1.0])
 
 # ── Flax ActorCriticET ────────────────────────────────────────────────────────
 
@@ -141,14 +144,39 @@ class ActorCriticET(nn.Module):
         return fire_logits, tgt_logits, frac_logits, value
 
 
+# ── State stacking helpers ────────────────────────────────────────────────────
+
+def _stack_states(states):
+    """Stack list of N GameState objects → batched GameState with leading dim N."""
+    return jax.tree_util.tree_map(lambda *xs: jnp.stack(xs), *states)
+
+
+# ── Vectorised obs encoding and env step (compiled once at import) ─────────────
+# These are defined here so JIT cache is shared across the training loop.
+
+_encode_p0 = jax.jit(jax.vmap(lambda st: oj.encode_obs(st, 0)))
+_encode_p1 = jax.jit(jax.vmap(lambda st: oj.encode_obs(st, 1)))
+_step_batch = jax.jit(jax.vmap(oj.step))
+
+
+@jax.jit
+def _compute_delta_reward(st_old, st_new):
+    """Per-env ship-delta reward for P0.  Returns (N,) float32."""
+    def score(st, p):
+        ps = jnp.sum(jnp.where((st.p_owner == p) & st.p_alive, st.p_ships, 0.), axis=-1)
+        fs = jnp.sum(jnp.where((st.f_owner == p) & st.f_alive, st.f_ships, 0.), axis=-1)
+        return ps + fs
+    my0 = score(st_old, 0); en0 = score(st_old, 1)
+    my1 = score(st_new, 0); en1 = score(st_new, 1)
+    return (my1 - en1) - (my0 - en0)   # (N,)
+
+
 # ── Pre-generate reset state pool ─────────────────────────────────────────────
 
 def build_reset_pool(n: int, seed0: int = 0) -> list:
     """Generate n GameState objects (Python-side). Slow, done once."""
     print(f"  Building {n}-state reset pool (seed {seed0}..{seed0+n-1})...")
-    pool = []
-    for i in range(n):
-        pool.append(oj.reset(seed0 + i))
+    pool = [oj.reset(seed0 + i) for i in range(n)]
     print(f"  Pool ready.")
     return pool
 
@@ -156,21 +184,19 @@ def build_reset_pool(n: int, seed0: int = 0) -> list:
 # ── Per-step action sampling ──────────────────────────────────────────────────
 
 def _sample_actions(params, model, obs_batch, p_owner_batch, p_alive_batch,
-                    p_x_batch, p_y_batch, p_ships_batch, key):
+                    p_x_batch, p_y_batch, p_ships_batch, key, player=0):
     """
-    For a batch of environments, sample per-planet actions.
+    For a batch of environments sample per-planet actions for `player` (0 or 1).
 
     Returns:
       actions:  (N_ENVS, MAX_PLANETS, 3) float — [angle, n_ships, fire_flag]
-      log_probs:(N_ENVS,) — summed log prob per env (across all planet decisions)
-      values:   (N_ENVS,) — V(s) estimate for P0
-      aux:      dict of arrays needed for PPO update
+      log_probs:(N_ENVS,) — summed log prob per env
+      values:   (N_ENVS,) — V(s) estimate
+      aux:      dict of arrays needed for PPO update  (empty when player==1)
     """
     N = obs_batch.shape[0]
     P = oj.MAX_OBS_PLANETS
 
-    # Collect per-planet inputs (only owned planets with enough ships)
-    # We batch ALL planet-decisions across ALL envs for GPU efficiency.
     obs_list, pf_list, mask_list, env_idx_list, slot_idx_list = [], [], [], [], []
 
     obs_np       = np.array(obs_batch)
@@ -184,24 +210,23 @@ def _sample_actions(params, model, obs_batch, p_owner_batch, p_alive_batch,
         for slot in range(P):
             if not p_alive_np[env_i, slot]:
                 continue
-            if p_owner_np[env_i, slot] != 0:
+            if p_owner_np[env_i, slot] != player:
                 continue
             if p_ships_np[env_i, slot] < MIN_SHIPS:
                 continue
-            x, y = p_x_np[env_i, slot], p_y_np[env_i, slot]
-            r_val = 0.0  # planet radius not directly needed here
-            ships  = p_ships_np[env_i, slot]
-            dx, dy = x - 50., y - 50.
+            x, y   = p_x_np[env_i, slot], p_y_np[env_i, slot]
+            ships   = p_ships_np[env_i, slot]
+            dx, dy  = x - 50., y - 50.
             pf = np.array([
                 x/100., y/100., 0./10., ships/200., 0./20.,
                 1., 0., 0.,
                 math.sqrt(dx*dx+dy*dy)/70.,
                 math.atan2(dy, dx)/math.pi,
             ], dtype=np.float32)
-            tgt_mask = np.ones(P, dtype=bool)
+            n_alive   = int(np.sum(p_alive_np[env_i, :P]))
+            tgt_mask  = np.zeros(P, dtype=bool)
+            tgt_mask[:n_alive] = True
             tgt_mask[slot] = False
-            for j in range(len([sl for sl in range(P) if p_alive_np[env_i, sl]]), P):
-                tgt_mask[j] = False
 
             obs_list.append(obs_np[env_i])
             pf_list.append(pf)
@@ -211,9 +236,7 @@ def _sample_actions(params, model, obs_batch, p_owner_batch, p_alive_batch,
 
     if not obs_list:
         dummy_actions = np.zeros((N, oj.MAX_PLANETS, 3), np.float32)
-        dummy_lp = np.zeros(N, np.float32)
-        dummy_val = np.zeros(N, np.float32)
-        return jnp.array(dummy_actions), jnp.array(dummy_lp), jnp.array(dummy_val), {}
+        return jnp.array(dummy_actions), jnp.zeros(N, np.float32), jnp.zeros(N, np.float32), {}
 
     obs_t  = jnp.array(np.stack(obs_list))
     pf_t   = jnp.array(np.stack(pf_list))
@@ -231,7 +254,7 @@ def _sample_actions(params, model, obs_batch, p_owner_batch, p_alive_batch,
     lp_tgt  = jnp.take_along_axis(lp_tgt, tgt_a[:, None], axis=-1).squeeze(-1)
     lp_frac = frac_l - jax.nn.logsumexp(frac_l, axis=-1, keepdims=True)
     lp_frac = jnp.take_along_axis(lp_frac, frac_a[:, None], axis=-1).squeeze(-1)
-    lp_total = lp_fire + lp_tgt + lp_frac   # per planet decision
+    lp_total = lp_fire + lp_tgt + lp_frac
 
     fire_np = np.array(fire_a)
     tgt_np  = np.array(tgt_a)
@@ -239,9 +262,9 @@ def _sample_actions(params, model, obs_batch, p_owner_batch, p_alive_batch,
     vals_np = np.array(vals)
     lp_np   = np.array(lp_total)
 
-    actions     = np.zeros((N, oj.MAX_PLANETS, 3), np.float32)
-    env_lp      = np.zeros(N, np.float32)
-    env_val     = np.zeros(N, np.float32)
+    actions  = np.zeros((N, oj.MAX_PLANETS, 3), np.float32)
+    env_lp   = np.zeros(N, np.float32)
+    env_val  = np.zeros(N, np.float32)
 
     for k, (env_i, slot) in enumerate(zip(env_idx_list, slot_idx_list)):
         fire = fire_np[k]
@@ -252,28 +275,32 @@ def _sample_actions(params, model, obs_batch, p_owner_batch, p_alive_batch,
         if fire and tgt < P and p_alive_np[env_i, tgt]:
             sx, sy = p_x_np[env_i, slot], p_y_np[env_i, slot]
             tx, ty = p_x_np[env_i, tgt],  p_y_np[env_i, tgt]
-            angle = math.atan2(ty - sy, tx - sx)
-            n_ships = max(1., float(p_ships_np[env_i, slot]) * float(FRAC_BINS[frac]))
+            angle   = math.atan2(ty - sy, tx - sx)
+            n_ships = max(1., float(p_ships_np[env_i, slot]) * float(FRAC_BINS_NP[frac]))
             actions[env_i, slot, 0] = angle
             actions[env_i, slot, 1] = n_ships
             actions[env_i, slot, 2] = 1.0
 
-    # Value: mean over all planet decisions per env
     for k, env_i in enumerate(env_idx_list):
-        env_val[env_i] = vals_np[k]   # last write wins (same global rep)
+        env_val[env_i] = vals_np[k]
 
-    aux = {
-        "obs":     np.stack(obs_list),
-        "pf":      np.stack(pf_list),
-        "mask":    np.stack(mask_list),
-        "fire":    fire_np,
-        "tgt":     tgt_np,
-        "frac":    frac_np,
-        "lp":      lp_np,
-        "val":     vals_np,
-        "env_idx": np.array(env_idx_list),
-        "slot_idx":np.array(slot_idx_list),
-    }
+    # Only return aux for player 0 (used in PPO buffer)
+    if player == 0:
+        aux = {
+            "obs":     np.stack(obs_list),
+            "pf":      np.stack(pf_list),
+            "mask":    np.stack(mask_list),
+            "fire":    fire_np,
+            "tgt":     tgt_np,
+            "frac":    frac_np,
+            "lp":      lp_np,
+            "val":     vals_np,
+            "env_idx": np.array(env_idx_list),
+            "slot_idx":np.array(slot_idx_list),
+        }
+    else:
+        aux = {}
+
     return jnp.array(actions), jnp.array(env_lp), jnp.array(env_val), aux
 
 
@@ -343,7 +370,6 @@ def ppo_update(train_state: TrainState, buffer, cfg):
             adv    = batch["adv"]
             pg = -jnp.minimum(ratio*adv, jnp.clip(ratio, 1-cfg["clip_eps"], 1+cfg["clip_eps"])*adv).mean()
             vl = 0.5 * jnp.mean((val - batch["ret"])**2)
-            # entropy
             p_fire = jax.nn.sigmoid(fl)
             ent_fire = -(p_fire*jnp.log(p_fire+1e-8) + (1-p_fire)*jnp.log(1-p_fire+1e-8)).mean()
             ent_tgt  = -jnp.sum(jax.nn.softmax(tl)*jax.nn.log_softmax(tl), axis=-1).mean()
@@ -357,7 +383,7 @@ def ppo_update(train_state: TrainState, buffer, cfg):
         return ts, loss, aux
 
     total_loss = 0.; n_mb = 0
-    ev = 0.; ent_m = 0.
+    ent_m = 0.
 
     for _ in range(cfg["ppo_epochs"]):
         idx = np.random.permutation(B)
@@ -378,7 +404,6 @@ def ppo_update(train_state: TrainState, buffer, cfg):
             total_loss += float(loss)
             n_mb += 1
 
-    # Explained variance on full batch
     with jax.disable_jit():
         _, _, _, val_all = train_state.apply_fn(
             train_state.params,
@@ -386,7 +411,6 @@ def ppo_update(train_state: TrainState, buffer, cfg):
         )
     ret_t = jnp.array(ret_np)
     ev    = float(1.0 - jnp.var(ret_t - val_all) / (jnp.var(ret_t) + 1e-8))
-    # Entropy estimate from last mini-batch
     ent_m = float(ent.mean()) if hasattr(ent, "mean") else float(ent)
 
     return train_state, total_loss / max(n_mb, 1), ev, ent_m
@@ -398,6 +422,225 @@ def log_metrics(row, run_dir):
     os.makedirs(run_dir, exist_ok=True)
     with open(os.path.join(run_dir, "metrics.jsonl"), "a") as f:
         f.write(json.dumps(row) + "\n")
+
+
+# ── Python-side obs encoder for eval (numpy, matches orbit_jax.encode_obs) ────
+
+def encode_obs_python(obs, player=0):
+    """
+    Encode kaggle observation to the same 302-dim vector as orbit_jax.encode_obs.
+    Planet format: [id, owner, x, y, r, ships, prod]
+    Fleet format:  [id, owner, x, y, angle, from_id, ships]
+    """
+    if isinstance(obs, dict):
+        planets = list(obs.get('planets', []))
+        fleets  = list(obs.get('fleets', []))
+        step    = int(obs.get('step', 0))
+    else:
+        planets = list(getattr(obs, 'planets', None) or [])
+        fleets  = list(getattr(obs, 'fleets',  None) or [])
+        step    = int(getattr(obs, 'step',  0) or 0)
+    p = player
+
+    # Planet features (first MAX_OBS_PLANETS)
+    pfeat = np.zeros((oj.MAX_OBS_PLANETS, oj.PLANET_FEATS), np.float32)
+    for i, pl in enumerate(planets[:oj.MAX_OBS_PLANETS]):
+        pid, ow, x, y, r, sh, prod = pl[0], int(pl[1]), float(pl[2]), float(pl[3]), \
+                                      float(pl[4]), float(pl[5]), float(pl[6])
+        dx, dy = x - oj.CENTER, y - oj.CENTER
+        pfeat[i] = [
+            x/100., y/100., r/10., sh/200., prod/20.,
+            float(ow == p), float(ow >= 0 and ow != p), float(ow < 0),
+            math.sqrt(dx*dx + dy*dy) / 70.,
+            math.atan2(dy, dx) / math.pi,
+        ]
+
+    # Fleet features (first MAX_OBS_FLEETS)
+    # Fleet: [id, owner, x, y, angle, from_id, ships]
+    ffeat = np.zeros((oj.MAX_OBS_FLEETS, oj.FLEET_FEATS), np.float32)
+    for i, fl in enumerate(fleets[:oj.MAX_OBS_FLEETS]):
+        ow, x, y, ang, sh = int(fl[1]), float(fl[2]), float(fl[3]), float(fl[4]), float(fl[6])
+        dx, dy = x - oj.CENTER, y - oj.CENTER
+        sp = min(1. + (oj.SHIP_SPEED_MAX-1.) * (math.log(max(sh, 1.)) / math.log(1000.))**1.5,
+                 oj.SHIP_SPEED_MAX)
+        ffeat[i] = [
+            x/100., y/100., sh/200., ang/math.pi,
+            float(ow == p), float(ow >= 0 and ow != p),
+            math.sqrt(dx*dx + dy*dy) / 70.,
+            sp / oj.SHIP_SPEED_MAX,
+        ]
+
+    # Global features
+    my_ps = sum(float(pl[5]) for pl in planets if int(pl[1]) == p)
+    en_ps = sum(float(pl[5]) for pl in planets if int(pl[1]) >= 0 and int(pl[1]) != p)
+    my_fs = sum(float(fl[6]) for fl in fleets if int(fl[1]) == p)
+    en_fs = sum(float(fl[6]) for fl in fleets if int(fl[1]) >= 0 and int(fl[1]) != p)
+    my_s, en_s = my_ps + my_fs, en_ps + en_fs
+    my_pl = sum(1 for pl in planets if int(pl[1]) == p)
+    en_pl = sum(1 for pl in planets if int(pl[1]) >= 0 and int(pl[1]) != p)
+    gfeat = np.array([
+        step / 500., my_s / 1000., en_s / 1000.,
+        my_pl / 20., en_pl / 20., (my_s - en_s) / 1000.,
+    ], np.float32)
+
+    return np.concatenate([pfeat.ravel(), ffeat.ravel(), gfeat])
+
+
+# ── RL agent factory for Python-side eval ─────────────────────────────────────
+
+def make_rl_agent(params, model):
+    """
+    Return a callable `agent(obs) -> launch_list` compatible with kaggle env.run().
+    Planet format: [id, owner, x, y, r, ships, prod]
+    """
+    def rl_agent(obs):
+        if isinstance(obs, dict):
+            player  = int(obs.get('player', 0))
+            planets = list(obs.get('planets', []))
+        else:
+            player  = int(getattr(obs, 'player', 0) or 0)
+            planets = list(getattr(obs, 'planets', None) or [])
+        obs_vec = encode_obs_python(obs, player)
+
+        owned = [(i, pl) for i, pl in enumerate(planets[:oj.MAX_OBS_PLANETS])
+                 if int(pl[1]) == player and float(pl[5]) >= MIN_SHIPS]
+        if not owned:
+            return []
+
+        launches = []
+        for src_idx, src in owned:
+            x, y, ships = float(src[2]), float(src[3]), float(src[5])
+            dx, dy = x - 50., y - 50.
+            pf = np.array([
+                x/100., y/100., float(src[4])/10., ships/200., float(src[6])/20.,
+                1., 0., 0.,
+                math.sqrt(dx*dx+dy*dy)/70.,
+                math.atan2(dy, dx)/math.pi,
+            ], dtype=np.float32)
+
+            n_alive = sum(1 for pl in planets[:oj.MAX_OBS_PLANETS])
+            tgt_mask = np.zeros(oj.MAX_OBS_PLANETS, dtype=bool)
+            tgt_mask[:n_alive] = True
+            tgt_mask[src_idx] = False
+
+            obs_t  = jnp.array(obs_vec[None])
+            pf_t   = jnp.array(pf[None])
+            mask_t = jnp.array(tgt_mask[None])
+
+            fire_l, tgt_l, frac_l, _ = model.apply(params, obs_t, pf_t, mask_t)
+
+            fire = bool(jax.nn.sigmoid(fire_l[0]) > 0.5)
+            if not fire:
+                continue
+
+            tgt_idx = int(jnp.argmax(tgt_l[0]))
+            frac_idx = int(jnp.argmax(frac_l[0]))
+
+            if tgt_idx >= len(planets) or tgt_idx == src_idx:
+                continue
+            tgt = planets[tgt_idx]
+            tx, ty = float(tgt[2]), float(tgt[3])
+            angle = math.atan2(ty - y, tx - x)
+            n_ships = max(1, int(ships * FRAC_BINS_NP[frac_idx]))
+            launches.append([int(src[0]), angle, n_ships])
+
+        return launches
+
+    return rl_agent
+
+
+# ── Evaluation vs greedy ──────────────────────────────────────────────────────
+
+def evaluate_vs_greedy(params, model, n_games=30):
+    """Seat-balanced eval vs nearest-planet greedy. Returns win rate dict."""
+    from kaggle_environments import make
+
+    def greedy_agent(obs):
+        player  = int(getattr(obs, 'player', 0))
+        planets = list(getattr(obs, 'planets', []))
+        my = [pl for pl in planets if int(pl[1]) == player and float(pl[5]) >= MIN_SHIPS]
+        if not my:
+            return []
+        src = max(my, key=lambda pl: float(pl[5]))
+        targets = [pl for pl in planets if int(pl[1]) != player]
+        if not targets:
+            return []
+        tgt = min(targets, key=lambda pl: math.hypot(float(pl[2])-float(src[2]),
+                                                       float(pl[3])-float(src[3])))
+        angle = math.atan2(float(tgt[3])-float(src[3]), float(tgt[2])-float(src[2]))
+        return [[int(src[0]), angle, int(float(src[5]))]]
+
+    rl_agent = make_rl_agent(params, model)
+    wins_p0 = wins_p1 = 0
+    half = n_games // 2
+
+    for seed in range(half):
+        env = make("orbit_wars", debug=False,
+                   configuration={"seed": seed, "episodeSteps": oj.EPISODE_STEPS})
+        env.run([rl_agent, greedy_agent])
+        r0 = env.steps[-1][0].reward or 0
+        r1 = env.steps[-1][1].reward or 0
+        if r0 > r1:
+            wins_p0 += 1
+
+    for seed in range(half, n_games):
+        env = make("orbit_wars", debug=False,
+                   configuration={"seed": seed, "episodeSteps": oj.EPISODE_STEPS})
+        env.run([greedy_agent, rl_agent])
+        r0 = env.steps[-1][0].reward or 0
+        r1 = env.steps[-1][1].reward or 0
+        if r1 > r0:
+            wins_p1 += 1
+
+    wr = (wins_p0 + wins_p1) / n_games
+    return {"wr": wr, "wr_p0": wins_p0 / half, "wr_p1": wins_p1 / half}
+
+
+# ── Evaluation vs comet_reaper ────────────────────────────────────────────────
+
+def _load_comet_reaper():
+    """Load comet_reaper agent from agents/comet_reaper/main.py."""
+    path = os.path.join(REPO, "agents", "comet_reaper", "main.py")
+    spec = importlib.util.spec_from_file_location("_cr_agent", path)
+    mod  = importlib.util.module_from_spec(spec)
+    sys.modules["_cr_agent"] = mod
+    spec.loader.exec_module(mod)
+    return mod.agent
+
+
+def evaluate_vs_comet_reaper(params, model, n_games=20):
+    """Seat-balanced eval vs comet_reaper. Returns win rate dict or None."""
+    from kaggle_environments import make
+    try:
+        cr_agent = _load_comet_reaper()
+    except Exception as e:
+        print(f"  [Eval CR] unavailable: {e}")
+        return None
+
+    rl_agent = make_rl_agent(params, model)
+    wins_p0 = wins_p1 = 0
+    half = n_games // 2
+
+    for seed in range(half):
+        env = make("orbit_wars", debug=False,
+                   configuration={"seed": seed + 50000, "episodeSteps": oj.EPISODE_STEPS})
+        env.run([rl_agent, cr_agent])
+        r0 = env.steps[-1][0].reward or 0
+        r1 = env.steps[-1][1].reward or 0
+        if r0 > r1:
+            wins_p0 += 1
+
+    for seed in range(half, n_games):
+        env = make("orbit_wars", debug=False,
+                   configuration={"seed": seed + 50000, "episodeSteps": oj.EPISODE_STEPS})
+        env.run([cr_agent, rl_agent])
+        r0 = env.steps[-1][0].reward or 0
+        r1 = env.steps[-1][1].reward or 0
+        if r1 > r0:
+            wins_p1 += 1
+
+    wr = (wins_p0 + wins_p1) / n_games
+    return {"wr": wr, "wr_p0": wins_p0 / half, "wr_p1": wins_p1 / half}
 
 
 # ── Training loop ─────────────────────────────────────────────────────────────
@@ -425,116 +668,82 @@ def train(cfg, run_dir):
     # Reset state pool
     pool = build_reset_pool(cfg["pool_size"])
 
-    # Current game states (one per env)
     N = cfg["num_envs"]
-    key, *env_keys = jax.random.split(key, N+1)
-    env_states = [pool[i % len(pool)] for i in range(N)]
 
-    # Auto-resume
-    ckpt_path = os.path.join(run_dir, "latest.pt")
+    # batch_state is the canonical env state; we never maintain a Python list of N states.
+    batch_state = _stack_states([pool[i % len(pool)] for i in range(N)])
+
     update = 0; total_steps = 0; best_wr = 0.
+    ep_count = 0; last_dones_np = np.zeros(N, bool)
 
     print(f"{'='*64}")
     print(f"PPO JAX | {jax.default_backend()} | {N} envs | {cfg['total_updates']} updates")
     print(f"{'='*64}\n")
 
     t0 = time.time()
-    ep_count = 0
 
     while update < cfg["total_updates"]:
-        buffer   = []
+        buffer = []
 
         # ── Rollout ───────────────────────────────────────────────────────────
         for step_i in range(cfg["rollout_steps"]):
-            # Stack observations for batch inference
-            obs_batch    = np.zeros((N, oj.OBS_DIM), np.float32)
-            p_owner_batch = np.zeros((N, oj.MAX_PLANETS), np.int32)
-            p_alive_batch = np.zeros((N, oj.MAX_PLANETS), bool)
-            p_x_batch    = np.zeros((N, oj.MAX_PLANETS), np.float32)
-            p_y_batch    = np.zeros((N, oj.MAX_PLANETS), np.float32)
-            p_ships_batch = np.zeros((N, oj.MAX_PLANETS), np.float32)
+            # Encode obs for both players in two vectorised GPU calls
+            obs_p0 = np.array(_encode_p0(batch_state))   # (N, OBS_DIM)
+            obs_p1 = np.array(_encode_p1(batch_state))   # (N, OBS_DIM)
 
-            for env_i, st in enumerate(env_states):
-                obs_batch[env_i]     = np.array(oj.encode_obs(st, 0))
-                p_owner_batch[env_i] = np.array(st.p_owner)
-                p_alive_batch[env_i] = np.array(st.p_alive)
-                p_x_batch[env_i]     = np.array(st.p_x)
-                p_y_batch[env_i]     = np.array(st.p_y)
-                p_ships_batch[env_i] = np.array(st.p_ships)
+            # Extract shared state arrays for action sampling
+            p_owner_np = np.array(batch_state.p_owner)   # (N, MAX_PLANETS)
+            p_alive_np = np.array(batch_state.p_alive)
+            p_x_np     = np.array(batch_state.p_x)
+            p_y_np     = np.array(batch_state.p_y)
+            p_ships_np = np.array(batch_state.p_ships)
 
-            key, subkey = jax.random.split(key)
+            key, k0, k1 = jax.random.split(key, 3)
+
+            # P0 actions (policy + PPO aux)
             actions_p0, lp_batch, val_batch, aux = _sample_actions(
                 train_state.params, model,
-                jnp.array(obs_batch),
-                jnp.array(p_owner_batch), jnp.array(p_alive_batch),
-                jnp.array(p_x_batch), jnp.array(p_y_batch), jnp.array(p_ships_batch),
-                subkey,
+                jnp.array(obs_p0), jnp.array(p_owner_np), jnp.array(p_alive_np),
+                jnp.array(p_x_np), jnp.array(p_y_np), jnp.array(p_ships_np),
+                k0, player=0,
             )
 
-            # Opponent: self-play (p1 uses the same policy with obs from p1's perspective)
-            # For simplicity: p1 uses a greedy "fire at nearest" heuristic
-            # TODO: port full OpponentPool logic from train.py
-            actions_p1 = np.zeros((N, oj.MAX_PLANETS, 3), np.float32)
-            for env_i, st in enumerate(env_states):
-                for slot in range(oj.MAX_OBS_PLANETS):
-                    if (not np.array(st.p_alive)[slot] or
-                            np.array(st.p_owner)[slot] != 1 or
-                            np.array(st.p_ships)[slot] < MIN_SHIPS):
-                        continue
-                    sx, sy = float(st.p_x[slot]), float(st.p_y[slot])
-                    best_d, best_tgt = float("inf"), -1
-                    for tsl in range(oj.MAX_PLANETS):
-                        if not np.array(st.p_alive)[tsl] or np.array(st.p_owner)[tsl] == 1:
-                            continue
-                        d = math.hypot(float(st.p_x[tsl])-sx, float(st.p_y[tsl])-sy)
-                        if d < best_d:
-                            best_d, best_tgt = d, tsl
-                    if best_tgt >= 0:
-                        tx, ty = float(st.p_x[best_tgt]), float(st.p_y[best_tgt])
-                        ang = math.atan2(ty-sy, tx-sx)
-                        n_sh = max(1., float(st.p_ships[slot]) * 0.5)
-                        actions_p1[env_i, slot, 0] = ang
-                        actions_p1[env_i, slot, 1] = n_sh
-                        actions_p1[env_i, slot, 2] = 1.0
+            # P1 actions — self-play: same policy, P1's perspective obs
+            actions_p1, _, _, _ = _sample_actions(
+                train_state.params, model,
+                jnp.array(obs_p1), jnp.array(p_owner_np), jnp.array(p_alive_np),
+                jnp.array(p_x_np), jnp.array(p_y_np), jnp.array(p_ships_np),
+                k1, player=1,
+            )
 
-            # Step envs
-            prev_ships = [
-                (float(jnp.sum(jnp.where(st.p_owner==0, st.p_ships*st.p_alive, 0.))) +
-                 float(jnp.sum(jnp.where(st.f_owner==0, st.f_ships*st.f_alive, 0.))),
-                 float(jnp.sum(jnp.where(st.p_owner==1, st.p_ships*st.p_alive, 0.))) +
-                 float(jnp.sum(jnp.where(st.f_owner==1, st.f_ships*st.f_alive, 0.))))
-                for st in env_states
-            ]
+            # Step ALL N environments in a single GPU kernel
+            batch_state_new, _, _, term_rew, dones = _step_batch(
+                batch_state, actions_p0, actions_p1)
 
-            new_states = []
-            step_rewards = []
-            step_dones   = []
-            for env_i, st in enumerate(env_states):
-                a0 = jnp.array(np.array(actions_p0)[env_i])
-                a1 = jnp.array(actions_p1[env_i])
-                ns, _, _, term_rew, done = oj.step_jit(st, a0, a1)
-                new_states.append(ns)
-                step_dones.append(bool(done))
+            # Dense reward: ship-count delta for P0
+            delta       = np.array(_compute_delta_reward(batch_state, batch_state_new))
+            dones_np    = np.array(dones)        # (N,) bool
+            term_rew_np = np.array(term_rew)     # (N,) float32
+            step_rewards = delta * cfg["reward_scale"] + \
+                           term_rew_np * dones_np * cfg["terminal_bonus"]
 
-                my0, en0 = prev_ships[env_i]
-                my1 = float(jnp.sum(jnp.where(ns.p_owner==0, ns.p_ships*ns.p_alive, 0.))) + \
-                      float(jnp.sum(jnp.where(ns.f_owner==0, ns.f_ships*ns.f_alive, 0.)))
-                en1 = float(jnp.sum(jnp.where(ns.p_owner==1, ns.p_ships*ns.p_alive, 0.))) + \
-                      float(jnp.sum(jnp.where(ns.f_owner==1, ns.f_ships*ns.f_alive, 0.)))
-                delta = (my1 - en1) - (my0 - en0)
-                r = delta * cfg["reward_scale"]
-                if bool(done):
-                    r += float(term_rew) * cfg["terminal_bonus"]
-                    ep_count += 1
-                    key, rk = jax.random.split(key)
-                    pool_idx = int(jax.random.randint(rk, (), 0, len(pool)))
-                    new_states[-1] = pool[pool_idx]   # reset from pool
-                step_rewards.append(r)
+            # Reset done envs: vectorised scatter (one .at[].set per GameState field)
+            done_idxs = np.where(dones_np)[0]
+            if len(done_idxs):
+                ep_count += len(done_idxs)
+                reset_pool_idxs = np.random.randint(0, len(pool), size=len(done_idxs))
+                reset_sts = [pool[pi] for pi in reset_pool_idxs]
+                reset_batch = _stack_states(reset_sts)
+                jidxs = jnp.array(done_idxs)
+                batch_state_new = jax.tree_util.tree_map(
+                    lambda b, r: b.at[jidxs].set(r),
+                    batch_state_new, reset_batch)
 
-            env_states = new_states
+            batch_state = batch_state_new   # persistent — no per-env unstack
+            last_dones_np = dones_np
             total_steps += N
 
-            # Store experience from aux
+            # Store P0 experience
             if aux:
                 for k, (env_i, slot_i) in enumerate(
                         zip(aux["env_idx"].tolist(), aux["slot_idx"].tolist())):
@@ -547,8 +756,8 @@ def train(cfg, run_dir):
                         "frac":   int(aux["frac"][k]),
                         "lp":     float(aux["lp"][k]),
                         "val":    float(aux["val"][k]),
-                        "rew":    step_rewards[env_i],
-                        "done":   float(step_dones[env_i]),
+                        "rew":    float(step_rewards[env_i]),
+                        "done":   float(dones_np[env_i]),
                         "env_i":  env_i,
                         "step_i": step_i,
                     })
@@ -556,21 +765,23 @@ def train(cfg, run_dir):
         if not buffer:
             continue
 
-        # Bootstrap vals for non-terminal envs
-        for env_i, st in enumerate(env_states):
-            if not step_dones[env_i]:
-                obs_v = np.array(oj.encode_obs(st, 0))[None]
-                pf_v  = np.zeros((1, oj.PLANET_FEATS), np.float32)
-                mk_v  = np.ones((1, oj.MAX_OBS_PLANETS), bool)
-                _, _, _, boot_v = model.apply(
-                    train_state.params,
-                    jnp.array(obs_v), jnp.array(pf_v), jnp.array(mk_v),
-                )
-                # Assign boot_val to this env's last buffer entries
-                for e in reversed(buffer):
-                    if e["env_i"] == env_i:
-                        e["boot_val"] = float(boot_v[0])
-                        break
+        # Bootstrap: one vectorised model call for ALL envs, zero out done ones
+        boot_obs = np.array(_encode_p0(batch_state))          # (N, OBS_DIM)
+        boot_pf  = np.zeros((N, oj.PLANET_FEATS), np.float32)
+        boot_mk  = np.ones((N, oj.MAX_OBS_PLANETS), bool)
+        _, _, _, boot_vals_j = model.apply(
+            train_state.params,
+            jnp.array(boot_obs), jnp.array(boot_pf), jnp.array(boot_mk),
+        )
+        boot_vals = np.array(boot_vals_j) * (~last_dones_np)  # (N,) zero for done envs
+
+        # Attach bootstrap value to last buffer entry per env
+        seen = set()
+        for e in reversed(buffer):
+            ei = e["env_i"]
+            if ei not in seen and not e["done"]:
+                e["boot_val"] = float(boot_vals[ei])
+                seen.add(ei)
 
         compute_gae(buffer, cfg)
         train_state, loss, ev, ent = ppo_update(train_state, buffer, cfg)
@@ -591,6 +802,28 @@ def train(cfg, run_dir):
                   f"| EV:{ev:.3f} | Ent:{ent:.3f} | EP:{ep_count} | SPS:{sps:.0f} "
                   f"| {(time.time()-t0)/3600:.1f}h")
 
+        # ── Periodic eval ─────────────────────────────────────────────────────
+        if update % cfg["eval_every"] == 0:
+            print(f"  [U{update}] Running eval...")
+            gr = evaluate_vs_greedy(train_state.params, model, n_games=30)
+            cr = evaluate_vs_comet_reaper(train_state.params, model, n_games=20)
+            cr_wr = cr["wr"] if cr else None
+            print(f"  eval_vs_greedy={gr['wr']:.3f}  comet_reaper_WR={cr_wr}")
+            eval_row = {
+                "update": update, "steps": total_steps,
+                "eval_vs_greedy": round(gr["wr"], 4),
+                "eval_vs_greedy_p0": round(gr["wr_p0"], 4),
+                "eval_vs_greedy_p1": round(gr["wr_p1"], 4),
+                "comet_reaper_WR": round(cr_wr, 4) if cr_wr is not None else None,
+                "comet_reaper_WR_p0": round(cr["wr_p0"], 4) if cr else None,
+                "comet_reaper_WR_p1": round(cr["wr_p1"], 4) if cr else None,
+                "ts": int(time.time()),
+            }
+            log_metrics(eval_row, run_dir)
+            if cr_wr is not None and cr_wr > best_wr:
+                best_wr = cr_wr
+
+        # ── Checkpoint ────────────────────────────────────────────────────────
         if update % cfg["save_every"] == 0:
             import pickle
             with open(os.path.join(run_dir, "latest.pkl"), "wb") as f:
