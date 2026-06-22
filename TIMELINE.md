@@ -482,4 +482,11 @@ exactly this architecture. Prior BC failure (Phase 4, lost 0–16) used a global
 3. Train: `agents/rl_ppo/bc_train.py` (new script) — CE loss on fire/target/frac per owned planet
 4. Gate: `eval_checkpoints.py --vs-comet --n-games 200` — comet_reaper_WR > 0% → submit
 
-**Status:** OPEN — data download step next.
+**Status:** CLOSED FAIL 2026-06-21.
+
+**Results:** 20 epochs on 982k per-planet examples from 1400+ Elo teams (2,650 episodes).
+fire=91%, tgt=19% (vs 5% chance), frac=79%. comet_reaper_WR=0/200, avg game 88/500 steps —
+crushed before midgame. BC ceiling confirmed: imitation captures *what* top players do,
+not *why*. orbit_lite exploits the gap immediately.
+
+**Final answer: comet_reaper (sub 53707586, ~1235 Elo).** Competition ends 2026-06-23.

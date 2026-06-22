@@ -113,8 +113,17 @@ python agents/rl_ppo/eval_checkpoints.py \
 
 | Date | Gate | Metric | Value | Notes |
 |------|------|--------|-------|-------|
-| | | | | |
+| 2026-06-21 | Training | fire acc | 91% | 20 epochs, 982k examples |
+| 2026-06-21 | Training | tgt acc | 19% (chance=5%) | Still improving at E20 |
+| 2026-06-21 | Training | frac acc | 79% | |
+| 2026-06-21 | Gate 3 | comet_reaper_WR | 0% (0/200) | Mean episode length 88 steps — crushed early |
 
-## Verdict
+## Verdict: CLOSED FAIL
 
-OPEN
+**BC ceiling confirmed.** 0/200 vs comet_reaper bot, avg game length 88/500 steps —
+the BC model is destroyed before the midgame. Same result as Phase 4 PlanetPolicy BC
+(which lost 0-16). Training metrics looked healthy (fire=91%, tgt=19% vs 5% chance)
+but imitation of *what* top players do doesn't capture *why*, and orbit_lite
+exploits the gap immediately.
+
+**comet_reaper (sub 53707586, ~1235 Elo) is the final submission.**
