@@ -490,3 +490,30 @@ crushed before midgame. BC ceiling confirmed: imitation captures *what* top play
 not *why*. orbit_lite exploits the gap immediately.
 
 **Final answer: comet_reaper (sub 53707586, ~1235 Elo).** Competition ends 2026-06-23.
+
+---
+
+## 2026-06-22 — v10-jax: Pure-JAX Engine (commit 105ab1e)
+
+**Milestone:** JAX game engine + two-phase validation gate committed to `v10-jax` branch.
+
+**orbit_jax.py** — fully-vectorised `step()` with no Python loops in hot path:
+- Fleet ring-buffer write slots via prefix-cumsum (no loop)
+- Fleet-planet swept-pair CCD via `(F,P)` broadcasting — no nested `vmap`
+- Comet spawning/expiry, orbit rotation, production all vectorised
+- Compile time: <10 s on CPU (was 3-5 min with nested vmap)
+
+**Bugs fixed vs Python interpreter (4 parity bugs):**
+1. Comet spawn trigger: `cur_step == 50` (not 49)
+2. Spawn position: `path[0]` immediately; `c_path_idx = 0` (not -99,-99 then advance)
+3. No double-advance on spawn tick (`already_adv = active_c & ~should_spawn`)
+4. Terminal condition: `slimit = cur_step >= EPISODE_STEPS-1` (not -2)
+
+**Validation result:**
+- Phase 1 (no-op exact): 20/20 (100%) — zero step/winner errors
+- Phase 2 (bot winner agreement): 15/20 (75%) — threshold 65%
+
+**train_jax.py** — ActorCriticET Transformer PPO, smoke test exit 0 (768 steps, 4 envs).
+**launch_gpu.sh** — validates engine (N=20) then runs training on A100.
+
+**Next:** deploy to Jetstream2 A100, measure SPS target (≥1000 SPS / 10k parallel envs).
