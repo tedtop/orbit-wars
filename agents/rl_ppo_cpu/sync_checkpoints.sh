@@ -7,25 +7,25 @@
 #   2. Challenger must beat current champion >0.50 win rate over n_games.
 #   3. Previous champions kept in checkpoints/pool/ — never discarded.
 #
-# Usage: bash agents/rl_ppo/sync_checkpoints.sh
+# Usage: bash agents/rl_ppo_cpu/sync_checkpoints.sh
 set -e
 
 HOSTS=(
-    "149.165.175.182"   # m3.quad
-    "149.165.174.18"    # m3.2xl
-    "149.165.174.133"
-    "149.165.171.142"
-    "149.165.170.73"
-    "149.165.171.248"
-    "149.165.175.105"   # m3.xl
-    "149.165.170.84"
-    "149.165.175.177"
+    "149.165.169.195"  # ppo-1
+    "149.165.173.145"  # ppo-2
+    "149.165.174.28"   # ppo-3
+    "149.165.175.244"  # ppo-4
+    "149.165.174.123"  # ppo-5
+    "149.165.154.56"   # ppo-6
+    "149.165.155.119"  # ppo-7
+    "149.165.150.220"  # ppo-8
+    "149.165.171.224"  # ppo-9
 )
 USER="exouser"
 REPO_DIR="/home/${USER}/orbit_wars"
-LOCAL_OUT="agents/rl_ppo/runs/remote"
-CHAMPION="agents/rl_ppo/checkpoints/champion.pt"
-POOL_DIR="agents/rl_ppo/checkpoints/pool"
+LOCAL_OUT="agents/rl_ppo_cpu/runs/remote"
+CHAMPION="agents/rl_ppo_cpu/checkpoints/champion.pt"
+POOL_DIR="agents/rl_ppo_cpu/checkpoints/pool"
 STATE_FILE="ORCHESTRATOR_STATE.md"
 SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=10 -i $HOME/.ssh/id_rsa"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -43,7 +43,7 @@ for HOST in "${HOSTS[@]}"; do
         --include='*/' --include='best_model.pt' --include='*.log' \
         --include='metrics.jsonl' --exclude='*' \
         -e "ssh $SSH_OPTS" \
-        "${USER}@${HOST}:${REPO_DIR}/agents/rl_ppo/runs/" \
+        "${USER}@${HOST}:${REPO_DIR}/agents/rl_ppo_cpu/runs/" \
         "$HOST_DIR/" 2>/dev/null && echo "✓ $HOST synced" || echo "✗ $HOST unreachable"
 done
 
@@ -52,13 +52,13 @@ echo ""
 echo "=== Champion selection ==="
 
 CANDIDATES=()
-while IFS= read -r line; do CANDIDATES+=("$line"); done < <(find "$LOCAL_OUT" -name "best_model.pt" 2>/dev/null | sort)
+while IFS= read -r line; do CANDIDATES+=("$line"); done < <(find "$LOCAL_OUT" -path '*v9*' -name "best_model.pt" 2>/dev/null | sort)
 
 # Also sync opp_log.jsonl files (logging only — no eval impact)
 for H in "${HOSTS[@]}"; do
     rsync -az -e "ssh $SSH_OPTS" \
       --include="*/" --include="opp_log.jsonl" --exclude="*" \
-      "${USER}@${H}:${REPO_DIR}/agents/rl_ppo/runs/" \
+      "${USER}@${H}:${REPO_DIR}/agents/rl_ppo_cpu/runs/" \
       "${LOCAL_OUT}/${H}/" 2>/dev/null || true
 done
 
@@ -119,7 +119,6 @@ if not printed:
 if [ ! -f "$CHAMPION" ]; then
     BEST_SEED=""; BEST_WR_SEED=0
     for C in "${CANDIDATES[@]}"; do
-        [[ "$C" == *"175.182"* ]] && continue
         WR=$(get_best_wr "$C")
         if awk "BEGIN{exit !($WR > $BEST_WR_SEED)}" 2>/dev/null; then
             BEST_WR_SEED=$WR; BEST_SEED=$C
@@ -136,12 +135,10 @@ fi
 CURRENT_U=$(get_update "$CHAMPION")
 CURRENT_WR=$(get_best_wr "$CHAMPION")
 
-# Find challenger: best-eval 64-env candidate at least U+50 deeper than champion
+# Find challenger: best-eval candidate at least U+50 deeper than champion
 # Ranked by greedy eval WR (not deepest U) — quality, not clock time
-# Exclude m3.quad (175.182) — entropy-collapsed, 8-env seeds are not valid challengers
 CHALLENGER=""; CHALLENGER_U=0; CHALLENGER_WR=0; CHALLENGER_LABEL=""
 for C in "${CANDIDATES[@]}"; do
-    [[ "$C" == *"175.182"* ]] && continue   # skip quad
     U=$(get_update "$C")
     WR=$(get_best_wr "$C")
     if [ "${U:-0}" -gt "$((CURRENT_U + 50))" ] 2>/dev/null; then
@@ -207,7 +204,7 @@ print(data[start:end] if start >= 0 and end > start else '')
             echo "  Pushing champion to fleet..."
             for H in "${HOSTS[@]}"; do
                 rsync -az -e "ssh $SSH_OPTS" "$CHAMPION" \
-                    "${USER}@${H}:${REPO_DIR}/agents/rl_ppo/checkpoints/champion.pt" 2>/dev/null &
+                    "${USER}@${H}:${REPO_DIR}/agents/rl_ppo_cpu/checkpoints/champion.pt" 2>/dev/null &
             done
             wait
             echo "  Champion pushed to ${#HOSTS[@]} hosts"
@@ -332,12 +329,13 @@ print(f'league_state.json written (v{champ_ver}, U={champ_u}, comet_reaper_bot_W
 PYEOF
 
 # Push league_state.json to all fleet hosts so monitor.sh can show league header
-if [ -f "$LEAGUE_JSON" ]; then
+# Only push if champion.pt actually exists (skip when no v9 candidates have been evaled yet)
+if [ -f "$LEAGUE_JSON" ] && [ -f "$CHAMPION" ]; then
     PUSH_OK=0
     for H in "${HOSTS[@]}"; do
         scp -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i "$HOME/.ssh/id_rsa" \
             "$LEAGUE_JSON" \
-            "${USER}@${H}:${REPO_DIR}/agents/rl_ppo/checkpoints/league_state.json" 2>/dev/null && PUSH_OK=$((PUSH_OK+1)) &
+            "${USER}@${H}:${REPO_DIR}/agents/rl_ppo_cpu/checkpoints/league_state.json" 2>/dev/null && PUSH_OK=$((PUSH_OK+1)) &
     done
     wait
     echo "  league_state pushed to ${PUSH_OK}/${#HOSTS[@]} hosts"

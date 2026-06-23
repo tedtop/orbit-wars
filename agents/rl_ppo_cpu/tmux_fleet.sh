@@ -1,24 +1,30 @@
 #!/usr/bin/env bash
-# Orbit Wars fleet monitor — active instances only.
-# v7 fleet: ppo-1 + ppo-2 active (A/B arms); ppo-3 through ppo-9 shelved to save SUs.
-# Usage:    bash agents/rl_ppo/tmux_fleet.sh
-# Reattach: tmux attach -t orbit_fleet
+# Orbit Wars fleet monitor — v9 ET, 9-instance fleet.
+# Usage:    bash agents/rl_ppo_cpu/tmux_fleet.sh
+# Reattach: tmux attach -t jetstream2_fleet
 # Detach:   Ctrl-b d  |  Zoom: Ctrl-b z  |  Navigate: Ctrl-b arrow
 
-SESSION="orbit_fleet"
+SESSION="jetstream2_fleet"
 SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=15 -o ServerAliveInterval=20"
 
-# label:IP — add ppo-3 through ppo-9 back when unshelved for VARIANT-B
+# label:IP — fill in IPs from Jetstream2 before running
 REMOTES=(
-    "ppo-1:149.165.175.228"
-    "ppo-2:149.165.175.188"
+    "ppo-1:149.165.169.195"
+    "ppo-2:149.165.173.145"
+    "ppo-3:149.165.174.28"
+    "ppo-4:149.165.175.244"
+    "ppo-5:149.165.174.123"
+    "ppo-6:149.165.154.56"
+    "ppo-7:149.165.155.119"
+    "ppo-8:149.165.150.220"
+    "ppo-9:149.165.171.224"
 )
 
 # Build the per-pane command: SSH with auto-reconnect so the pane never dies
 pane_cmd() {
     local LABEL="$1" IP="$2"
     # Retry loop keeps the pane alive if SSH drops
-    printf "while true; do ssh -tt %s exouser@%s 'bash ~/orbit_wars/agents/rl_ppo/monitor.sh %s %s'; echo '[%s] disconnected — retrying in 8s...'; sleep 8; done" \
+    printf "while true; do ssh -tt %s exouser@%s 'bash ~/orbit_wars/agents/rl_ppo_cpu/monitor.sh %s %s'; echo '[%s] disconnected — retrying in 8s...'; sleep 8; done" \
         "$SSH_OPTS" "$IP" "$LABEL" "$IP" "$LABEL"
 }
 
@@ -49,12 +55,12 @@ tmux set -t "$SESSION" pane-active-border-style "fg=#f9e2af"
 
 # Status bar
 tmux set -t "$SESSION" status-style    "bg=#1e1e2e,fg=#cdd6f4"
-tmux set -t "$SESSION" status-right    "#[fg=#f9e2af]orbit_fleet  #[fg=#a6e3a1]%H:%M"
+tmux set -t "$SESSION" status-right    "#[fg=#f9e2af]jetstream2_fleet  #[fg=#a6e3a1]%H:%M"
 tmux set -t "$SESSION" status-interval 15
 
 tmux select-pane -t "$SESSION:fleet.0"
 
-echo "=== orbit_fleet: ${#REMOTES[@]} active panes (ppo-3 through ppo-9 shelved) ==="
+echo "=== jetstream2_fleet: ${#REMOTES[@]} active panes ==="
 echo "  Ctrl-b d  detach    Ctrl-b z  zoom pane"
 echo "  Ctrl-b o  next      Ctrl-b ;  last active"
 echo ""

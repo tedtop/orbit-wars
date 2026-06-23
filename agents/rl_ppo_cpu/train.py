@@ -215,9 +215,130 @@ class ActorCritic(nn.Module):
         return fire_dist, tgt_dist, frac_dist, val
 
 
-policy = ActorCritic().to(DEVICE)
+class ActorCriticET(nn.Module):
+    """
+    Entity-Transformer policy: planets/fleets as a set of objects, not a flat vector.
+
+    Key difference from ActorCritic: instead of flattening all entities into a
+    302-dim vector and running an MLP, each planet and fleet is kept as its own
+    object and processed through a Transformer encoder.  Attention lets every
+    planet "see" every other planet — the relational structure the game is built
+    on — so the value function can actually predict outcomes and EV should reach
+    >0.9 early (vs the <0.84 cap of the flat MLP).
+
+    Drop-in replacement: same forward signature as ActorCritic.
+    Target selection uses dot-product attention between source query and per-planet
+    representations, which is strictly more expressive than a linear projection.
+    """
+    _PLANET_END = MAX_PLANETS * PLANET_FEATS
+    _FLEET_END  = _PLANET_END + MAX_FLEETS * FLEET_FEATS
+
+    def __init__(self, embed_dim=64, n_heads=4, n_layers=2):
+        super().__init__()
+        self.embed_dim = embed_dim
+
+        self.planet_embed = nn.Linear(PLANET_FEATS, embed_dim)
+        self.fleet_embed  = nn.Linear(FLEET_FEATS,  embed_dim)
+        self.global_embed = nn.Linear(GLOBAL_FEATS, embed_dim)
+
+        enc_layer = nn.TransformerEncoderLayer(
+            d_model=embed_dim, nhead=n_heads,
+            dim_feedforward=embed_dim * 4,
+            dropout=0.0, batch_first=True, norm_first=True,
+        )
+        self.transformer = nn.TransformerEncoder(enc_layer, num_layers=n_layers)
+
+        # fire + frac: source context (global pool + raw planet feats)
+        src_dim = embed_dim + PLANET_FEATS
+        self.fire_head = nn.Linear(src_dim, 1)
+        self.frac_head = nn.Linear(src_dim, N_FRACS)
+
+        # target: learned query from source context, scored against per-planet reps
+        self.tgt_query = nn.Linear(src_dim, embed_dim)
+
+        self.val_head  = nn.Linear(embed_dim, 1)
+        self._init_weights()
+
+    def _init_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.orthogonal_(m.weight, gain=math.sqrt(2))
+                nn.init.constant_(m.bias, 0)
+        for h in (self.fire_head, self.frac_head, self.tgt_query):
+            nn.init.orthogonal_(h.weight, gain=0.01)
+        nn.init.orthogonal_(self.val_head.weight, gain=1.0)
+
+    def _run_transformer(self, obs_t: torch.Tensor):
+        """Parse flat obs, run transformer, return (global_rep, planet_reps).
+        global_rep:   (B, E)       — mean-pool of all entity outputs
+        planet_reps:  (B, 20, E)   — per-planet representations
+        """
+        B = obs_t.shape[0]
+        planets = obs_t[:, :self._PLANET_END].reshape(B, MAX_PLANETS, PLANET_FEATS)
+        fleets  = obs_t[:, self._PLANET_END:self._FLEET_END].reshape(B, MAX_FLEETS, FLEET_FEATS)
+        glob    = obs_t[:, self._FLEET_END:]
+
+        p_emb = self.planet_embed(planets)            # (B, 20, E)
+        f_emb = self.fleet_embed(fleets)              # (B, 12, E)
+        g_emb = self.global_embed(glob).unsqueeze(1)  # (B,  1, E)
+
+        seq = torch.cat([g_emb, p_emb, f_emb], dim=1)  # (B, 33, E)
+        out = self.transformer(seq)                      # (B, 33, E)
+
+        global_rep  = out.mean(dim=1)          # (B, E)
+        planet_reps = out[:, 1:1+MAX_PLANETS]  # (B, 20, E)
+        return global_rep, planet_reps
+
+    def shared_embed(self, obs_t: torch.Tensor) -> torch.Tensor:
+        global_rep, _ = self._run_transformer(obs_t)
+        return global_rep
+
+    def value(self, obs_t: torch.Tensor) -> torch.Tensor:
+        return self.val_head(self.shared_embed(obs_t)).squeeze(-1)
+
+    def forward(self, obs_t, planet_feats_t, tgt_mask=None):
+        global_rep, planet_reps = self._run_transformer(obs_t)
+
+        src_ctx = torch.cat([global_rep, planet_feats_t], dim=-1)  # (B, E+10)
+
+        fire_logits = self.fire_head(src_ctx).squeeze(-1)   # (B,)
+        frac_logits = self.frac_head(src_ctx)               # (B, N_FRACS)
+
+        # Target: dot-product attention — source query vs all planet representations
+        q = self.tgt_query(src_ctx)                         # (B, E)
+        tgt_logits = torch.bmm(
+            q.unsqueeze(1),                                 # (B, 1, E)
+            planet_reps.transpose(1, 2)                     # (B, E, 20)
+        ).squeeze(1) / math.sqrt(self.embed_dim)            # (B, 20)
+
+        if tgt_mask is not None:
+            tgt_logits = tgt_logits.masked_fill(~tgt_mask, -1e8)
+
+        val = self.val_head(global_rep).squeeze(-1)         # (B,)
+
+        fire_dist = torch.distributions.Bernoulli(logits=fire_logits)
+        tgt_dist  = Categorical(logits=tgt_logits)
+        frac_dist = Categorical(logits=frac_logits)
+        return fire_dist, tgt_dist, frac_dist, val
+
+
+# Model selected by --model-type flag (default mlp for backward compat).
+# Parsed from sys.argv early so the correct class is instantiated at module load.
+import sys as _sys
+_MODEL_TYPE = "mlp"
+if "--model-type" in _sys.argv:
+    _idx = _sys.argv.index("--model-type")
+    if _idx + 1 < len(_sys.argv):
+        _MODEL_TYPE = _sys.argv[_idx + 1]
+
+def _build_policy(model_type: str):
+    if model_type == "et":
+        return ActorCriticET().to(DEVICE)
+    return ActorCritic().to(DEVICE)
+
+policy = _build_policy(_MODEL_TYPE)
 n_params = sum(p.numel() for p in policy.parameters())
-print(f"Model: {n_params:,} parameters  |  OBS_DIM={OBS_DIM}")
+print(f"Model: {n_params:,} parameters  |  OBS_DIM={OBS_DIM}  |  type={_MODEL_TYPE}")
 
 
 # ── Action execution ───────────────────────────────────────────────────────────
@@ -478,7 +599,7 @@ class OpponentPool:
             sd = random.choice(pool)
         else:
             return None
-        p = ActorCritic().to(DEVICE)
+        p = _build_policy(_MODEL_TYPE)
         p.load_state_dict(sd)
         p.eval()
         return p
@@ -963,14 +1084,16 @@ def train():
                 best_wr = wr
                 torch.save({"state": policy.state_dict(), "update": update,
                             "steps": total_steps, "best_wr": wr,
-                            "cr_wr": cr_wr if cr_wr is not None else 0.0},
+                            "cr_wr": cr_wr if cr_wr is not None else 0.0,
+                            "model_type": _MODEL_TYPE},
                            os.path.join(run_dir, "best_model.pt"))
                 print(f"  *** New best: {wr:.0%} (vs greedy); vs CR: {cr_wr:.0%} ***" if cr_wr else f"  *** New best: {wr:.0%} ***")
 
         if update % CFG["checkpoint_every"] == 0:
             opponent_pool.add(policy)
             torch.save({"state": policy.state_dict(), "update": update,
-                        "steps": total_steps}, os.path.join(run_dir, f"ckpt_{update}.pt"))
+                        "steps": total_steps, "model_type": _MODEL_TYPE},
+                       os.path.join(run_dir, f"ckpt_{update}.pt"))
             # Refresh cross-seed champion (sync_checkpoints.sh may have pushed a new one)
             opponent_pool.load_champion(_champion_path)
             # Log the champion reload so the dashboard can show OPP version per job
@@ -987,11 +1110,13 @@ def train():
 
         if update % CFG["save_every"] == 0:
             torch.save({"state": policy.state_dict(), "optimizer": optimizer.state_dict(),
-                        "update": update, "steps": total_steps, "best_wr": best_wr},
+                        "update": update, "steps": total_steps, "best_wr": best_wr,
+                        "model_type": _MODEL_TYPE},
                        os.path.join(run_dir, "latest.pt"))
 
     torch.save({"state": policy.state_dict(), "update": update,
-                "steps": total_steps}, os.path.join(run_dir, "final_model.pt"))
+                "steps": total_steps, "model_type": _MODEL_TYPE},
+               os.path.join(run_dir, "final_model.pt"))
     print(f"\nDone. Total steps: {total_steps:,d}")
 
 
@@ -1003,6 +1128,9 @@ if __name__ == "__main__":
     p.add_argument("--lr",            type=float, default=None)
     p.add_argument("--reward_scale",  type=float, default=None)
     p.add_argument("--run_name",      type=str,   default="default")
+    p.add_argument("--model-type",    type=str,   default="mlp",
+                   choices=["mlp", "et"],
+                   help="mlp = original flat-MLP ActorCritic; et = EntityTransformer")
     args = p.parse_args()
     if args.num_envs      is not None: CFG["num_envs"]      = args.num_envs
     if args.total_updates is not None: CFG["total_updates"]  = args.total_updates

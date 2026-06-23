@@ -15,3 +15,7 @@ agents/comet_reaper
 experiments/v5_engine_tuning/tuning/study.db
 experiments/v5_engine_tuning/logs/
 experiments/v5_engine_tuning/intel_kernels/
+agents/rl_ppo_cpu/runs/
+agents/rl_ppo_cpu/checkpoints/
+agents/rl_ppo_jax/runs/
+best_model.pt
