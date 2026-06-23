@@ -5,10 +5,10 @@ Trains the same ActorCritic used by PPO (train.py) via supervised learning
 on prize-zone replay data extracted by pipeline/extract_moves.py.
 
 Usage:
-    python agents/rl_ppo/bc_train.py \
+    python agents/rl_ppo_cpu/bc_train.py \
         --data training/moves_v8.jsonl.gz \
         --epochs 10 --lr 1e-3 --batch-size 512 \
-        --out agents/rl_ppo/checkpoints/bc_best.pt
+        --out agents/rl_ppo_cpu/checkpoints/bc_best.pt
 """
 
 import argparse
@@ -387,7 +387,7 @@ def train(args):
             print(f"  -> saved best checkpoint (val_loss={vl:.4f})")
 
     print(f"\nDone. Best val_loss={best_val_loss:.4f} | checkpoint: {args.out}")
-    print(f"Next: python agents/rl_ppo/eval_checkpoints.py --checkpoint-a {args.out} --vs-comet --n-games 200")
+    print(f"Next: python agents/rl_ppo_cpu/eval_checkpoints.py --checkpoint-a {args.out} --vs-comet --n-games 200")
 
 
 def main():
@@ -397,7 +397,7 @@ def main():
     ap.add_argument("--epochs",     type=int,   default=10)
     ap.add_argument("--lr",         type=float, default=1e-3)
     ap.add_argument("--batch-size", type=int,   default=512)
-    ap.add_argument("--out",        default="agents/rl_ppo/checkpoints/bc_best.pt")
+    ap.add_argument("--out",        default="agents/rl_ppo_cpu/checkpoints/bc_best.pt")
     args = ap.parse_args()
     train(args)
 

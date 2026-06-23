@@ -56,9 +56,9 @@ sync_rl_if_due() {
             return
         fi
     fi
-    if [[ -f "agents/rl_ppo/sync_checkpoints.sh" ]]; then
+    if [[ -f "agents/rl_ppo_cpu/sync_checkpoints.sh" ]]; then
         echo "=== $(date '+%H:%M:%S') — RL sync ==="
-        bash agents/rl_ppo/sync_checkpoints.sh 2>/dev/null | grep -E 'synced|unreachable|Best' || true
+        bash agents/rl_ppo_cpu/sync_checkpoints.sh 2>/dev/null | grep -E 'synced|unreachable|Best' || true
         date +%s > "$RL_LOCK_FILE"
     fi
 }

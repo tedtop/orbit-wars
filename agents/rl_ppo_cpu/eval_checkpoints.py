@@ -28,17 +28,20 @@ from kaggle_environments import make
 # Import shared model/inference code from train.py
 sys.path.insert(0, os.path.dirname(__file__))
 from train import (
-    ActorCritic, collect_planet_actions, make_launches,
+    ActorCritic, ActorCriticET, _build_policy,
+    collect_planet_actions, make_launches,
     DEVICE, TOTAL_STEPS, MIN_SHIPS
 )
 
 
 def load_policy(checkpoint_path):
-    policy = ActorCritic().to(DEVICE)
     ckpt = torch.load(checkpoint_path, map_location=DEVICE)
+    model_type = ckpt.get("model_type", "mlp")
+    policy = _build_policy(model_type)
     policy.load_state_dict(ckpt["state"])
     policy.eval()
-    meta = {"update": ckpt.get("update", "?"), "steps": ckpt.get("steps", "?")}
+    meta = {"update": ckpt.get("update", "?"), "steps": ckpt.get("steps", "?"),
+            "model_type": model_type}
     return policy, meta
 
 

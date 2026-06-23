@@ -1,6 +1,21 @@
 # Orbit Wars — Active TODO
 
-Updated: 2026-06-18 21:00 MT
+Updated: 2026-06-22 07:10 MT
+
+## Post-competition cleanup (do after June 23)
+
+- [ ] Delete stale v6 run dirs from `agents/rl_ppo/runs/` (v6_cr2/cr3/cr4, v6_fresh/greedy/main/sym, ent_fix_test, et_benchmark, eval_fix_test, gae_fix_test, gae_full, h1_test, remote/)
+- [ ] Delete loose .log files at `agents/rl_ppo/` root level
+- [ ] Delete `agents/rl_ppo/checkpoints/pool/` MLP champion relics
+- [ ] Delete `agents/rl_ppo/launch_gpu.sh` (speculative, never used, superseded by JAX rewrite)
+- [ ] Add `agents/rl_ppo/runs/` and `agents/rl_ppo/checkpoints/` to `.gitignore`
+- [ ] Commit actual code changes: train.py, monitor.sh, sync_checkpoints.sh, eval_checkpoints.py, launch_cpu.sh
+- [ ] Future experiments: use versioned subfolders (experiments/v9_et/runs/ + /checkpoints/) to avoid cross-contamination
+- [ ] Review v10-jax worktree (`../orbit_wars_jax/`) — merge or close branch
+
+---
+
+## Stale entries (from 2026-06-18, kept for reference)
 
 ## Blocking / high priority
 

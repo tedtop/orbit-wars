@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # GPU server launch script for Jetstream2 (A100) or Lambda Labs GH200
-# Run from repo root: bash agents/rl_ppo/launch_gpu.sh
+# Run from repo root: bash agents/rl_ppo_cpu/launch_gpu.sh
 set -e
 
 # ── Config ────────────────────────────────────────────────────────────────────
 PYTHON=${PYTHON:-python3}
-LOG_DIR=agents/rl_ppo/runs
+LOG_DIR=agents/rl_ppo_cpu/runs
 RUN_NAME="gpu_$(date +%Y%m%d_%H%M%S)"
 LOG_FILE="$LOG_DIR/${RUN_NAME}.log"
 
@@ -34,7 +34,7 @@ echo "[launch] Starting training run: $RUN_NAME"
 echo "[launch] Log: $LOG_FILE"
 echo "[launch] num_envs=$OW_NUM_ENVS  total_updates=$OW_TOTAL_UPDATES"
 
-nohup python agents/rl_ppo/train.py \
+nohup python agents/rl_ppo_cpu/train.py \
     --num_envs ${OW_NUM_ENVS} \
     --total_updates ${OW_TOTAL_UPDATES} \
     > "$LOG_FILE" 2>&1 &

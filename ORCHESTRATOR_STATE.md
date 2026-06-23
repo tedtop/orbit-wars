@@ -1199,3 +1199,120 @@ Pool size:        3 checkpoints
 
 ### Champion eval — 2026-06-22 02:50 | champion=U400 WR=0.36666666666666664 | no challenger  comet_reaper_WR=0.000
 Pool size:        3 checkpoints
+
+### Champion eval — 2026-06-22 03:04 | champion=U400 WR=0.36666666666666664 | no challenger  comet_reaper_WR=0.000
+Pool size:        3 checkpoints
+
+### Champion eval — 2026-06-22 03:19 | champion=U400 WR=0.36666666666666664 | no challenger  comet_reaper_WR=0.000
+Pool size:        3 checkpoints
+
+### Champion eval — 2026-06-22 03:33 | champion=U400 WR=0.36666666666666664 | no challenger  comet_reaper_WR=0.000
+Pool size:        3 checkpoints
+
+### Champion eval — 2026-06-22 03:47 | champion=U400 WR=0.36666666666666664 | no challenger  comet_reaper_WR=0.000
+Pool size:        3 checkpoints
+
+### Champion eval — 2026-06-22 04:00 | champion=U400 WR=0.36666666666666664 | no challenger  comet_reaper_WR=0.000
+Pool size:        3 checkpoints
+
+### Champion eval — 2026-06-22 04:14 | champion=U400 WR=0.36666666666666664 | no challenger  comet_reaper_WR=0.000
+Pool size:        3 checkpoints
+
+### Champion eval — 2026-06-22 04:26 | champion=U400 WR=0.36666666666666664 | no challenger  comet_reaper_WR=0.000
+Pool size:        3 checkpoints
+
+### Champion eval — 2026-06-22 04:38 | champion=U400 WR=0.36666666666666664 | no challenger  comet_reaper_WR=0.000
+Pool size:        3 checkpoints
+
+### Champion eval — 2026-06-22 04:50 | champion=U400 WR=0.36666666666666664 | no challenger  comet_reaper_WR=0.000
+Pool size:        3 checkpoints
+
+### Champion eval — 2026-06-22 05:02 | champion=U400 WR=0.36666666666666664 | no challenger  comet_reaper_WR=0.000
+Pool size:        3 checkpoints
+
+### Champion eval — 2026-06-22 05:14 | champion=U400 WR=0.36666666666666664 | no challenger  comet_reaper_WR=0.000
+Pool size:        3 checkpoints
+
+### Champion eval — 2026-06-22 05:26 | champion=U400 WR=0.36666666666666664 | no challenger  comet_reaper_WR=0.000
+Pool size:        3 checkpoints
+
+### Champion eval — 2026-06-22 05:37 | champion=U400 WR=0.36666666666666664 | no challenger  comet_reaper_WR=0.000
+Pool size:        3 checkpoints
+
+### Champion eval — 2026-06-22 05:49 | champion=U400 WR=0.36666666666666664 | no challenger  comet_reaper_WR=0.000
+Pool size:        3 checkpoints
+
+### Champion eval — 2026-06-22 06:02 | champion=U400 WR=0.36666666666666664 | no challenger  comet_reaper_WR=0.000
+Pool size:        3 checkpoints
+
+### Champion eval — 2026-06-22 06:13 | champion=U400 WR=0.36666666666666664 | no challenger  comet_reaper_WR=0.000
+Pool size:        3 checkpoints
+
+### Champion eval — 2026-06-22 06:25 | champion=U400 WR=0.36666666666666664 | no challenger  comet_reaper_WR=0.000
+Pool size:        3 checkpoints
+
+### Champion eval — 2026-06-22 09:49 | champion=U100 WR=0.4 | no challenger  comet_reaper_WR=0.000
+Pool size:        3 checkpoints
+
+### Champion eval — 2026-06-22 10:01 | champion=U100 WR=0.4 | no challenger  comet_reaper_WR=0.000
+Pool size:        3 checkpoints
+
+### Champion eval — 2026-06-22 10:13 | champion=U100 WR=0.4 | no challenger  comet_reaper_WR=0.000
+Pool size:        0 checkpoints
+
+### Champion eval — 2026-06-22 10:25 | champion=U100 WR=0.4 | no challenger  comet_reaper_WR=0.000
+Pool size:        0 checkpoints
+
+### Champion eval — 2026-06-22 10:38 | champion=U100 WR=0.4 | no challenger  comet_reaper_WR=0.000
+Pool size:        0 checkpoints
+
+### Champion eval — 2026-06-22 10:50 | champion=U100 WR=0.4 | no challenger  comet_reaper_WR=0.000
+Pool size:        0 checkpoints
+
+### Champion eval — 2026-06-22 11:02 | champion=U100 WR=0.4 | no challenger  comet_reaper_WR=0.000
+Pool size:        0 checkpoints
+
+### Champion eval — 2026-06-22 11:14 | champion=U100 WR=0.4 | no challenger  comet_reaper_WR=0.000
+Pool size:        0 checkpoints
+
+### Champion eval — 2026-06-22 11:26 | champion=U100 WR=0.4 | no challenger  comet_reaper_WR=0.000
+Pool size:        0 checkpoints
+
+### Champion eval — 2026-06-22 11:38 | champion=U100 WR=0.4 | no challenger  comet_reaper_WR=0.000
+Pool size:        0 checkpoints
+
+### Champion eval — 2026-06-22 11:50 | champion=U100 WR=0.4 | no challenger  comet_reaper_WR=0.000
+Pool size:        0 checkpoints
+
+### Champion eval — 2026-06-22 12:01 | champion=U100 WR=0.4 | no challenger  comet_reaper_WR=0.000
+Pool size:        0 checkpoints
+
+### Champion eval — 2026-06-22 12:13 | champion=U100 WR=0.4 | no challenger  comet_reaper_WR=0.000
+Pool size:        0 checkpoints
+
+### Champion eval — 2026-06-22 12:26 | champion=U100 WR=0.4 | no challenger  comet_reaper_WR=0.000
+Pool size:        0 checkpoints
+
+### Champion eval — 2026-06-22 12:38 | champion=U100 WR=0.4 | no challenger  comet_reaper_WR=0.000
+Pool size:        0 checkpoints
+
+### Champion eval — 2026-06-22 12:50 | champion=U100 WR=0.4 | no challenger  comet_reaper_WR=0.000
+Pool size:        0 checkpoints
+
+### Champion eval — 2026-06-22 13:02 | champion=U100 WR=0.4 | no challenger  comet_reaper_WR=0.000
+Pool size:        0 checkpoints
+
+### Champion eval — 2026-06-22 13:14 | champion=U100 WR=0.4 | no challenger  comet_reaper_WR=0.000
+Pool size:        0 checkpoints
+
+### Champion eval — 2026-06-22 13:26 | champion=U100 WR=0.4 | no challenger  comet_reaper_WR=0.000
+Pool size:        0 checkpoints
+
+### Champion eval — 2026-06-22 13:38 | champion=U100 WR=0.4 | no challenger  comet_reaper_WR=0.000
+Pool size:        0 checkpoints
+
+### Champion eval — 2026-06-22 13:51 | champion=U100 WR=0.4 | no challenger  comet_reaper_WR=0.000
+Pool size:        0 checkpoints
+
+### Champion eval — 2026-06-22 14:03 | champion=U100 WR=0.4 | no challenger  comet_reaper_WR=0.000
+Pool size:        0 checkpoints
