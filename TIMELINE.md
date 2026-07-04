@@ -614,3 +614,11 @@ fully static, Vercel-ready, zero chart/animation libraries.
   seven lessons → final standings + 24-phase mission log.
 - **QA:** `next build` + eslint clean; headless-Chrome screenshot pass at desktop
   and mobile widths; zero console errors.
+
+## 2026-07-04 — Presentation site deployed to Vercel
+
+`website_fable/` deployed to production: **https://orbit-wars-smoky.vercel.app**
+(project `orbit-wars`; the plain `orbit-wars.vercel.app` subdomain was already
+taken by another account). Final content: mission-log timeline with education
+post-mortem + next-season playbook, lab field notes (MCTS, Boltzmann search),
+replay theater, GitHub repo link.

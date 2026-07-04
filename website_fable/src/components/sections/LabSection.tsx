@@ -53,10 +53,12 @@ function WinBar({ pct }: { pct: number | null }) {
   );
 }
 
-/* Plain-words explainers for the most interesting weapons in the ledger. */
+/* Plain-words explainers for the most interesting weapons in the ledger.
+   `bots` are footnote links to the ledger rows above (tr ids = exp-<name>). */
 const FIELD_NOTES = [
   {
-    rows: "ledger #13–14",
+    bots: ["CR_mcts_v1", "CR_mcts_v2"],
+    accent: "var(--s-violet)",
     title: "MCTS — Monte Carlo Tree Search",
     body: (
       <>
@@ -73,7 +75,8 @@ const FIELD_NOTES = [
     ),
   },
   {
-    rows: "ledger #17",
+    bots: ["CR_stochastic"],
+    accent: "var(--s-amber)",
     title: "Boltzmann search — playing the odds on your opponent",
     body: (
       <>
@@ -160,10 +163,15 @@ export default function LabSection() {
           <span className="font-mono text-[#2fc32f]">KEEP</span> only if it beat
           the champion by a threshold, otherwise{" "}
           <span className="font-mono text-[#e66c6c]">DISCARD</span> with the
-          reason logged. {rows.length} experiments entered.{" "}
-          <strong className="text-ink">{rows.length - discards} survived.</strong>{" "}
-          That&apos;s not failure — that&apos;s what a ratchet looks like: the
-          champion can only get stronger.
+          reason logged.
+          <span className="mt-6 block font-display text-3xl font-bold text-ink sm:text-4xl">
+            {rows.length} experiments entered.{" "}
+            <span className="text-s-green">{rows.length - discards} survived.</span>
+          </span>
+          <span className="mt-3 block">
+            That&apos;s not failure — that&apos;s what a ratchet looks like: the
+            champion can only get stronger.
+          </span>
         </>
       }
       wide
@@ -184,6 +192,7 @@ export default function LabSection() {
               {rows.map((r) => (
                 <tr
                   key={r.epoch}
+                  id={`exp-${r.name}`}
                   className="border-b border-white/[0.04] transition-colors last:border-0 hover:bg-white/[0.03]"
                 >
                   <td className="px-5 py-2.5 font-mono text-[11px] text-ink-3">{r.epoch}</td>
@@ -201,14 +210,32 @@ export default function LabSection() {
       <div className="mt-10 grid gap-4 lg:grid-cols-2">
         {FIELD_NOTES.map((n, i) => (
           <Reveal key={n.title} delay={i * 80}>
-            <div className="card card-hover h-full px-6 py-5">
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <h3 className="font-display text-lg font-bold text-ink">{n.title}</h3>
-                <span className="rounded-full bg-white/[0.05] px-2.5 py-0.5 font-mono text-[10px] tracking-widest text-ink-3">
-                  {n.rows}
-                </span>
-              </div>
+            <div
+              className="card card-hover flex h-full flex-col px-6 py-5 sm:px-7 sm:py-6"
+              style={{ borderLeft: `2px solid ${n.accent}` }}
+            >
+              <p
+                className="font-mono text-[10px] uppercase tracking-[0.25em]"
+                style={{ color: n.accent }}
+              >
+                field note
+              </p>
+              <h3 className="mt-1.5 font-display text-lg font-bold text-ink">{n.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-ink-2">{n.body}</p>
+              <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/[0.06] pt-4">
+                <span className="font-mono text-[10px] uppercase tracking-widest text-ink-3">
+                  tested as
+                </span>
+                {n.bots.map((b) => (
+                  <a
+                    key={b}
+                    href={`#exp-${b}`}
+                    className="rounded-full bg-s-blue/10 px-2.5 py-0.5 font-mono text-[11px] text-s-blue transition-colors hover:bg-s-blue/20"
+                  >
+                    {b} ↑
+                  </a>
+                ))}
+              </div>
             </div>
           </Reveal>
         ))}

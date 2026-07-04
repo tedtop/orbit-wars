@@ -151,6 +151,29 @@ body {
   white-space: nowrap;
 }
 
+/* ─── Ledger row targeting (field-note footnote links) ──────────────── */
+tr[id^="exp-"] {
+  scroll-margin-top: 110px;
+}
+tr[id^="exp-"]:target {
+  animation: row-pulse 1.3s ease-out 3;
+}
+@keyframes row-pulse {
+  0%,
+  100% {
+    background-color: transparent;
+  }
+  35% {
+    background-color: rgba(57, 135, 229, 0.28);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  tr[id^="exp-"]:target {
+    animation: none;
+    background-color: rgba(57, 135, 229, 0.18);
+  }
+}
+
 /* ─── Orbit animations (game diagram) ───────────────────────────────── */
 @keyframes orbit-spin {
   to {
