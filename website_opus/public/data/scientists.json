@@ -1,0 +1,140 @@
+[
+  {
+    "name": "artificial_potential_fields",
+    "field": "Control Theory · APF",
+    "cluster": "physics",
+    "description": "Treats planets as attractive/repulsive potentials; fleets flow along gradient descent."
+  },
+  {
+    "name": "distributed_pid_controllers",
+    "field": "Control Theory · PID",
+    "cluster": "physics",
+    "description": "Each fleet controlled by an independent PID loop targeting planet delta-ships."
+  },
+  {
+    "name": "lyapunov_defense_heuristic",
+    "field": "Dynamical Systems · Lyapunov",
+    "cluster": "physics",
+    "description": "Certifies stability of a fleet allocation via Lyapunov energy functions."
+  },
+  {
+    "name": "kinematic_wave_theory",
+    "field": "Physics · Kinematic Waves",
+    "cluster": "physics",
+    "description": "Models fleet traffic as kinematic shock waves propagating through the galaxy."
+  },
+  {
+    "name": "reaction_diffusion_turing_patterns",
+    "field": "Physics · Turing Patterns",
+    "cluster": "physics",
+    "description": "Fleet allocation evolves via reaction-diffusion equations producing stable spatial patterns."
+  },
+  {
+    "name": "susceptible_infected_recovered_model",
+    "field": "Epidemiology · SIR",
+    "cluster": "life",
+    "description": "Planet ownership spreads like infection: susceptible neutrals, infected friendlies, recovered captured."
+  },
+  {
+    "name": "stigmergic_pheromone_routing",
+    "field": "Biology · Stigmergy",
+    "cluster": "life",
+    "description": "Fleets deposit virtual pheromones on successful paths; others follow the scent gradient."
+  },
+  {
+    "name": "minimax_fleet_allocation",
+    "field": "Game Theory · Minimax",
+    "cluster": "math_cs",
+    "description": "Two-ply minimax over fleet allocation decisions, pruned by alpha-beta."
+  },
+  {
+    "name": "bayesian_wave_function_collapse",
+    "field": "Probability · Bayesian WFC",
+    "cluster": "math_cs",
+    "description": "Treats uncertain game states as a quantum wave function; collapses to best allocation via Bayes."
+  },
+  {
+    "name": "graph_neural_network_value_estimator",
+    "field": "ML · GNN",
+    "cluster": "math_cs",
+    "description": "Planet graph encoded by a GNN; value head scores each possible fleet dispatch."
+  },
+  {
+    "name": "deep_q_network_macro_strategist",
+    "field": "ML · DQN",
+    "cluster": "math_cs",
+    "description": "Deep Q-Network trained on synthetic episodes to select macro strategic moves."
+  },
+  {
+    "name": "lstm_fleet_trajectory_forecaster",
+    "field": "ML · LSTM",
+    "cluster": "math_cs",
+    "description": "LSTM predicts opponent fleet trajectories; pre-empts captures with counter-launches."
+  },
+  {
+    "name": "target_classifier_fnn",
+    "field": "ML · FNN Classifier",
+    "cluster": "math_cs",
+    "description": "Feedforward net classifies each planet as high/low priority target; ships flow to high."
+  },
+  {
+    "name": "cascading_classifier_regressor",
+    "field": "ML · Cascade",
+    "cluster": "math_cs",
+    "description": "Two-stage model: classifier filters candidates, regressor sizes the fleet dispatch."
+  },
+  {
+    "name": "predictive_kinematic_interceptor",
+    "field": "Physics · Kinematics",
+    "cluster": "physics",
+    "description": "Predicts orbital intercept points analytically; launches to arrive exactly when planet is capturable."
+  },
+  {
+    "name": "path_aware_lead_interceptor",
+    "field": "Pathfinding · Lead",
+    "cluster": "math_cs",
+    "description": "Computes lead-angle intercept path around the sun for orbiting targets."
+  },
+  {
+    "name": "greedy_lead_interceptor",
+    "field": "Heuristic · Greedy",
+    "cluster": "math_cs",
+    "description": "Greedy nearest-available fleet always dispatched to highest-value intercept target."
+  },
+  {
+    "name": "macroeconomic_gravity_model",
+    "field": "Economics · Gravity Model",
+    "cluster": "economics",
+    "description": "Trade-gravity model: fleet flows proportional to planet GDP and inversely to orbital distance."
+  },
+  {
+    "name": "frontline_consolidation",
+    "field": "Military · Consolidation",
+    "cluster": "other",
+    "description": "Identifies contested frontier planets; concentrates force at the weakest point in the line."
+  },
+  {
+    "name": "comet_riding_ephemeris_exploitation",
+    "field": "Astronomy · Ephemeris",
+    "cluster": "physics",
+    "description": "Exploits comet orbital ephemerides to predict lucrative short-window capture opportunities."
+  },
+  {
+    "name": "the_vulture",
+    "field": "Heuristic · Opportunistic",
+    "cluster": "other",
+    "description": "Waits for two opponents to battle; swoops in to capture depleted planets."
+  },
+  {
+    "name": "markowitz_portfolio_optimization",
+    "field": "Economics · Markowitz MPT",
+    "cluster": "economics",
+    "description": "Applies Markowitz mean-variance portfolio theory: allocates ships to maximize expected production return per unit risk. 🏆 Won the arena."
+  },
+  {
+    "name": "coordinated_strike_interceptor",
+    "field": "Heuristic · Coordination",
+    "cluster": "other",
+    "description": "Coordinates multiple fleets to converge simultaneously on high-value targets."
+  }
+]

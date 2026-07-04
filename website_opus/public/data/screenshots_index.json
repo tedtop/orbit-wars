@@ -1,0 +1,212 @@
+[
+  {
+    "filename": "01-game-board-domination-step186-you-5806-vs-starter-5.png",
+    "caption": "game board domination step186 you 5806 vs starter 5",
+    "category": "game_board",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "02-game-board-mid-domination-step165-you-4293-vs-starter-136.png",
+    "caption": "game board mid domination step165 you 4293 vs starter 136",
+    "category": "game_board",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "03-game-board-early-game-step154-you-3606-vs-starter-279.png",
+    "caption": "game board early game step154 you 3606 vs starter 279",
+    "category": "game_board",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "04-game-board-early-game-step109-you-1041-vs-starter-47.png",
+    "caption": "game board early game step109 you 1041 vs starter 47",
+    "category": "game_board",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "05-game-board-losing-state-step279-you-296-vs-easy-9002.png",
+    "caption": "game board losing state step279 you 296 vs easy 9002",
+    "category": "game_board",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "06-dashboard-rank-140-score-1248-leaderboard.png",
+    "caption": "dashboard rank 140 score 1248 leaderboard",
+    "category": "dashboard",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "07-dashboard-active-agents-episode-history.png",
+    "caption": "dashboard active agents episode history",
+    "category": "dashboard",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "08-dashboard-early-score-1141-rank-653-climbing.png",
+    "caption": "dashboard early score 1141 rank 653 climbing",
+    "category": "dashboard",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "09-rl-training-dashboard-red-gate-fleet-sps-1612.png",
+    "caption": "rl training dashboard red gate fleet SPS 1612",
+    "category": "dashboard",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "10-fleet-monitor-4-pane-per-instance-metrics.png",
+    "caption": "fleet monitor (4-pane) per instance metrics",
+    "category": "fleet_monitor",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "11-orchestrator-track-c-value-function-auc-0-99-massive-pass.png",
+    "caption": "orchestrator track c value function AUC 0 99 massive pass",
+    "category": "autoresearch",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "12-orchestrator-live-ladder-schmeekler-beats-comet-reaper.png",
+    "caption": "orchestrator live ladder schmeekler beats comet reaper",
+    "category": "autoresearch",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "13-schmeekler-confirmed-win-rate-table-70pct-entire-field.png",
+    "caption": "schmeekler confirmed win rate table 70pct entire field",
+    "category": "autoresearch",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "14-multi-agent-terminal-track-a-structural-features-session.png",
+    "caption": "multi agent terminal track a structural features session",
+    "category": "autoresearch",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "15-multi-agent-terminal-track-b-mcts-search-session.png",
+    "caption": "multi agent terminal track b mcts search session",
+    "category": "autoresearch",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "16-autoresearch-program-log-ratchet-hypothesis-queue.png",
+    "caption": "autoresearch program log ratchet hypothesis queue",
+    "category": "autoresearch",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "17-autoresearch-cheap-hypothesis-space-exhausted-conclusion.png",
+    "caption": "autoresearch cheap hypothesis space exhausted conclusion",
+    "category": "autoresearch",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "18-streamlit-autoresearch-tab-15-experiments-track-c-auc.png",
+    "caption": "streamlit autoresearch tab 15 experiments track c AUC",
+    "category": "autoresearch",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "19-submission-moment-python-submit-schmeekler-kaggle.png",
+    "caption": "submission moment python submit schmeekler kaggle",
+    "category": "autoresearch",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "20-orchestrator-orbit-lite-inflection-value-function-insight.png",
+    "caption": "orchestrator orbit lite inflection value function insight",
+    "category": "autoresearch",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "21-orchestrator-agent-variants-table.png",
+    "caption": "orchestrator agent variants table",
+    "category": "autoresearch",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "22-orchestrator-tick-live-ladder-schmeekler-fmt-climbing.png",
+    "caption": "orchestrator tick live ladder schmeekler fmt climbing",
+    "category": "autoresearch",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "23-orchestrator-wake-event-track-c-vf-metrics-table.png",
+    "caption": "orchestrator wake event track c vf metrics table",
+    "category": "autoresearch",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "24-orchestrator-fresh-relaunch-prompt-hard-rules.png",
+    "caption": "orchestrator fresh relaunch prompt hard rules",
+    "category": "autoresearch",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "25-track-b-mcts-search-closed-state-of-play.png",
+    "caption": "track b mcts search closed state of play",
+    "category": "autoresearch",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "26-submit-py-bot-selection-list.png",
+    "caption": "submit py bot selection list",
+    "category": "submission",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "27-schmeekler-validation-sweep-running-parallel.png",
+    "caption": "schmeekler validation sweep running parallel",
+    "category": "autoresearch",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "28-fleet-monitor-9-pane-all-jetstream2-instances.png",
+    "caption": "fleet monitor (9-pane) all jetstream2 instances",
+    "category": "fleet_monitor",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "29-fleet-launch-moment-8-instances-deploying.png",
+    "caption": "fleet launch moment 8 instances deploying",
+    "category": "terminal_agent",
+    "key_numbers": "",
+    "ocr_summary": ""
+  },
+  {
+    "filename": "30-dashboard-rank-140-score-1248-angle2.png",
+    "caption": "dashboard rank 140 score 1248 angle2",
+    "category": "dashboard",
+    "key_numbers": "",
+    "ocr_summary": ""
+  }
+]

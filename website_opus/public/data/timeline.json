@@ -1,0 +1,194 @@
+[
+  {
+    "phase": "Phase 0",
+    "date": "",
+    "title": "Phase 0 — 23 bots from across the sciences (Jun 13)",
+    "headline": "Started broad: built 23 homegrown bots, each implementing a different theory drawn\nfrom a different scientific field — c",
+    "body_md": "Started broad: built **23 homegrown bots**, each implementing a different theory drawn\nfrom a different scientific field — control theory, graph neural nets, epidemiology\n(SIR), reaction-diffusion (Turing patterns), stigmergy/pheromones, minimax, Bayesian\nmethods, kinematics, macroeconomics, portfolio theory, and more.\n\n- 20 \"algorithm-strategy\" agents + 3 earlier homegrown bots (renamed by method).\n- **Best performer: `markowitz_portfolio_optimization`** — an *economics* approach\n  (Markowitz mean-variance portfolio optimization applied to fleet/planet allocation).\n- These now live in `archive/agents/` (21 of them) plus the two that were submitted,\n  still at the top level of `agents/`.\n- Git: `4366f1d` \"add 20 algorithm-strategy agents and roster write-up\",\n  `6f8be2c` \"rename the 3 homegrown bots by method\", `324bd2e` \"add arena workflow\".",
+    "status": "submitted"
+  },
+  {
+    "phase": "Phase 1",
+    "date": "",
+    "title": "Phase 1 — Evaluation infrastructure (Jun 13–14)",
+    "headline": "Built the harness to tell the 23 bots apart objectively",
+    "body_md": "Built the harness to tell the 23 bots apart objectively.\n\n- OpenSkill-rated **arena** (round-robin, seat-aware), a **pipeline**, and a\n  **Streamlit dashboard** with episode cards, an HTML leaderboard, submission DB sync,\n  and a countdown.\n- Archived 21 bots into `archive/agents/`.\n- Git: `8cb91e5` \"add OpenSkill arena, pipeline, dashboard, and archive 21 bots\",\n  `1ea297c`, `c672ce3`.",
+    "status": "infrastructure"
+  },
+  {
+    "phase": "Phase 2",
+    "date": "",
+    "title": "Phase 2 — First submissions (Jun 14) ⚠️ verify IDs/placement",
+    "headline": "Submitted the best two bots:",
+    "body_md": "Submitted the **best two** bots:\n\n- `markowitz_portfolio_optimization`\n- `coordinated_strike_interceptor` v1 — ⚠️ ~36 episodes (confirm exact count)\n\n**Result: placed in the ~500s** on the public leaderboard. ⚠️ exact submission IDs and\nscores to be filled in (memory has live submissions in the ~535–546 range). Screenshots\nkept separately by Ted.\n\n> *\"Then we slept.\"* — a deliberate pause before the next direction.",
+    "status": "submitted"
+  },
+  {
+    "phase": "Phase 3",
+    "date": "",
+    "title": "Phase 3 — Reverse-engineer the top of the leaderboard (Jun 14–15)",
+    "headline": "Studied the public leaderboard and found the best / most interesting bots were all\nthe same lineage: built on The Produc",
+    "body_md": "Studied the public leaderboard and found the best / most interesting bots were **all\nthe same lineage**: built on **The Producer**, which runs on the **`orbit_lite`\nengine** — a self-contained planning package (\"speed-first flow-diff producer\";\nzero-sum competitive scorer that prefers enemy captures).\n\n- Built our own clone of that engine → **`comet_reaper`** (vendors `orbit_lite/` next\n  to `main.py`). This became our strongest bot.\n- Distinction worth keeping straight: **The Producer** = the top public *bot*;\n  **orbit_lite** = the *engine/library* it's built on; **comet_reaper** = our clone.",
+    "status": "breakthrough"
+  },
+  {
+    "phase": "Phase 4",
+    "date": "",
+    "title": "Phase 4 — Prize-zone data + neural cloning (Jun 15) — DEAD END",
+    "headline": "In parallel with Phase 3, pulled public episodes from \"density-max\" / prize-zone\ngames  and tried to learn from the\ntop ",
+    "body_md": "In parallel with Phase 3, pulled **public episodes from \"density-max\" / prize-zone\ngames** (matches where teams rated **>1500** participated) and tried to learn from the\ntop humans:\n\n1. **Behavior-clone the top public players** (`rl/bc_train.py`): label their recorded\n   moves and train a neural `PlanetPolicy` to imitate them (`--team` clones one team →\n   `training/clone_*.pt`).\n2. **Self-play against the clones** (`rl/selfplay.py --clones`): use those clones as\n   fixed PPO league opponents.\n3. **Result — failed.** The cloned-from-humans net hit a **\"BC ceiling\"** and lost\n   **0–16 to `comet_reaper`**. The engine is better than anything a net imitating human\n   players can reach. Also recovered a genuine *insight* (top teams target enemy ≫\n   neutral, near-dead, nearby, high-production planets), but the engine already encodes it.",
+    "status": "dead_end"
+  },
+  {
+    "phase": "Phase 5",
+    "date": "",
+    "title": "Phase 5 — comet_reaper fork bake-off (Jun 15) — no champion",
+    "headline": "Forked `comet_reaper` five times, each adding one bolt-on heuristic (precog, kingmaker,\nmaestro, helmsman, oracle), and ",
+    "body_md": "Forked `comet_reaper` five times, each adding one bolt-on heuristic (precog, kingmaker,\nmaestro, helmsman, oracle), and ran them against the engine on **seat-swapped** arena.\n**All ≈parity-or-worse.** The orbit_lite engine is a tight, well-tuned local optimum.\n\n- **Conclusion: submit `comet_reaper` unchanged** — it ties the real Producer (~14–14)\n  and beats the rest of the public field (~67%).\n- The whole experiment is filed under `archive/experiments/comet_reaper_forks/`\n  (see its `README.md`). The neural BC/self-play track (Phase 4) is kept in `rl/` but\n  carries `DEAD END` banners.",
+    "status": "dead_end"
+  },
+  {
+    "phase": "Phase 6",
+    "date": "",
+    "title": "Phase 6 — Config tuning + forum intel (Jun 16–17)",
+    "headline": "Milestone: `comet_reaper` hit a new best — #144 / 1243",
+    "body_md": "**Milestone: `comet_reaper` hit a new best — #144 / 1243.8** (up from #183 / 1235.9; first time inside\nthe top ~150).\n\nFinally read the Kaggle competition notebooks (pulled via `kaggle kernels pull` →\n`experiments/v5_engine_tuning/intel_kernels/`):\n\n- `souldrive/why-cloning-the-1-bot-loses-to-greedy` **independently confirms our Phase-4 dead end:** a BC\n  clone of #1 (LB **1793**) wins only **~17%** vs the greedy Producer (~1240); PPO made it worse (4%).\n  *\"If a fast search exists, run the search — don't clone.\"* And **inference is not the bottleneck** —\n  ~1 s/turn budget vs ~25 ms used → **~30× headroom for deeper search.**\n- `improved-agent-v2`, `improved-heuristic-agent` (target ~1500): 1-ply heuristics with better\n  **scoring/sizing** — NPV/snowball scoring with ownership multipliers (enemy 2.05× / neutral 1.4× /\n  contested 0.7× / friendly 0.3×), phase-aware ship sizing (1.2×→3.0×), speed-bracket sizing, enemy-fleet\n  interdiction, 4P weakest-enemy + elimination bonus.\n- **Landscape: comet_reaper ≈ Producer ≈ 1240; #1 ≈ 1793.** Two levers — better scoring/sizing\n  (1240→~1500), and **deeper multi-ply search** (~1500→1793, the real prize lever; we have the budget).\n\nPlan (`experiments/v5_engine_tuning/`): low-noise seat-rotated **gauntlet** → bench comet_reaper vs the\nimproved field → port what wins → **Optuna** over the ~22 config knobs → **deeper search**, with an\n**autoresearch** ratchet as orchestrator.\n\n**🏆 Result — `schmeekler` (Ted's own idea) BEATS comet_reaper.** A comet_reaper fork that adds a tunable\nscoring bonus for capturing **static (non-rotating) planets** first (the safe periphery land-grab — static\nplanets can't drift into enemy reach). Swept `static_target_bonus`: **1.0–1.5 is the sweet spot** (beats\ncomet_reaper ~71–72% 2P, seat-swapped), ≥2.0 over-commits and tanks. Validated:\n- 2P vs comet_reaper: **72%** (36–14, n=50). vs the public panel: producer-v2 **77%**, floor-matched 77%,\n  i-m-stronger 70%, 1266-elo 60% — beats the whole field (comet_reaper only *tied* producer-v2).\n- 4P (focal vs 3× comet_reaper): **best in the pod** — 35% first-places vs each comet_reaper's ~22%.\n- **Submitted 2026-06-17** as our new bot. First thing all project to genuinely beat the engine.\n\nAlso this phase: `comet_reaper_tuned` (knob-exposed for Optuna; config sweep found nothing, best 0.34 —\nbase config is a tight optimum) and `comet_reaper_search` (Numba forward-sim lookahead, ~80k rollouts/turn;\nthe single-move signal washes out over the rollout — being fixed). ⚠️ search in progress.\n\n---",
+    "status": "breakthrough"
+  },
+  {
+    "phase": "2026-06-17 — Track A comet 2×2 factorial kill-test: DISCARD",
+    "date": "2026-06-17",
+    "title": "2026-06-17 — Track A comet 2×2 factorial kill-test: DISCARD",
+    "headline": "Tested `comet_target_bonus=1",
+    "body_md": "Tested `comet_target_bonus=1.5` (additive score bonus for targeting ephemeral comet-planets) across\na 2×2 factorial: with/without the static bonus (schmeekler vs comet_reaper base) × with/without the\ncomet bonus. Implementation: `obs_tensors[\"comet_planet_ids\"]` → `torch.isin()` mask → additive bonus.\n\nResults (n=50/opp, 5-opp panel, seat-swapped):\n- **schmeekler_comet** (static=1.5, comet=1.5): OVERALL 74% = schmeekler baseline 74% → **+0pp**\n- **comet_reaper_comet** (static=0, comet=1.5): OVERALL ~61% ≈ comet_reaper baseline → **+0pp**\n\nPer-opp breakdown: schmeekler_comet 72%/74%/78%/78%/66%; comet_reaper_comet 50%/52%/67%/71%/66%.\n\nThe flow scorer already handles ephemeral target valuation implicitly. A flat additive bonus is noise —\ncomets are correctly de-prioritized by the engine because they are structurally low-value (prod=1.0,\nshort time window). COMET bonus sweep (0.5/1.0/2.0) not run; verdict: DISCARD.\n\n---",
+    "status": "dead_end"
+  },
+  {
+    "phase": "2026-06-17 — Track C value function: NULL RESULT (submittable), V model preserved",
+    "date": "2026-06-17",
+    "title": "2026-06-17 — Track C value function: NULL RESULT (submittable), V model preserved",
+    "headline": "Built `comet_reaper_vf`: bolt-on value function trained on 746K  pairs from 2937 prize-zone episodes",
+    "body_md": "Built `comet_reaper_vf`: bolt-on value function trained on 746K (obs, outcome) pairs from 2937 prize-zone episodes.\n\n**What worked:**\n- V model (MLP 2×128, DeepSets encoding): AUC=0.9835, Pearson=0.917 — genuinely predictive of game outcomes\n- Integration gate (15ms/turn) well within the 800ms budget\n\n**What didn't:**\n- Phase E arena 2P: 17-17-6 **parity** vs comet_reaper — both bots use the same engine, so base moves are identical; VF aggressive expansions add noise, not signal\n- Phase E arena 4P: 12 vs 23 firsts — **HURT** — aggressive moves from secondary sources expose the bot to 3-opponent counter-attacks simultaneously\n\n**Insight:** Bolt-on VF (add extra candidates if V improves) is the wrong integration strategy. The right path: replace `score_candidates` inside orbit_lite with V-based scoring (policy-level, not post-planning). That requires a deep refactor with ~6 days to deadline — not feasible.\n\n**Preserved:** `track_c/data/value_probe.pt` (trained V model) — genuinely accurate, useful if we revisit next season.\n\n**Only remaining offensive bet: `comet_reaper_stochastic` (Boltzmann opponent model, τ sweep running).**\n\n---",
+    "status": "infrastructure"
+  },
+  {
+    "phase": "2026-06-17 — Track B Boltzmann stochastic search: NULL RESULT",
+    "date": "2026-06-17",
+    "title": "2026-06-17 — Track B Boltzmann stochastic search: NULL RESULT",
+    "headline": "Built `comet_reaper_stochastic`: Boltzmann 2-ply opponent search on top of comet_reaper base",
+    "body_md": "Built `comet_reaper_stochastic`: Boltzmann 2-ply opponent search on top of comet_reaper base.\n\n**Design:** P(R1_j) ∝ exp(orbit_lite_score_j / τ); EV(W1) = Σ_j P_j × competitive_score(W1+R1_j).\nZ-score correction: `score = 1ply_score + EV_BONUS * (ev - ev_mean) / ev_std` (EV_BONUS=2.0).\n\n**5 correctness bugs fixed during development** (summary in TRACK_B_NOTES.md).\n\n**Results (n=20/opp, seat-swapped, panel=comet_reaper+4 opponents):**\n\nτ=2.0 (EV_BONUS=2.0, N_CAND=192, TOP_K_OPP=5):\n```\nvs comet_reaper      10-10  (50%)\nvs the-producer-v2   11-9   (55%)\nvs i-m-stronger      12-8   (60%)\nvs floor-matched     12-8   (60%)\nvs 1266-elo          16-4   (80%)\nOVERALL: 61/100 = 61%\n```\n\nschmeekler baseline (same panel, same n):\n```\nOVERALL: 78/100 = 78%\n```\n\n**VERDICT: DISCARD** — stochastic 61% < schmeekler 78%; did not clear +3pp threshold.\n\n**Key insight:** Stochastic search excels vs hard opponents (80% vs 1266-elo, +20pp over schmeekler)\nbut fails vs comet_reaper (50%). Root cause: base is plain comet_reaper which already loses 80-20\nto schmeekler. EV corrections can't overcome base strength gap vs aggressive opponents.\n\n**Next idea:** Apply Boltzmann search on top of schmeekler base (with static bonus). Unlikely to pursue\nbefore deadline — time better spent on submission strategy.",
+    "status": "dead_end"
+  },
+  {
+    "phase": "2026-06-17 — schmeekler_elim: DISCARD (bug found + fixed, still below baseline)",
+    "date": "2026-06-17",
+    "title": "2026-06-17 — schmeekler_elim: DISCARD (bug found + fixed, still below baseline)",
+    "headline": "Tested elimination mode bolt-on to schmeekler_fmt: when opponent has ≤3 planets + we own more, add +8",
+    "body_md": "Tested elimination mode bolt-on to schmeekler_fmt: when opponent has ≤3 planets + we own more, add +8.0 enemy planet score bonus and lower ROI threshold to 1.0.\n\n**Bug found:** Original threshold=3 fires at game START (opponent always starts with 1-2 planets → immediate overaggression). Fixed with dominance guard (`n_my_planets > n_enemy_planets`).\n\n**Full panel results (n=150, post-fix):**\n\n| Opponent | schmeekler_elim | schmeekler_fmt baseline |\n|---|---|---|\n| comet_reaper | 56.7% | ~80% |\n| the-producer-v2 | 57.3% | ~85% |\n| i-m-stronger | 70.0% | ~80% |\n| floor-matched | 69.3% | ~85% |\n| 1266-elo | **72.0%** | ~60% ← only win |\n| **OVERALL** | **65.1%** | **~78%** |\n\nDirect matchup vs schmeekler_fmt (n=20): 9-11 (45%) — ELIM LOSES TO ITS OWN BASE.\n\n**Key insight:** Both elim (+12pp) and stochastic (+20pp, prior track) add edge specifically vs the 1266-elo opponent, but hurt vs the rest. orbit_lite greedy 1-ply is suboptimal in close/late-game vs skilled opponents. The fix (elim or EV) over-corrects and destroys medium-game performance.\n\n**Preserved:** `agents/schmeekler_elim/main.py` for reference. schmeekler_fmt remains best gym bot.\n\n---",
+    "status": "infrastructure"
+  },
+  {
+    "phase": "2026-06-17 — Track D multi-fleet coordination: DISCARD",
+    "date": "2026-06-17",
+    "title": "2026-06-17 — Track D multi-fleet coordination: DISCARD",
+    "headline": "Tested coordinated 2-source attacks on targets neither fleet can take alone ",
+    "body_md": "Tested coordinated 2-source attacks on targets neither fleet can take alone (4 implementations: crude ETA → tensor intercept_angle with accurate ETAs via orbit_lite's `intercept_angle`).\n\nEconomic analysis of 438 combo decisions: average value = -75.6 ships. 95% of combos negative EV. With strict filter (prod≥3, combined_ships≤40, turns≥10): only 0.8 profitable combos per game.\n\nRoot cause: staggered arrival (first fleet softens, second finishes) destroys the first fleet as attrition. The action-space gap is real (orbit_lite's `clears_floor` gate blocks multi-source attacks), but exploiting it requires simultaneous arrival (same-turn), not sequential. Simultaneous arrival needs L=2 LaunchSet in `plan_lite_waves` — invasive, didn't pursue.\n\n**VERDICT: DISCARD.** `comet_reaper_combo` preserved with COMBO_ENABLED=0 (identical to comet_reaper).\n\n---",
+    "status": "dead_end"
+  },
+  {
+    "phase": "2026-06-18 — v5 CLOSED — Full RL/PPO pivot for final 5 days",
+    "date": "2026-06-18",
+    "title": "2026-06-18 — v5 CLOSED — Full RL/PPO pivot for final 5 days",
+    "headline": "v5 Engine Tuning is complete",
+    "body_md": "**v5 Engine Tuning is complete.** All tracks exhausted. Crystallized finding:\n\n> orbit_lite's `capture_floor`/`clears_floor` collapses each turn to 0–4 candidates (0–1 most turns). Every bolt-on intervention (potential fields, EV scoring, elim bonus, 2-ply search, VF re-rank) lands at parity or hurts because there is nothing meaningful to re-rank at depth=1. The fix requires either (a) replacing the decision architecture entirely or (b) training a learned policy.\n\n**Summary of 20+ experiments across 4 tracks:**\n- Track A (structural features): all DISCARD — additive bonuses override flow scorer\n- Track B (search/lookahead): all DISCARD — 2-ply exact search ≈ parity; stochastic EV incompatible with static-grab\n- Track C (value function bolt-on): AUC=0.9835 pass, Phase E HURT in 4P. V model preserved.\n- Track D (multi-fleet coordination): DISCARD — staggered combos negative EV\n- Config tuning (Optuna, 37 trials): DISCARD — base config is a tight optimum\n\n**Live situation at pivot:** comet_reaper=1234.7 (best, inactive), schmeekler_fmt~1125 (active, converging), schmeekler~1098 (active). Gap to prize zone (~1500): 265 pts. Heuristic ceiling confirmed at ~1240.\n\n**Forum intel gathered (2026-06-18):** Lin Myat Ko (#1, 1793 elo) = JAX env + PPO self-play 600M steps (~$150). Radek (68th) = 1303 LB in $15 on GH200 in 6.5hrs. Mendrika (48th) = 1420 LB pure BC per-planet fire heads. Abhyuday (31st) = RL beat heuristic in 1 day. `orbit-wars-torch` (MIT) = complete PyTorch GPU batched env + PPO. Fanghhhh's notebook = complete working PPO loop.\n\n**v6 plan:** PPO self-play, per-planet action heads, kaggle_environments (8K SPS target), train on Jetstream2/GH200, 2P first then optionally 4P. New branch: `v6-rl-selfplay`.\n\n---",
+    "status": "closed"
+  },
+  {
+    "phase": "2026-06-18 — v6 PPO GAE Bug Found and Fixed (session 2)",
+    "date": "2026-06-18",
+    "title": "2026-06-18 — v6 PPO GAE Bug Found and Fixed (session 2)",
+    "headline": "v6 RL training is now running correctly on 8 Jetstream2 instances",
+    "body_md": "**v6 RL training is now running correctly on 8 Jetstream2 instances.**\n\n### Experiment log\n\n| Exp | Config | Result | Verdict |\n|-----|--------|--------|---------|\n| v6-baseline | reward_scale=0.001, pure self-play | CF≈0, eval=25% at U=200 | ❌ DISCARD |\n| v6-H1 | reward_scale=0.01, pure self-play | CF=0.052 at U=91 (EP spike), eval=25% at U=200 | ❌ DISCARD |\n| v6-H1-remote | reward_scale=0.01, 32 remote jobs | CF=0.04-0.06 at U=10 (promising) | ❌ KILLED (GAE bug) |\n\n### Root cause diagnosis (GAE structural bug)\n\n`compute_gae()` grouped all per-planet decisions by `env_i` and treated them as sequential timesteps. With N owned planets per turn, planets 0..N-2 got `nv = V(same_state)` → delta ≈ r_t (no bootstrapping). Only the last planet per turn got a real TD advantage. ~70-80% of buffer entries had near-zero advantages regardless of reward_scale. Direct explanation for CF≈0 and entropy stuck at 5.0 for 1.2M steps.\n\n**Smoking gun:** entropy never decayed across 300 updates and two separate runs — a learning policy always shows entropy decay.\n\n### Fix implemented\n\n- Tagged each buffer entry with `step_i` (rollout step index, 0..rollout_steps-1)\n- Rewrote `compute_gae` to group by `(env_i, step_i)` → true timestep sequence\n- Broadcast one advantage per timestep to all planet decisions at that step\n- Validation: CF=0.17/0.08/0.16 at U=1-3 with EP=0, entropy decaying (5.00→4.92)\n\n### Other changes this session\n\n- **Comet_reaper as P1 cold-start opponent**: loads via importlib, fires from step 1, provides combat signal before self-play pool has checkpoints\n- **Fleet monitoring**: tmux_fleet.sh (8-pane, per-instance tables), monitor.sh (refreshing CF/EV/Ent/EP/SPS display, color-coded)\n- **VecEnv callable P1**: step() accepts callable agent(obs)->launches alongside per-planet tuple lists\n\n### Fleet status (as of 2026-06-18 19:15 MT)\n\n8 Jetstream2 instances relaunched with fixed train.py:\n- 5× m3.2xl (64 CPU, 250 GB): 149.165.174.18/133/171.142/170.73/171.248\n- 3× m3.xl (32 CPU, 125 GB): 149.165.175.105/170.84/175.177\n- 32 parallel runs total (4 per machine)\n\n### Next gate\n\nWith GAE fix, expect CF=0.05-0.3 sustained from U=1 (not just at terminal spikes). Gate passes when: CF in-band + EV rising + entropy decaying — all three, not just CF.\n\n---",
+    "status": "dead_end"
+  },
+  {
+    "phase": "2026-06-19 — v6 RL CLOSED: FAIL at pre-committed gate",
+    "date": "2026-06-19",
+    "title": "2026-06-19 — v6 RL CLOSED: FAIL at pre-committed gate",
+    "headline": "### Pre-committed failure condition \nAt U=500: best seed < 25% vs greedy AND 0% vs comet_reaper → FAIL",
+    "body_md": "### Pre-committed failure condition (set ~20:00 MT 2026-06-18)\nAt U=500: best seed < 25% vs greedy AND 0% vs comet_reaper → FAIL. Close v6 RL track.\n\n### Result\n- v6_cr4 (diverse cold-start: greedy + comet_reaper alternating) — final experiment\n- Greedy eval: 20%, 20%, 20%, 20%, 22% at U=100 through U=500. **Completely flat.**\n- vs comet_reaper: 0% at every checkpoint, confirmed by direct eval (not instrument artifact)\n- Three cold-start regimes tested: comet (v6_cr2), greedy, diverse (v6_cr4) — identical ~20% ceiling\n\n### Diagnosis\nEntropy decayed cleanly 4.84 → 2.1 across training. Policy committed — to a local optimum scoring 20% vs greedy. This is the worst-case pattern: not \"still exploring,\" but \"converged to something bad.\" Feature design or encoding changes won't un-commit a settled policy; the ceiling is structural given achievable depth (~11M steps by deadline, vs Radek's JAX pipeline at 15× throughput).\n\n### Bugs fixed during v6 (all resolved, no competitive value extracted)\n8 critical bugs found and fixed: GAE grouping, ent_coef (50× game signal), eval null-agent, eval n=20 noise, no checkpoint resume, shaped-reward drift, env reset logic, GAE rollout boundary bootstrap. First green gate: eval_fix_test U=100 → 40% vs greedy. But subsequent depth showed 40% was noise: plateau appears immediately at U=200 with all configs.\n\n### Infrastructure built (retains value)\n- eval_checkpoints.py: seat-balanced RL vs RL eval, symmetry gate, JSON output\n- sync_checkpoints.sh: fleet champion promotion loop\n- Fleet: 9 Jetstream2 instances, 32 × 64-env + 4 × 8-env jobs, ~1,312 SPS\n- ORCHESTRATOR_STATE.md: structured session log\n\n### Decision\n**Pivot to Plan B: defend and harden comet_reaper (current live submission ~1235 Elo).**\n- Verify submission slot eligibility before 2026-06-23 deadline\n- Investigate #1047 trig inversion / [Y,X] coordinate transpose in orbit_lite engine\n- Lock comet_reaper as the active defended submission",
+    "status": "closed"
+  },
+  {
+    "phase": "2026-06-19 — SECOND PROMOTION (v3 champion, U=400)",
+    "date": "2026-06-19",
+    "title": "2026-06-19 — SECOND PROMOTION (v3 champion, U=400)",
+    "headline": "Champion v2 → v3: ppo-1-of-3_job1 U=400 (WR=36",
+    "body_md": "**Champion v2 → v3: ppo-1-of-3_job1 U=400 (WR=36.7% vs greedy)**\n\n- 15:35 MT: v2 promoted (1000-game eval WR=0.753, pool_size=2)\n- 15:56 MT: v3 promoted same model, duplicate eval (WR=0.752 — bookkeeping quirk, concurrent sync)\n- Net: champion.pt is ppo-1-of-3_job1 U=400 WR=36.7% vs greedy\n- vs comet_reaper: 0.000 (still zero at U=400)\n- Champion pushed to all 9 fleet hosts ✓\n\nTrajectory of ppo-1-of-3_job1 inline evals (n=30 greedy):\n  U=100: 20%  U=200: 16%  U=300: 33% [v1]  U=400: 37% [v3]\n\nUpcoming: Phase 3 gate at U=500 (~16:30 MT) — greedy WR > 25% likely; comet WR > 0% is the stretch goal",
+    "status": "infrastructure"
+  },
+  {
+    "phase": "2026-06-19 21:07 MT — Phase 3 Gate: PASS (condition 1 only)",
+    "date": "2026-06-19",
+    "title": "2026-06-19 21:07 MT — Phase 3 Gate: PASS (condition 1 only)",
+    "headline": "Trigger: U=500 eval on 4 deep seeds ",
+    "body_md": "**Trigger:** U=500 eval on 4 deep seeds (ppo-1-of-3_j1/j3, ppo-3-of-3_j3/j4)\n\n| Seed | greedy WR | comet WR | Pass? |\n|------|-----------|----------|-------|\n| j1 (1-of-3) | **36.7%** | 0.0% | ✓ cond 1 |\n| j3 (1-of-3) | 23.3% | 0.0% | ✗ collapsed |\n| j3 (3-of-3) | 30.0% | 0.0% | ✓ cond 1 |\n| j4 (3-of-3) | 26.7% | 0.0% | ✓ cond 1 |\n\n**Verdict:** Gate PASS (cond 1: greedy > 25%). Continue fleet.\n**Comet ceiling confirmed:** vs_comet_reaper = 0.000% across ALL seeds at ALL depths through U=500.\n**Strategic implication:** RL is learning (beats greedy at 37%) but shows no signal vs comet_reaper. June 22 re-submit trigger still in effect.\n**Fresh seeds ETA to eligibility:** ~21:45 MT (U=450 threshold) from ppo-2-of-3 (170.84) and ppo-1-of-3_j2/j4 (175.105).",
+    "status": "breakthrough"
+  },
+  {
+    "phase": "2026-06-19 22:19 MT — RL Ceiling Confirmed at U=500",
+    "date": "2026-06-19",
+    "title": "2026-06-19 22:19 MT — RL Ceiling Confirmed at U=500",
+    "headline": "All 4 deep seeds evaluated at U=500",
+    "body_md": "**All 4 deep seeds evaluated at U=500. No challengers. Track effectively closed.**\n\n| Seed | U=500 greedy WR | comet WR | best_model status |\n|------|----------------|----------|------------------|\n| ppo-1-of-3_j1 (champion) | 36.7% | 0.0% | stuck @ U=400 (no improvement) |\n| ppo-1-of-3_j3 (collapsed) | 23.3% | 0.0% | stuck @ U=300 |\n| ppo-3-of-3_j3 | 30.0% | 0.0% | stuck @ U=400 |\n| ppo-3-of-3_j4 | 27.0% | 0.0% | stuck @ U=300 |\n\n**Structural finding:** 32 seeds, 28 have inverted-U WR trend (peak U=100-200, decline after). Only j1 improved monotonically. n_games=30 variance causes spurious early saves that block later eligibility.\n\n**One remaining watch:** ppo-2-of-6_j2 (174.133) shows genuine improvement (28%→27%→33%→33%→37%) — the only fresh seed with an upward trend at U=400. At U=420, 33 SPS → ETA U=500 in ~2.5h (~01:00 MT June 20). Needs ≥40% at U=500 to save a new best_model and challenge.\n\n**comet ceiling:** 0.000% across all seeds, all depths — zero signal that RL can beat comet_reaper.\n\n**June 22 trigger still active.** Fleet continues but prognosis is bearish.\n\n---",
+    "status": "infrastructure"
+  },
+  {
+    "phase": "2026-06-20 — v8 comet_reaper hardening audit: CLEAN, no changes made",
+    "date": "2026-06-20",
+    "title": "2026-06-20 — v8 comet_reaper hardening audit: CLEAN, no changes made",
+    "headline": "With 3 days to deadline and comet_reaper resubmitted as the protected floor (sub 53871873,\n~1235 Elo), ran a full correc",
+    "body_md": "With 3 days to deadline and comet_reaper resubmitted as the protected floor (sub 53871873,\n~1235 Elo), ran a full correctness + latency audit before locking it.\n\n### Task 1: Latency audit\n\nInstrumented `run_turn` (the main planning call) across 5 seeds (2P, 500 steps each) and\none 4P run:\n\n| Config | Median | p99 | Max (local) | Max × 5× (tournament est.) |\n|--------|--------|-----|-------------|----------------------------|\n| 2P (5 seeds) | 6–7 ms | ~8 ms | 85 ms† | ~425 ms |\n| 4P (seed 42) | 5.1 ms | 6.8 ms | 7.6 ms | ~38 ms |\n\n†The 85 ms max is a one-time PyTorch lazy kernel compilation spike (fires at most once per\ngame, not every turn — confirmed by repeating the same game in the same process: zero spikes\non runs 2 and 3). All other turns are under 10 ms.\n\n**Verdict: no latency issue.** Zero turns exceed 100 ms locally. At 5× tournament slowdown\nevery turn is well under the 1 s budget. No fix needed.\n\n### Task 2: Coordinate-order check\n\nChecked `orbit_wars.py` (the live environment source) — line 8 declares:\n\n```\n# Planets and fleets share a common [id, owner, x, y, ...] prefix.\nPlanet = [\"id\", \"owner\", \"x\", \"y\", \"radius\", \"ships\", \"production\"]\n```\n\nIndex 2 = X, index 3 = Y — not Y-before-X. Traced the full stack:\n\n- `adapter.py`: unpacks `pid, owner, x, y, r, ships, prod = p[:7]` — correct\n- `obs.py`: `x = planets[..., 2]`, `y = planets[..., 3]` — correct\n- `intercept_aim.py`: `atan2(t0y − CENTER, t0x − CENTER)` — standard `atan2(Δy, Δx)` convention — correct\n\n**Verdict: no coordinate bug.**\n\n### Overall finding\n\nBot is clean. No latency overage, no coordinate swap, no correctness bug found.\nSub 53871873 locked as-is — do not touch before the 2026-06-23 deadline.\n\n---",
+    "status": "submitted"
+  },
+  {
+    "phase": "2026-06-20 — v7 Critic A/B: CLOSED FAIL",
+    "date": "2026-06-20",
+    "title": "2026-06-20 — v7 Critic A/B: CLOSED FAIL",
+    "headline": "Hypothesis: Dense per-step reward (reward_scale=0",
+    "body_md": "**Hypothesis:** Dense per-step reward (reward_scale=0.01) adds noise to GAE returns,\nsuppressing critic EV vs pure sparse ±1 terminal (reward_scale=0.0). Expected: var_a EV\nclimbs to ≥0.90 while ctrl stays ~0.80.\n\n**Setup:** 8 jobs across ppo-1 + ppo-2 (4 ctrl, 4 var_a), 64 envs each, comet_reaper\ncold-start opponent, per-planet PPO. Branch: v7-critic-ab.\n\n**Result — both arms identical:**\n\n| U | ctrl greedy | var_a greedy | comet_reaper_WR | ctrl EV | var_a EV |\n|---|------------|-------------|-----------------|---------|---------|\n| 100 | 30–47% | 30–40% | 0% | 0.97 | 0.97 |\n| 200 | 33–43% | 27–47% | 0% | 0.93 | 0.93 |\n| 300 | 30–37% | 27–43% | 0% | 0.87 | 0.85 |\n| 400 | — | — | 0% | 0.65–0.97 | — |\n\nEntropy collapsed to 1.18–3.13 by U=390–400 (started ~4.9). Fleet killed at U=390–400.\n\n**Why hypothesis failed:** The \"fast filter\" (EV ≥ 0.90) was trivially met by both arms\nfrom U=10 onward — short 64-step rollouts mean the buffer is dominated by near-zero dense\nrewards, making the critic's job easy regardless of reward_scale. EV was not the real bottleneck.\n\n**Diagnosis:** RL from scratch at CPU scale (~67 SPS, ~1.6M steps) cannot close the\ncomet_reaper gap. Policy peaks at U=100 (~40% greedy) then entropy-collapses. Same\nstructural failure as v6 with a different config. comet_reaper_WR = 0% at every checkpoint\nacross all 8 seeds.\n\n**Fleet:** ppo-1 (149.165.175.228) + ppo-2 (149.165.175.188) killed 2026-06-20 ~14:30 MT.\n\n**Next:** v8 — per-planet behavior cloning from top-ranked game replays (Mendrika's approach,\n1420 Elo with pure BC per-planet fire heads).\n\n---",
+    "status": "closed"
+  },
+  {
+    "phase": "2026-06-20 — v8 Per-Planet BC: OPENED",
+    "date": "2026-06-20",
+    "title": "2026-06-20 — v8 Per-Planet BC: OPENED",
+    "headline": "Branch: v8-planet-bc | Spec: experiments/v8_planet_bc/SPEC",
+    "body_md": "**Branch:** v8-planet-bc | **Spec:** experiments/v8_planet_bc/SPEC.md\n\n**Hypothesis:** Mendrika (48th, ~1420 Elo) achieved their rating with pure behavior cloning\nusing per-planet fire heads on top-ranked replays. Our current `ActorCritic` in train.py has\nexactly this architecture. Prior BC failure (Phase 4, lost 0–16) used a global `PlanetPolicy`\n(rl/policy.py), not per-planet heads. This combination has never been tested.\n\n**Plan:**\n1. Download prize-zone episodes: `pipeline/pull_topbot_episodes.py --require-rating 1400`\n2. Extract labeled moves: `pipeline/extract_moves.py --min-rating 1400 --out training/moves_v8.jsonl.gz`\n3. Train: `agents/rl_ppo/bc_train.py` (new script) — CE loss on fire/target/frac per owned planet\n4. Gate: `eval_checkpoints.py --vs-comet --n-games 200` — comet_reaper_WR > 0% → submit\n\n**Status:** CLOSED FAIL 2026-06-21.\n\n**Results:** 20 epochs on 982k per-planet examples from 1400+ Elo teams (2,650 episodes).\nfire=91%, tgt=19% (vs 5% chance), frac=79%. comet_reaper_WR=0/200, avg game 88/500 steps —\ncrushed before midgame. BC ceiling confirmed: imitation captures *what* top players do,\nnot *why*. orbit_lite exploits the gap immediately.\n\n**Final answer: comet_reaper (sub 53707586, ~1235 Elo).** Competition ends 2026-06-23.\n\n---",
+    "status": "infrastructure"
+  },
+  {
+    "phase": "2026-06-22 — v10-jax: Pure-JAX Engine (commit 105ab1e)",
+    "date": "2026-06-22",
+    "title": "2026-06-22 — v10-jax: Pure-JAX Engine (commit 105ab1e)",
+    "headline": "Milestone: JAX game engine + two-phase validation gate committed to `v10-jax` branch",
+    "body_md": "**Milestone:** JAX game engine + two-phase validation gate committed to `v10-jax` branch.\n\n**orbit_jax.py** — fully-vectorised `step()` with no Python loops in hot path:\n- Fleet ring-buffer write slots via prefix-cumsum (no loop)\n- Fleet-planet swept-pair CCD via `(F,P)` broadcasting — no nested `vmap`\n- Comet spawning/expiry, orbit rotation, production all vectorised\n- Compile time: <10 s on CPU (was 3-5 min with nested vmap)\n\n**Bugs fixed vs Python interpreter (4 parity bugs):**\n1. Comet spawn trigger: `cur_step == 50` (not 49)\n2. Spawn position: `path[0]` immediately; `c_path_idx = 0` (not -99,-99 then advance)\n3. No double-advance on spawn tick (`already_adv = active_c & ~should_spawn`)\n4. Terminal condition: `slimit = cur_step >= EPISODE_STEPS-1` (not -2)\n\n**Validation result:**\n- Phase 1 (no-op exact): 20/20 (100%) — zero step/winner errors\n- Phase 2 (bot winner agreement): 15/20 (75%) — threshold 65%\n\n**train_jax.py** — ActorCriticET Transformer PPO, smoke test exit 0 (768 steps, 4 envs).\n**launch_gpu.sh** — validates engine (N=20) then runs training on A100.\n\n**Next:** deploy to Jetstream2 A100, measure SPS target (≥1000 SPS / 10k parallel envs).\n\n---",
+    "status": "infrastructure"
+  },
+  {
+    "phase": "2026-06-24 — v10-jax A100 runs: CLOSED FAIL",
+    "date": "2026-06-24",
+    "title": "2026-06-24 — v10-jax A100 runs: CLOSED FAIL",
+    "headline": "Status: SHUT DOWN ",
+    "body_md": "**Status:** SHUT DOWN (all Jetstream2 instances shelved by prof; CPU fleet also unreachable).\n\n**What ran:** 2× g3.xl A100 instances (GPU1 seed=1, GPU2 seed=2), each ~20 hours, ~107M steps (U≈1640).\n\n**Results:** `eval_vs_greedy` locked at **0.2333 (7/30)** from U=100 through U=1600 on both seeds — never moved. `comet_reaper_WR=null` entire run.\n\n**Root causes diagnosed:**\n1. **Broken eval signal** — `make_rl_agent` uses argmax (deterministic), eval uses fixed seeds 0–29. Once the policy stabilises on those 30 games (U=100), the result never changes. Fix implemented: random seed offset per eval call.\n2. **comet_reaper eval null** — `comet_reaper/main.py` imports `torch`; jax_env had no torch. Fix implemented: CPU-only torch installed.\n3. **No opponent quality** — snapshot pool seeded from random weights. CPU `train.py` used comet_reaper as P1 cold-start → 40% vs greedy at U=100. JAX had no cold-start → policy learned to beat random play only.\n\n**Fixes committed but not yet proven:**\n- `evaluate_vs_greedy` now uses random `seed_offset` per call\n- `torch` (CPU-only) installed in jax_env on both GPU instances\n- `SnapshotPool` class with 50% current / 50% historical P1 mixing\n- `--seed` arg for JAX PRNGKey diversity\n\n**Next when GPU instances are reactivated:**\n- Implement comet_reaper bootstrap phase (~60 lines): run Python games vs comet_reaper for first 50 updates to warm-start snapshot pool with a competent policy before switching to JAX self-play.\n- The JAX engine + Tensorboard + sync_runs.sh infrastructure is all in place.\n\n**Final submission:** comet_reaper (sub 53707586, ~1235 Elo). Competition ended 2026-06-23.\n\n---",
+    "status": "closed"
+  },
+  {
+    "phase": "2026-06-25 — v9 CPU fleet: CLOSED FAIL + metrics archived",
+    "date": "2026-06-25",
+    "title": "2026-06-25 — v9 CPU fleet: CLOSED FAIL + metrics archived",
+    "headline": "Final result: `comet_reaper_WR = 0",
+    "body_md": "**Final result:** `comet_reaper_WR = 0.0` across all 24 seeds (6 of 9 instances reachable), all 700+ updates, ~69 hours of training each. Gate was cr_WR > 0% at U=500 — never triggered.\n\n**Final training state (ppo-1 sample):**\n- U=710–723, elapsed ~69h, entropy ~0.08 (collapsed), explained_variance ~0.82–0.90\n- eval_vs_greedy stuck at 0.2333 (7/30) — same 23.3% plateau as JAX runs\n- terminal_win_pct = 0.0 — training games never terminated with a winner\n\n**Metrics archived** to `agents/rl_ppo_cpu/runs_archive/` (24 × metrics.jsonl, no checkpoints — best_model.pt files were all saved at cr_WR=0%, not worth keeping).\n\n**All Jetstream2 instances shelved/deleted.** No RL experiment ever beat comet_reaper.\n\n**Lesson confirmed:** Both CPU (v9 ET-PPO, 24 seeds, 69h) and JAX (v10, 2 seeds, 20h) converged to the same 23% greedy ceiling and 0% vs comet_reaper. Root cause: self-play without a strong opponent bootstrap → policy learns to beat random play only, not transferable to orbit_lite opponents.",
+    "status": "closed"
+  }
+]
