@@ -76,7 +76,7 @@ export default function ClimbSection() {
         {(
           [
             ["1,243.8", "peak Elo — rank #144, first time in the top 150", "text-s-blue"],
-            ["#415", "final rank of 4,752 — top 9%, two submissions", "text-s-blue"],
+            ["#415", "of 4,752 at the submission deadline — the ladder keeps settling until the competition closes", "text-s-blue"],
             ["~1,530", "where the money started: the rank-10 prize line", "text-s-amber"],
             ["1,694", "the leader — JAX + PPO self-play, 600M steps, ~$150 of GPU", "text-s-violet"],
           ] as const

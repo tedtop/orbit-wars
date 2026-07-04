@@ -106,7 +106,7 @@ const LOG: { date: string; type: EntryType; title: string; body: ReactNode }[] =
     date: "jun 23",
     type: "ship",
     title: "Deadline",
-    body: "Final answer: comet_reaper — the day-three engine clone, unmodified, because nothing in 19 experiments ever beat it. Final rank #415 of 4,752. Top 9%.",
+    body: "Final answer: comet_reaper — the day-three engine clone, unmodified, because nothing in 19 experiments ever beat it. #415 of 4,752 at the deadline, before the post-deadline ladder (suddenly 4P-heavy, our weakest format) began grinding everyone's ratings toward their final resting places.",
   },
   {
     date: "jun 24–30",
@@ -120,8 +120,8 @@ const LOG: { date: string; type: EntryType; title: string; body: ReactNode }[] =
     title: "The post-mortem",
     body: (
       <>
-        We didn&apos;t place top 10 — a day-three engine clone at #415 of 4,752 was
-        our ceiling this season. What we took away instead: a crash course in PPO
+        We didn&apos;t place top 10 — a day-three engine clone, #415 of 4,752 at
+        the deadline, was our ceiling this season. What we took away instead: a crash course in PPO
         self-play, behavior cloning, value functions, MCTS, and Boltzmann search; a
         pure-JAX game engine and a nine-machine CPU + A100{" "}
         <a

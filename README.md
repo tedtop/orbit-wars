@@ -7,9 +7,12 @@ sessions that ran the research, and the interactive write-up built from it all.
 
 ### 🚀 Start here: **[kaggle-orbit-wars.vercel.app](https://kaggle-orbit-wars.vercel.app)**
 
-| Final rank | Peak | Final submission |
+| Rank at submission deadline | Peak | Final submission |
 |:---:|:---:|:---:|
-| **#415** of 4,752 teams · top 9% | **#144** @ 1,243.8 Elo | `comet_reaper` · ~1,235 Elo |
+| **#415** of 4,752 teams¹ | **#144** @ 1,243.8 Elo | `comet_reaper` · ~1,235 Elo |
+
+¹ The ladder keeps settling (heavily 4-player) until the competition fully
+closes — official final rank will be recorded here when it lands.
 
 ---
 

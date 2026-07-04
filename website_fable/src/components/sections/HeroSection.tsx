@@ -217,7 +217,7 @@ export default function HeroSection() {
         <dl className="mt-10 grid grid-cols-2 gap-3 font-mono text-xs sm:grid-cols-4">
           {[
             ["4,752", "teams in the field"],
-            ["#415", "final rank · top 9%"],
+            ["#415", "rank at submission deadline"],
             ["1,243.8", "peak elo · rank 144"],
             ["80,000+", "games simulated"],
           ].map(([num, label]) => (

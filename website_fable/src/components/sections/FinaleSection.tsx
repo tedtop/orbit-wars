@@ -36,8 +36,10 @@ export default function FinaleSection() {
           When the music stopped, the answer was the one we&apos;d had since day
           three: <code className="font-mono text-s-blue">comet_reaper</code>, the
           engine clone, unmodified — because nothing in 19 experiments and five RL
-          campaigns ever beat it. Top 9% of {lb.n_teams.toLocaleString()} teams,
-          and a complete, honest lab notebook of how we got there.
+          campaigns ever beat it. #415 of {lb.n_teams.toLocaleString()} teams at
+          the submission deadline — the ladder keeps settling until the
+          competition fully closes, heavily four-player and unkind to 2P-tuned
+          heuristics — and a complete, honest lab notebook of how we got there.
         </>
       }
     >
