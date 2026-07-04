@@ -5,10 +5,11 @@ real-time orbital-mechanics strategy war. This repo is the full research
 record — source for every bot, every experiment log, the autonomous AI lab
 sessions that ran the research, and the interactive write-up built from it all.
 
-### 🌐 Start here: **[kaggle-orbit-wars.vercel.app](https://kaggle-orbit-wars.vercel.app)**
+### 🚀 Start here: **[kaggle-orbit-wars.vercel.app](https://kaggle-orbit-wars.vercel.app)**
 
-**Final result:** #415 of 4,752 teams (top 9%) · peak rank **#144 @ 1,243.8 Elo** ·
-final submission `comet_reaper` (~1,235 Elo)
+| Final rank | Peak | Final submission |
+|:---:|:---:|:---:|
+| **#415** of 4,752 teams · top 9% | **#144** @ 1,243.8 Elo | `comet_reaper` · ~1,235 Elo |
 
 ---
 
