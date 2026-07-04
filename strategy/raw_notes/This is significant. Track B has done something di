@@ -1,0 +1,62 @@
+This is significant. Track B has done something different and important. Let me read this carefully because it changes the picture.
+
+## What Track B Actually Found
+
+The 2-ply search dead-end wasn't because shallow search is structurally impossible — it was because the **specific 2-ply implementation used argmax** over the opponent's response. That meant Track B was assuming the opponent always plays the single best counter to our exact move. That's an "oracle opponent" — they always perfectly counter us. Against a perfect oracle, nothing wins. Hence the parity result.
+
+**The Markov fix changes everything:** model the opponent's response as a Boltzmann (softmax) distribution over their candidates instead of a single argmax pick. Now you compute the *expected value* over their likely responses, not the worst-case response. With temperature τ tuned to actual opponent concentration, this becomes a correct Bellman equation for a 2-player MDP.
+
+And the candidate-pool problem dissolves: with softmax over outcomes including penalties for losing attacks, you don't need to pre-filter to floor-cleared candidates. **The expectation handles it.**
+
+## Why This Is Important
+
+We had concluded — based on Track B's first attempt and the candidate scarcity finding — that shallow search was structurally dead. **That conclusion was wrong, or at least premature.** It was dead for *argmax* search against a deterministic opponent. It may not be dead for *expected value* search against a stochastic opponent model.
+
+The 180 orbit_lite evaluations per turn idle compute is real. The proposed depth-2 stochastic implementation needs ~100ms. Depth-3 stochastic is ~300ms. Both fit comfortably in the 800ms budget.
+
+## How This Affects Your Plan
+
+This complicates the Track C / value function story. Let me be honest about the tradeoffs:
+
+**Track B's stochastic opponent model** — fast to build (hours), well-understood (it's a standard 2-player MDP Bellman equation), and addresses the specific algorithmic failure that killed v3. The only unknown is tuning τ, which Optuna can sweep in 30 minutes. If it works, you have a real depth-2 (and potentially depth-3) search bot inside a day.
+
+**Track C's value function** — bigger build (1-2 days), needs Jetstream2, needs careful encoding work, has the encoder-risk flag. But it's the only thing that can expand the candidate set to aggressive floor-blocked moves and evaluate them by learned outcome.
+
+**These aren't competing — they're complementary.** Stochastic 2-ply with the Markov fix + Track C's value function as the leaf evaluator at depth 2-3 is the right combined architecture. Track B's recommendation order is actually correct:
+
+1. Stochastic opponent model first (~100ms, ~1 day build) — fixes the immediate algorithmic failure
+2. Extend to depth-3 once stochastic-2ply confirms signal
+3. Track C value function plugs in as leaf eval to enable depth-4+ within budget
+
+## What to Tell the Orchestrator
+
+**Append this to the overnight directive:**
+
+> **Track B is NOT idle — it's active again.** The 2-ply dead end was an algorithmic failure (deterministic argmax opponent model), not a structural one. Track B has identified the fix: stochastic opponent model via Boltzmann distribution over orbit_lite scores, tuned τ via Optuna sweep.
+>
+> **New Track B work order:** Implement stochastic 2-ply per the recommendation document. Phase 1: build the Markov opponent model, ~100ms target. Phase 2: Optuna τ sweep (50 trials, 10 games each, ~30 min). Phase 3: gauntlet v2 verdict at n=150 vs schmeekler/comet_reaper. Report KEEP/DISCARD.
+>
+> **Track C remains active in parallel.** The value function build is unchanged but its eventual integration target is now richer — it plugs into Track B's stochastic search shell at depth 2-3, not depth-1.
+>
+> **Optuna is un-shelved for one specific purpose only:** sweeping τ for the stochastic opponent model. The 22 engine knobs remain done. This is a single targeted parameter sweep, not a return to general config tuning.
+
+## On the Periodic Orbit Timing (Option C)
+
+This is also worth flagging. Track B's Option C is genuinely novel and orthogonal — "wait for a better attack window when a planet's orbit brings it closer." This is structural feature work that would normally be Track A's lane, but Track A is occupied with the comet kill-test.
+
+After the comet kill-test completes (likely tonight), reassign Track A to Option C — periodic orbit timing as a "hold-back" flag. It's compatible with the stochastic search and would be an additional structural lever.
+
+## The Updated Track Picture
+
+```
+Track A — Comet 2×2 factorial kill-test (active now, ~few hours)
+          → after completion: periodic orbit timing (Option C)
+Track B — Stochastic opponent model + Markov chain 2-ply (active again)
+          → depth-2 first, then depth-3 if signal positive
+Track C — Value function (active, multi-day build)
+          → eventually plugs into Track B's stochastic search shell
+```
+
+Three live tracks. The wall we thought we hit was an algorithmic wall, not a structural one. Track B just found a way through.
+
+This changes my "don't add anything to the directive" advice from earlier. **Add the Track B stochastic model directive.** It's higher-confidence than the value function and faster to validate. Both should run.

@@ -1,0 +1,23 @@
+ Since the deeper-search build is best done with you watching (search bugs are subtle), I'm putting the updated plan up for approval rather than starting it unattended.
+
+  /btw how are you doing autoresearch? Do I need to install something or are you able to auto-discover it as a skill from the internet or something?
+
+    Good question — and the short answer: there's nothing to install, and it's not a skill I auto-discover from the internet.
+
+    "Autoresearch" in our plan isn't a package or a Claude Code plugin. Karpathy's autoresearch is just a pattern — a 3-file convention (an immutable scorer/prepare.py, an
+    agent-editable train.py, and a human-written program.md of goals/constraints) plus a ratchet loop: propose a change → score it on a fixed yardstick → keep it only if
+    it improves → repeat. The "agent" that runs that loop is me (Claude Code).
+
+    So for us, "doing autoresearch" means I build/run those pieces out of things we already have — no new dependency:
+    - The fixed yardstick = our gauntlet evaluator (experiments/v5_engine_tuning/eval/eval_worker.py + arena), which already scores a bot vs the field.
+    - The editable code = comet_reaper_tuned's config / the planner.
+    - program.md = a short goals/constraints doc ("raise 4P score, don't regress 2P, stay under the 1 s/turn budget").
+    - The ratchet = me proposing config/structural changes, benching them, and keeping only winners — with Optuna as the numeric inner-loop tool I call.
+
+    The only thing I did install for this is Optuna (the optimizer, pip/uv — already done). The autoresearch ratchet itself is just orchestration code I'd write in the
+    experiment folder.
+
+    One caveat worth knowing: Karpathy's reference autoresearch was designed for fast, low-noise experiments (tiny models scored in minutes on a deterministic metric).
+    Ours is the opposite — each "experiment" is a noisy batch of stochastic games — so the ratchet is only as trustworthy as the evaluator underneath it (enough
+    seat-rotated games to beat noise). That's exactly why I prioritized the low-noise gauntlet first; the autoresearch loop is most valuable layered on top of the
+    deeper-search build, where there are many design choices to sweep.

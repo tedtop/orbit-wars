@@ -1,0 +1,10 @@
+What you can do right now:
+
+  # Launch the dashboard
+  .venv/bin/streamlit run dashboard/app.py
+
+  # Run the data pipeline (fetch new episodes + leaderboard)
+  bash pipeline/run_pipeline.sh
+
+  # Quick local 4P test with archive fillers
+  python arena.py --mode 4p --players coordinated_strike_interceptor,markowitz_portfolio_optimization,the_vulture,bayesian_wave_function_collapse --games 20

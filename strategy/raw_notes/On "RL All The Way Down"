@@ -1,0 +1,12 @@
+On "RL All The Way Down"
+You're right to call me out. I was anchoring on a pre-Jetstream timeline. With Jetstream2 + A100 the calculus is different:
+What's actually feasible in 4-5 days with serious compute:
+A from-scratch policy network learning to play Orbit Wars without engine scaffolding. AlphaZero-style: pure self-play, no human demonstrations, no orbit_lite filtering. The network learns its own candidate generation, its own evaluation, its own search.
+Day 1: Build the self-play training loop, action/state encoders, network architecture
+Day 2: Generate 1-2M self-play games on 150 CPU cores (huge headroom)
+Day 3: Train policy + value head jointly on A100 (hours, not minutes)
+Day 4: Fidelity probe vs comet_reaper, iterate if needed
+Day 5: Submit
+The real question isn't time — it's whether from-scratch learning beats engine + learned augmentation in this domain. Honest answer: probably not within 4 days. AlphaZero on Go took thousands of TPU-hours and weeks of training. We have hours of A100 and days. But "probably not" isn't "no."
+Where it could win: if the engine's filtering really is the ceiling and a from-scratch learner discovers strategies the engine refuses to consider, it could blow past 1500. The exact same logic that motivates Track C's candidate expansion applies — just done more aggressively.
+What I'd actually do given infinite Ted-time and current Jetstream2: spin it up as Track D in parallel. It doesn't compete with A/B/C — they all draw from different compute pools. Worst case it produces a 600 Elo bot you don't submit. Best case it produces something the engine couldn't have. The cost is the engineering time to build the training loop.

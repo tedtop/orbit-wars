@@ -1,0 +1,68 @@
+ ---
+  TO: Orchestrator
+  FROM: Track B worker (branch track-b-mcts-search, worktree /Users/Ted/src/orbit_wars-track-b)
+  RE: Track B closure + two new search ideas needing an implementation plan
+
+  ---
+  Track B verdict: CLOSED, DISCARD all 2-ply variants
+
+  All depth-2 opponent-model search variants are discarded. n=50 confirmed: v2 (state-advance + cheap opponent) = 75% overall vs schmeekler 74% — within noise (SE≈2.7%).
+  Full evidence trail in experiments/v5_engine_tuning/autoresearch/TRACK_B_NOTES.md.
+
+  Root cause: orbit_lite's clears_floor filter leaves only 0–4 valid candidates per turn (64 turns with 0, 47 with 1 out of 133 profiled). De-meaned correction is
+  near-zero with n≤2 samples. Expanding to floor-blocked candidates collapsed the de-mean baseline with losing-attack negatives. No variant found a valid candidate pool to
+  re-rank.
+
+  Housekeeping needed (orchestrator decision):
+  - Merge track-b-mcts-search → v5-engine-tuning, remove worktree
+  - Keep: experiments/v5_engine_tuning/autoresearch/TRACK_B_NOTES.md, the _advance_garrison_single_wave() utility function (will be reused)
+  - Drop: agents/comet_reaper_mcts/ (copy of schmeekler with failed 2-ply, defaults to SEARCH_DEPTH=1)
+
+  ---
+  Two new ideas discovered this session — need implementation plans
+
+  Idea 1: Stochastic Markov opponent model (~100ms compute budget)
+
+  The root cause of v3's oracle catastrophe was argmax over opponent's orbit_lite scores. The fix: replace with a Boltzmann/softmax distribution:
+
+  P(opp attacks planet j | GS1) ∝ exp(score_j / τ)
+
+  Then 2-ply value becomes an expectation over the opponent distribution, not a minimax:
+
+  EV(W1) = Σ_j  P(R1_j | GS1)  ×  competitive_score(W1 + R1_j)
+
+  This is a proper 2-step Markov chain (Bellman equation for 2-player MDP). Temperature τ → 0 is the oracle disaster; τ → ∞ is random; τ optimal matches real opponent
+  concentration. Needs τ tuned, probably via Optuna (50 trials × 10 games).
+
+  Critically: with the stochastic model, there's no need for the clears_floor filter — EV(W1) naturally scores losing attacks near zero. We now have ~192 viable (src, tgt)
+  pairs to evaluate instead of 0–4. The candidate pool problem is solved.
+
+  Compute: 10 candidates × (1 orbit_lite opp distribution call ~5ms + top-5 opp moves × 1ms) = ~100ms. Well within the ~900ms available budget.
+
+  Idea 2: Periodic orbit timing — "WHEN to attack, not just WHETHER" (~negligible extra compute)
+
+  Currently schmeekler asks "is attacking planet X profitable RIGHT NOW?" and passes if not. It has no look-ahead on when planet X will be cheapest to capture.
+
+  Planets orbit the sun with period ~40–80 steps. At different points in the orbit, the same planet costs different amounts to capture (distance from our nearest source
+  varies → floor varies → ships needed varies).
+
+  Proposal: for each target planet in the shortlist, scan the next 150 steps (alive_by_step is already computed) to find the minimum capture floor and the step at which it
+  occurs. If min floor occurs in T_future steps and current floor is 2× that, output a "hold" signal — suppress attacking now, accumulate garrison, attack at the optimal
+  window.
+
+  Compute cost: negligible — floor is already computed for K_eta steps. Just scan forward rather than reading only the arrival-time index.
+
+  This is completely orthogonal to the stochastic opponent model and could be implemented independently. Ted was enthusiastic about this one specifically.
+
+  ---
+  Other items from this session
+
+  - 4P testing: current gauntlet is 2P only. Should add 4P (50/50 split or separate scores) since comet_reaper's live score is partly 4P-influenced. The static bonus is
+  already format-aware (STATIC_BONUS_2P=1.5 / STATIC_BONUS_4P=0.0).
+  - Available compute: ~900ms per turn with ~180 orbit_lite calls to spend. The budget is not the constraint — the algorithm is. Both new ideas above fit comfortably.
+  - Infrastructure already built: _advance_garrison_single_wave(), _plan_opponent_1ply(), build_target_shortlist(), score_candidates() are all in the Track B codebase and
+  reusable.
+
+  ---
+  Request to orchestrator: Write an implementation plan for Ideas 1 and 2 above, decide which agent to fork from (comet_reaper recommended), decide branch/worktree
+  strategy, and hand back to the Track B worker to execute.

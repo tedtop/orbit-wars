@@ -1,0 +1,12 @@
+{
+  "avg_place": 1.9166666666666667,
+  "winrate": 0.4166666666666667,
+  "config": {
+    "ffa_leader_attack_bonus": 0.0,
+    "ffa_weakest_attack_bonus": 0.4,
+    "ffa_elimination_bonus": 6.0,
+    "ffa_elimination_strength": 6.0,
+    "ffa_target_prod_bonus": 0.1,
+    "roi_threshold": 1.55
+  }
+}

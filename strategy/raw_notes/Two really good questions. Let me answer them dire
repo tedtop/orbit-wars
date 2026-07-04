@@ -1,0 +1,53 @@
+Two really good questions. Let me answer them directly.
+
+## Did MCTS See Any Success?
+
+Short answer: it showed promise at small sample sizes but collapsed at proper sample sizes.
+
+- **v1 (exact flow scorer as leaf):** looked great at n=20 (80% vs schmeekler) but collapsed to parity at n=50. The de-meaned correction showed zero variance — the scoring was correct but the candidate set was so small (0-4 moves per turn) that re-ranking them made no difference.
+
+- **v2 (true depth-2 beam + state-advancement opponent model):** showed +2pp at n=20, parity at n=50. Same problem — the engine already filters so aggressively that there's nothing meaningful to search over.
+
+So MCTS didn't fail because the algorithm was wrong. It failed because the **engine pre-filters to near-determinism before search even starts.** You can't build a meaningful search tree when 64/133 turns have zero candidates and 47 have exactly one.
+
+This is why the value function changes the game — instead of re-ranking the engine's 0-4 approved candidates, it evaluates moves the engine currently rejects. That's a fundamentally different problem.
+
+## What If the Gym Is Still Wrong?
+
+This is the right question to keep asking and the honest answer is: the gym is still imperfect, but you have two protection mechanisms.
+
+**Protection 1 — The gym-vs-live calibration is improving.** You now have two real live data points: comet_reaper at 1245 and schmeekler at 1075. The gym correctly orders them after the anchor fixes. It's not perfect but it's directionally trustworthy for large differences.
+
+**Protection 2 — The value function sidesteps the gym problem entirely.** Its fidelity is measured on real episode outcomes, not gym results. The fidelity probe asks "does V rank real winning positions above real losing positions from downloaded episodes?" — that's ground truth, not a proxy. If V passes fidelity on real data, you can submit with confidence regardless of what the gym says.
+
+This is actually the strongest argument for the value function path: it's the only improvement mechanism whose quality signal comes from real competition data rather than your local approximation.
+
+## The Practical Answer on Live Testing
+
+You're right that nothing except schmeekler has been live-tested. Here's the full picture:
+
+```
+Live tested:      comet_reaper (1245) ← best confirmed
+                  schmeekler (1075)   ← confirmed below CR
+
+Gym only:         schmeekler_fmt      ← fmt > schmeekler in gym, not live-tested
+                  comet_reaper_mcts   ← parity at n=50, not live-tested
+
+Never built:      value function      ← the moonshot
+```
+
+schmeekler_fmt is the safest live test because it's a small modification of a known bot. The risk is low — worst case it matches schmeekler's 1075, best case it's slightly above. Worth one submission slot.
+
+comet_reaper_mcts at gym parity with schmeekler is not worth a live test — parity at n=50 means it's not clearly better than schmeekler, and schmeekler is already below comet_reaper live. No point burning a slot on that.
+
+## Your Directives
+
+**Tell Claude Code three things:**
+
+**1. Build the comet factorial now.** Track A builds schmeekler_comet (both STATIC_BONUS and COMET_BONUS knobs), runs the 2×2 gauntlet. Cheap, fast, closes the question. Expectation: comet ≈ 0, but run it to kill the hypothesis with data.
+
+**2. Submit schmeekler_fmt.** It's the best schmeekler variant, confirmed at n=150. Free upgrade to your second slot. Verify active-slot rule first — make sure submitting doesn't bump comet_reaper.
+
+**3. Start the value function spec and Jetstream2 setup.** Both tracks are idle after the comet factorial starts. Draft the full build plan while the factorial runs and fmt soaks. The spec is already 80% defined from our conversations — Claude Code just needs to write it up and start the data generation pipeline.
+
+The gym concern is valid but the value function is specifically designed to not depend on the gym for its quality signal. That's the right bet precisely because it sidesteps the problem you're worried about.

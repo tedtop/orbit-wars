@@ -1,0 +1,71 @@
+Great question — this is exactly the kind of thing worth thinking through before handing to Claude Code for implementation. Here's the landscape:
+
+## Classical Search
+
+**Minimax with Alpha-Beta Pruning**
+The chess/checkers standard. You already have a `minimax_fleet_allocation` bot that tried this — it ranked 21st (30%) in your arena. The problem is branching factor. In chess you have ~35 moves per turn. In Orbit Wars you have potentially dozens of planets × dozens of targets × ship count decisions = enormous search tree. Depth-2 is about all that's feasible before hitting the 1-second budget.
+
+**Monte Carlo Tree Search (MCTS)**
+Better fit than minimax for this game. Instead of exhaustively searching, it:
+1. Randomly simulates many game continuations from the current state
+2. Tracks which moves led to wins
+3. Gradually focuses exploration on promising branches
+
+Handles large branching factor well, naturally handles multi-player (unlike minimax which assumes 1 opponent), and gets stronger with more compute. AlphaGo started as pure MCTS. The catch — needs a fast forward simulator, which you have via `kaggle-environments`.
+
+**Beam Search**
+Keep only the top K most promising states at each depth rather than the full tree. Much more tractable than full minimax, reasonable results. Good for planning a sequence of fleet dispatches several turns ahead.
+
+---
+
+## Continuous Space Specific
+
+**A\* / Dijkstra**
+Classic pathfinding but less relevant here — your fleets travel in straight lines and the action space is dispatch decisions, not navigation. However A\* is useful for one specific subproblem: finding the optimal angle to aim at a moving planet that avoids the sun and planet blockers. Your physics core already does this iteratively — A\* could make it more principled.
+
+**Rapidly-exploring Random Trees (RRT)**
+Designed for continuous spaces with obstacles. Could plan fleet paths that thread between planet blockers and around the sun more elegantly than your current segment-intersection checks. Probably overkill given fleets travel in straight lines.
+
+**Potential Fields**
+You already have `artificial_potential_fields.py` — it placed 18th (41%). The concept is sound but your implementation showed its limitations: local minima (ships get stuck), no lookahead, purely reactive. A better potential field that incorporates future planet positions could score much higher.
+
+---
+
+## Game-Theory Approaches
+
+**Nash Equilibrium / Regret Minimization**
+In 4-player games, pure minimax breaks down because you can't assume opponents play optimally against you — they're also fighting each other. Counterfactual Regret Minimization (CFR) finds mixed strategies that can't be exploited. Used in poker AI. Complex to implement but theoretically the right approach for multi-player games.
+
+**Opponent Modeling**
+Rather than assuming optimal play, model each opponent's likely strategy from observed behavior and plan against that model. Your `bayesian_wave_function_collapse` bot (2nd place, 64%) does a version of this with Monte Carlo rollouts. Explicitly tracking "this opponent is aggressive early" or "this opponent turtles" and adjusting your plan accordingly is a significant edge.
+
+---
+
+## Planning Under Uncertainty
+
+**Partially Observable MCTS (POMCP)**
+You don't know opponents' ship counts in transit or their future decisions. POMCP handles uncertainty by sampling possible game states rather than assuming perfect information. Stronger than standard MCTS for hidden-information games.
+
+**Temporal Difference Planning (TD-Gammon style)**
+Learn a value function for board positions through self-play, then use that value function to guide a shallow search. TD-Gammon beat the world's best backgammon players in the 90s with this approach. The learned value function does the heavy lifting so the search doesn't need to go deep.
+
+---
+
+## What's Actually Worth Building Given Your Timeline
+
+Given 9 days to deadline, here's my honest ranking by impact-to-effort:
+
+| Approach | Effort | Potential Impact | Verdict |
+|---|---|---|---|
+| MCTS on top of existing physics | Medium | High | Best bet |
+| Improved potential fields | Low | Medium | Quick win |
+| Opponent modeling (classify style) | Medium | High | Worth it for 4P |
+| Beam search fleet planning | Low | Medium | Reasonable |
+| CFR / Nash equilibrium | Very High | High ceiling | Too slow for deadline |
+| RRT path planning | Medium | Low | Skip |
+
+**MCTS is the highest-leverage thing you could build.** It directly addresses the planning horizon problem — your current bots are purely reactive (score targets, dispatch greedily). MCTS would let your bot simulate "if I take this planet now, what happens 20 turns later" and pick moves based on that. Combined with your existing physics core as the simulation engine and The Producer's orbit_lite for fast evaluation, that's potentially a significant rating jump.
+
+The key implementation question: can you run your game simulator fast enough to do meaningful MCTS within 1 second per turn? At 2.2 games/second on 10 CPUs, a single full game takes ~0.45 seconds. For MCTS you need many partial rollouts per turn — you'd need a much faster lightweight forward model, not the full `kaggle-environments` engine. That's the main engineering challenge.
+
+Want me to add MCTS as a priority item to the Claude Code handoff document?

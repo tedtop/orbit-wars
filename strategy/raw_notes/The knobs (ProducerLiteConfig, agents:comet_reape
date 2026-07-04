@@ -1,0 +1,9 @@
+ The knobs (ProducerLiteConfig, agents/comet_reaper/main.py), grouped:
+ - Aggression/selection: roi_threshold, min_ships_to_launch, max_waves_per_turn, max_offensive_targets,
+ max_defensive_targets, max_sources_per_lane.
+ - Lookahead: horizon. Reinforce-risk: reinforce_size_beta, reinforce_eta_free, reinforce_eta_scale.
+ - Regroup: enable_regroup, max_regroup_time, regroup_pressure_delta_min, max_regroup_sources_per_lane,
+ max_regroup_targets_per_source, regroup_time_penalty_weight.
+ - Endgame surge (phase 2): terminal_phase_turns, terminal_roi_threshold, terminal_max_waves_per_turn.
+ - Misc/4P: comet_evac_steps; ffa_leader_attack_bonus / ffa_target_prod_bonus (4P-only, currently 0
+ in comet_reaper — re-add + tune).

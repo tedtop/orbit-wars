@@ -1,0 +1,190 @@
+Orbit Wars — four engine-layer bots + "learn from the top bots without their code"
+
+ Context
+
+ The top public leaderboard is one shared engine — Slawek Biel's orbit_lite ("The Producer") —
+ run with different config presets (agents/opponents/ORBIT_LITE_FAMILY.md). Beating the LB is a
+ policy-layer problem on top of a known engine, not a new heuristic from scratch. comet_reaper
+ (agents/comet_reaper/main.py) is our validated baseline = that engine (producer-v2, #1 in 2P & 4P)
+ - never-crash guard + terminal-phase surge + comet-evac.
+
+ The four highest-EV improvements each attack a structural weakness the entire family shares:
+ opponents modeled as do-nothing, shallow 4P play, greedy/no-search, and a blunt global roi_threshold.
+ Separately, the user asked how to learn from the private top-10 teams when we can't see their code and
+ naive behavior-cloning can't exceed its teacher.
+
+ Part A — Four bots
+
+ Each bot = a fork of agents/comet_reaper/ (its main.py + vendored orbit_lite/) into
+ agents/<name>/, changing exactly one thing, gated behind a knob whose zero value reproduces
+ comet_reaper — so every bot is a clean A/B against the comet_reaper control and the new behaviour is
+ tunable. Bots: precog, kingmaker, helmsman, maestro.
+
+ 1. precog — opponent-response modeling.
+ - Problem: score_candidates (orbit_lite/planner_core.py:89) scores my waves against
+ garrison_status, a projection where opponents do nothing (only reactivity = reinforce_size_beta
+ floor, comet_reaper/main.py:76). ORBIT_LITE_FAMILY.md calls this the #1 shared exploit surface.
+ - Change: before scoring, predict each opponent's likely launches this turn and apply them into the
+ projection. v1 proxy (cheap, recommended): for each opponent reuse build_target_shortlist
+ (planner_core.py:271) + safe_drain (planner_core.py:587) from their perspective (player_id=opp)
+ = "send the safe surplus at their best target"; apply via apply_private_planned_launches (already
+ used at main.py:355). Score my candidates against the post-opponent-move board.
+ - Knob: opp_model_strength (0 ⇒ comet_reaper). Escalation v2: run the full planner per opponent
+ (true 1-ply) if the proxy pays — watch per-turn wall-clock.
+
+ 2. kingmaker — 4P coalition / meta-play.
+ - Problem: competitive_score (planner_core.py:75-86) sums opponents equal-weight
+ (opp = net.sum(-1) − me, line 85). v2-gru's additive ffa_* bonuses were ≈noise and comet_reaper
+ dropped them, so go deeper than bonuses.
+ - Change: weighted opponent term — overweight the current leader (prefer plays that hurt whoever's
+ winning), discount opponents already bleeding each other, plus a "don't provoke while leading" term.
+ Active only when player_count >= 4. Knobs: leader_weight, etc.
+
+ 3. helmsman — shallow lookahead / search.
+ - Problem: _greedy_select is myopic per-turn; no lookahead over our own future turns.
+ - Change: beam search over the top-M wave-sets, roll each forward a few turns with orbit_lite's own
+ movement/garrison projection, score the resulting state, pick the best line. Hard wall-clock cap +
+ graceful fallback to greedy (Kaggle timeout = instant loss). Knobs: search_beam, search_depth,
+ time_budget_ms.
+
+ 4. maestro — dynamic config controller (the v2-gru slot, done right).
+ - Problem: v2-gru built a GRU to modulate roi_threshold/max_waves/ffa per turn but shipped it
+ disabled (USE_GRU_CONTROLLER=True but GRU_WEIGHTS_AVAILABLE=False) — runs on a hand heuristic.
+ comet_reaper only has a fixed terminal-phase surge.
+ - Change: port v2-gru's extract_global_features (24-dim) + apply_strategy_controller scaffold and
+ ship a better controller — improved heuristic, or actually-trained 4-output weights (self-play/BC).
+ Reuse TinyGRUStrategyController, _clamp_config_values from the v2-gru notebook.
+
+ Validation (all four): reuse arena.py — do NOT write a new harness. It already does 2P round-robin
+ (auto seat-swap, fresh board every 2 games), 4P (seat rotation), OpenSkill (PlackettLuce), Wilson-CI
+ adaptive stopping, an h2h matrix, and parallel multiprocessing.Pool. The only change needed is to
+ extend discover_bots() (arena.py:103, currently globs agents/*.py) to also pick up folder bots
+ (agents/*/main.py → name = dir, spec = that path) so comet_reaper + the four forks are addressable
+ by name. This is additive and backward-compatible (file bots unaffected). Then:
+ arena.py --players precog,comet_reaper (h2h 2P) and
+ arena.py --players precog,comet_reaper,comet_reaper,comet_reaper --mode 4p (focal vs 3 controls) work
+ as-is. A bot is a submission candidate only if win% > 50 vs the control and it stays within the per-turn
+ time budget.
+
+ Engine isolation & training/eval vs the real top bots (resolves the "subprocess" worry).
+ Confirmed by source diff: every orbit_lite-shipping public bot (the-producer-v2, floor-matched,
+ i-m-stronger, v2-gru, exp50, 1266-elo, agent-lyonel) has byte-identical engine source to ours — the
+ only differences are .pyc bytecode and their main.py config preset (matches ORBIT_LITE_FAMILY.md).
+ kaggle_environments.get_last_callable (agent.py:57) execs each main.py in an isolated globals dict
+ but shares one sys.modules["orbit_lite"]; since the source is identical, load order is irrelevant and
+ in-process games are correct and fast (~4s/game) — no subprocess needed. So we CAN run our bots vs
+ the real Producer & the public family in arena, in-process.
+ - Hard build constraint: the four forks keep ALL logic in main.py and never edit the vendored
+ orbit_lite. A fork that edited its engine would diverge, and the shared-sys.modules collision
+ would silently corrupt A/B games (first-loaded engine wins). So kingmaker applies leader-weighting in
+ main.py by calling the shared sparse_launch_flow_delta and reweighting net_ship_delta itself —
+ not by editing competitive_score. (Same rule keeps all forks collision-safe vs each other.)
+ - Eval gauntlet: add the real public bots (producer-v2 + the self-contained non-orbit_lite ones:
+ heuristic-1110, star-wars-1224, advanced-1608, lb-958-reinforce, lb-highest-1000-search) as fixed
+ arena opponents to measure true progress, not just win% vs our own control.
+ - Training hot loop still uses fast in-process proxies (the family as config presets of our shared
+ engine + BC clones + self-play snapshots); the real bots are for periodic eval, now cheap too.
+
+ Part B — Learn from the top bots WITHOUT their code (idea 5)
+
+ Framing correction: we can't see their code, but we CAN see their behavior —
+ (obs, action) per step for every prize-zone team via pipeline/pull_topbot_episodes.py +
+ extract_moves.py --min-rating 1500. BC/IRL/offline-RL need behavior, not source. Data is already
+ abundant and extracted: training/moves_prizezone.jsonl.gz = 168,848 decisions (85,265 with a
+ launch) from 343 teams ≥1500. BC on prize-zone HAS been run (training/bc_prizezone.pt,
+ bc_prizezone_v2.pt, + 4 BC clones clone_*.pt); the bc_train.py docstring "local-only" caveat is
+ stale. So the imitation baseline already exists — objective-recovery must beat it, not a blank.
+ The "reverse-engineering that failed" (reverse-engineering-.../replay_analysis.py) is a behavioral
+ profiler (reaction time, phase volume, comet rate), not a policy learner. We also have 133 real
+ comet_reaper games (replays/, our team = "Montana Schmeekler") vs the live ladder — a test set + a
+ source of opponent moves in our own state distribution.
+
+ Naive BC caps at the teacher; ranked ways to exceed them from their logs:
+
+ - Track A (recommended) — Objective recovery / preference ranking. Each move is a revealed
+ preference: it beat the alternatives they passed. For each replay state, regenerate orbit_lite's
+ candidate waves, compute per-candidate features, and fit weights so the team's actual move ranks top
+ (pairwise logistic/ranking loss — tractable, data-efficient). Plug the recovered weights into a
+ parameterized competitive_score, then let our deeper planner (precog/helmsman) optimize that
+ objective better than they do. Answers "what are they optimizing for" — what reverse-engineering
+ wanted but couldn't read off code. New: rl/objective_recovery.py.
+ - Track B — Engine-as-teacher + tuning. The whole public family is orbit_lite presets (we own the
+ code). CMA-ES/Optuna the config in the gym to beat the public presets → that tuned engine is a teacher
+ ≥ public bots → BC (bc_train.py) → self-play past it (selfplay.py). Teacher is internal & rising,
+ not external & fixed. New: pipeline/tune_config.py.
+ - Track C — Mistake-mining. Run prize-zone replay states through orbit_lite's exact combat-flow
+ projector; flag dominated moves (declined +EV captures, do-nothing-blind-spot losses); BC on "their
+ mistake → the correction." Beats them where they're weak. New: pipeline/mine_mistakes.py.
+ - Track D — Opponent-conditioning. Repurpose the fingerprints (replay_analysis.py) as a runtime
+ archetype classifier → switch counter-config. Feeds precog + maestro.
+ - Track E (heavier, later) — Offline RL (IQL/CQL/AWAC) on (s,a,s',terminal-reward): textbook
+ "exceed the logging policy from fixed logs," but data-hungry/finicky — stage after A–C.
+ - Track F — Self-play league with the public bots / clones as fixed benchmark opponents
+ (selfplay.py already started): don't imitate, just guarantee we beat them.
+
+ Step 0: pull prize-zone episodes + run the existing BC on them to see where naive imitation lands —
+ the baseline every track above is trying to beat.
+
+ Critical files
+
+ - New forks: agents/{precog,kingmaker,helmsman,maestro}/ (copy comet_reaper/main.py + orbit_lite/)
+ — already created this session (cleaned of __pycache__/.DS_Store).
+ - Harness: arena.py discover_bots():103 — add folder-bot (agents/*/main.py) discovery (only edit).
+ - All four changes live in each fork's main.py only (never edit vendored orbit_lite): precog &
+ kingmaker call the shared sparse_launch_flow_delta / score_candidates / competitive_score
+ (planner_core.py:75-110, garrison_launch.py:311) and apply new logic in main.py; helmsman wraps
+ run_turn/_greedy_select + the movement projection; maestro ports the v2-gru controller scaffold.
+ Reuse safe_drain:587, build_target_shortlist:271,
+ apply_private_planned_launches (main.py:355), intercept_angle, garrison_status
+ (movement.py:375).
+ - Idea-5: pipeline/extract_moves.py, pull_topbot_episodes.py, rl/bc_train.py, rl/selfplay.py,
+ reverse-engineering-.../replay_analysis.py; new rl/objective_recovery.py,
+ pipeline/tune_config.py, pipeline/mine_mistakes.py.
+
+ Verification
+
+ - Each bot: gym check (rl/rl_agent.py:_check pattern) + N-game round-robin vs comet_reaper (2P & 4P)
+ via arena.py/bench.py; require win% > 50 vs control and per-turn time within budget.
+ - Idea-5: Track A — held-out top-bot move-prediction top-1 accuracy vs the BC baseline, then
+ recovered-weights engine vs stock comet_reaper in the gym. Track B — tuned config beats public presets
+ in the gym.
+
+ Decisions & execution order
+
+ Resolved: bot #1 is named precog; objective-recovery (Track A) leads — it's the highest-EV
+ use of the prize-zone data and it upgrades the scorer that both precog and kingmaker build on.
+
+ Current state (done this session): four forks created; data inventoried (168k prize-zone decisions,
+ BC + clones already trained, 133 comet_reaper replays); arena.py confirmed as the harness; engine APIs
+ read (LaunchSet.owner is per-launch → opponent what-ifs scorable via the existing flow projector).
+
+ Sequenced execution:
+ 0. Harness: extend arena.py:discover_bots() for folder bots (4 lines); smoke --players    precog,comet_reaper to confirm all forks are addressable.
+ 1. Track A (lead). Data is already pulled+extracted and BC already trained (bc_prizezone*.pt) — use
+ those as the imitation baseline. Build rl/objective_recovery.py: regenerate orbit_lite candidate
+ waves per replay state, fit per-candidate scoring weights by pairwise ranking so each team's actual
+ move ranks top. Output: a parameterized competitive_score + recovered weight vector. Gate: held-out
+ top-1 move-prediction accuracy beats the BC baseline.
+ 2. precog (bot #1) — opponent-response modeling, built on the parameterized scorer from step 1.
+ 3. kingmaker (bot #2) — 4P weighted-opponent term, also consuming the recovered scorer.
+ 4. helmsman (bot #3) — shallow search; maestro (bot #4) — dynamic config controller.
+ 5. In parallel as compute allows: Track B (engine-as-teacher tuning), Track C (mistake-mining),
+ Track D (opponent-conditioning) feeding precog/maestro.
+
+ Each bot is gym-validated vs the comet_reaper control (2P & 4P, win% > 50, per-turn time within budget)
+ before it becomes a submission candidate.
+
+ Overnight autonomous run (one "go", then sleep)
+
+ Approving this plan is the only command needed — no second command, no babysitting. On approval I run,
+ in one continuous self-driven session:
+ 1. Extend arena.py:discover_bots() for folder bots; smoke --players precog,comet_reaper.
+ 2. Build the four forks (main.py-only) + rl/objective_recovery.py; arena-smoke each vs comet_reaper.
+ 3. Launch background self-play (detached process, warm-started from bc_prizezone.pt, periodic
+ checkpoints) — this is the engine that keeps improving while you sleep.
+ 4. Self-schedule supervision via ScheduleWakeup (~every 20–30 min): verify the trainer is alive
+ (restart if dead), run an arena round (latest checkpoint + the 4 bots vs comet_reaper + the real
+ public-bot gauntlet), promote winners into the self-play opponent pool, append a timestamped row to
+ overnight/RESULTS.md. Re-schedule and repeat until you interrupt in the morning.
+ Nothing is committed (commits need explicit approval); everything is left in the working tree with
+ overnight/RESULTS.md as the readout.

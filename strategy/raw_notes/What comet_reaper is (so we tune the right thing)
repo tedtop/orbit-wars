@@ -1,0 +1,121 @@
+ What comet_reaper is (so we tune the right thing)
+
+ Not a neural net — no weights file. It's a deterministic algorithm (the orbit_lite planner) steered by
+ a config of ~20 numbers. "Tuning" = searching for better numbers in the gym; no gradients/training
+ data/.pt. (The training/*.pt files were the abandoned neural track.) Structure today: separate 2P vs
+ 4P presets + a normal→endgame phase split; no opening book, no opponent profiling.
+
+ The full knob set to tune (ProducerLiteConfig) — tune ALL of them, don't pre-prune:
+ horizon · max_sources_per_lane · max_offensive_targets · max_defensive_targets · max_waves_per_turn ·
+ roi_threshold · min_ships_to_launch · reinforce_size_beta · reinforce_eta_free · reinforce_eta_scale ·
+ enable_regroup · max_regroup_time · regroup_pressure_delta_min · max_regroup_sources_per_lane ·
+ max_regroup_targets_per_source · regroup_time_penalty_weight · terminal_phase_turns ·
+ terminal_roi_threshold · terminal_max_waves_per_turn · terminal_enable_regroup · comet_evac_steps
+ + RE-ADD ffa_leader_attack_bonus & ffa_target_prod_bonus (4P leader-attack bonuses comet_reaper
+ dropped but the stronger i-m-stronger uses). ~22 knobs; separate values for 2P-normal / 4P-normal /
+ terminal — but 4P is the high-EV surface (2P config is identical across the whole public field).
+
+ The missing piece: a LOW-NOISE evaluator (root cause of "no progress")
+
+ Past evals were noise-dominated (n=28, ±18% CI, seat-biased) → we optimized noise. Fix it:
+ - Gauntlet: comet_reaper + strong public bots (the-producer-v2, i-m-stronger, floor-matched, 1266-elo)
+   - self, by explicit path (engine source is byte-identical → safe in-process in arena.py).
+ - Seat-rotated 4P (focal through all 4 seats) + 2P; n ≥ 150–200 games/candidate → ~±5% CI.
+ - Reuse arena.py run_4p_tournament (seat-rotation built in) + seat-fair eval worker. Parallel across cores.
+
+ Optimizer: Optuna
+
+ A Python framework that proposes configs (TPE/CMA-ES samplers), scores them on the gauntlet, prunes bad
+ trials, and stores every trial in a queryable DB + dashboard. It IS our systematic tuner (vs ad-hoc
+ sweeps). MLFlow is only a tracker (optional), not an optimizer — not needed.
+
+ Plan (staged; each GATE must pass before the next)
+
+ 0. Stop the orphaned driver (PID 2937) + adopt clean logging: one tuning/<study>/ dir per run
+ (config + Optuna DB + results); append milestones to TIMELINE.md. No more scattered session logs.
+ 1. Build the low-noise gauntlet evaluator + agents/cr_tuned/ (comet_reaper fork exposing every knob,
+ incl. re-added ffa_*, via env/CONFIG; 0 ⇒ comet_reaper; crash-guarded).
+ 2. Cheapest win — adopt + test i-m-stronger's 4P config: A/B cr_tuned (its 4P values + ffa bonuses)
+ vs comet_reaper, seat-rotated 4P, n≥200. GATE: beats comet_reaper outside the CI → a validated better
+ submission today.
+ 3. Optuna over the full ~22-knob 4P config against the gauntlet (then 2P as secondary). GATE: optimized
+ config beats comet_reaper on the gauntlet, cleanly validated → submit it.
+ 4. Scale to Jetstream2 (150 cores) — ONLY after a local win. Cloud buys low-noise evals at scale
+ (pop × configs × games); gate behind step 2/3 showing real local gains.
+ 5. Parallel/later tracks (as bandwidth allows):
+   - Autoresearch ratchet (user is keen): LLM-driven propose→score-on-gauntlet→keep-if-better, with
+ Claude Code as the agent, the gauntlet as the fixed yardstick, Optuna as a tool it calls. Lets us
+ explore structural changes, not just knobs.
+   - Batched GPU simulator (the "leverage the larger engine" idea): orbit_lite's movement.py /
+ garrison_launch.py hold the physics in tensor form → a batched sim could be built from them for
+ millions of games/sec on GPU. Big, careful build (must match kaggle exactly); ultimate compute lever.
+
+ Deducing edges beyond the 20 knobs (parallel diagnostic)
+
+ If optimal config still falls short of 1500, the residual = structural edges the knobs can't express.
+ To find them: policy-diff comet_reaper against the top private teams' replay states (we have their
+ moves in the prize-zone data) — where does our planner's move differ from theirs? Check the family's 4
+ known structural gaps for behavioral evidence: (a) single fleet size vs partial commits, (b) no
+ opponent-reaction, (c) no own-turn search/lookahead, (d) shallow 4P coalition play. This tells us what to
+ build after tuning saturates.
+
+ Honest EV
+
+ 4P-config tuning is the highest-probability lever and we know the exact knobs the stronger bots use —
+ but not guaranteed to reach 1500 (the engine is shared; top teams may have structural edges). We
+ validate on the gauntlet before submitting, so the downside is only local compute.
+
+ Verification
+
+ arena.py --mode 4p seat-rotated + 2P, candidate vs the gauntlet, n≥200; report avg placement + 95% CI.
+ Submittable only if it beats comet_reaper outside the CI on both 2P win% and 4P placement.
+
+
+ 6/16/26
+=========
+- comet_reaper ≈ "the Producer" 1‑ply greedy search ≈ LB 1240 = us. #1 ≈ 1793. Gap ~550.
+ - Imitation/RL is a dead end (confirmed externally): souldrive cloned #1 → 17% vs the greedy
+ Producer; PPO made it worse (4%). Verdict: run the search, don't clone.
+ - ~30× per‑turn compute surplus (2.4M net ≈ 7 ms vs the 1 s/turn budget; comet_reaper ≈ 25 ms) →
+ deeper search is affordable and is the likely lever to #1. comet_reaper is only 1‑ply.
+ - The ~1500‑targeting public "improved" agents are 1‑ply with better scoring/sizing, namely:
+ NPV/production‑snowball scoring with ownership multipliers (enemy 2.05× / neutral 1.4× / contested
+ 0.7× / friendly 0.3×); phase‑aware ship sizing (early 1.2×→mid 1.5×→late 2.0×→finishing 3.0×);
+ speed‑bracket sizing (fleet_speed log‑concave → cross full‑turn thresholds); enemy‑fleet
+ interdiction; threat‑map reserves; 4P weakest‑enemy targeting + elimination bonus; deception/feints.
+ - Aggression theme is universal (your no‑op point): clones learn passivity from no‑op‑heavy data; winners
+ attack early. Tuning/structure should bias toward aggression.
+
+ Levers, in EV order (empirical-first, no guessing)
+
+ 1. Expanded gauntlet bench (decisive, cheap): add the public "improved" agents (improved‑agent‑v2,
+ improved‑heuristic‑agent) + the strong family bots to a seat‑rotated, low‑noise (n≥200) gauntlet and
+ bench comet_reaper. This tells us empirically whether comet_reaper is actually behind the "improved"
+ approaches or already competitive — and branches the rest.
+ 2. Port what wins (structural, if step 1 says so): fold the evidence‑backed techniques into a
+ agents/cr_tuned/ fork — NPV/snowball ownership multipliers, speed‑bracket + phase‑aware sizing,
+ interdiction — and A/B each vs comet_reaper on the gauntlet. (These edit the orbit_lite planner, not
+ just config — exactly the "improve the engine" idea.)
+ 3. Config tuning (Optuna), overnight baseline: optimize the full ~22 CONFIG_4P knobs incl. re‑added
+ ffa_leader_attack_bonus/ffa_target_prod_bonus on the gauntlet. Cheap, runs unattended, polishes the
+ 1‑ply engine. New: tuning/tune_config.py.
+ 4. Deeper search (the high‑ceiling lever to ~1793): real multi‑ply lookahead over our own (and a cheap
+ opponent model's) future turns — beam/iterative‑deepening within the 1 s budget. We have the headroom;
+ comet_reaper currently wastes it. This is the most likely path to the prize zone.
+
+ Tonight's autonomous run
+
+ 0. Kill the orphaned driver (pkill -f pipeline/overnight.py); record the milestone to memory + TIMELINE.md.
+ 1. Build the low‑noise seat‑rotated gauntlet (reuse arena.py run_4p_tournament + seat‑fair worker from
+ archive/experiments/comet_reaper_forks/); add the improved public agents (pulled to /tmp/owk, copy in).
+ 2. Run the expanded bench overnight → where does comet_reaper really stand vs the "improved" field?
+ 3. Launch the Optuna config study in parallel (overnight baseline).
+ 4. Synthesize forum intel into strategy/INTEL.md.
+
+
+ Autoresearch (orchestration; the "recursively improve what‑to‑try" idea)
+
+ LLM‑driven ratchet on the fixed gauntlet yardstick (Claude Code as agent): read strategy/INTEL.md +
+ bench/tuning results → propose the next structural change or knob range → score on the gauntlet →
+ keep‑if‑better → reflect/refine the hypothesis → repeat. Could fan out subagents to build+bench bot
+ variations and promote only those beating a threshold. Optuna = numeric inner loop; LLM = structural outer loop.

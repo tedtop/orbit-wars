@@ -1,0 +1,177 @@
+I have a bunch of questions:
+
+     What does small net + simple decode mean?
+
+     You said Producer has to run in a subprocess? Why? That sounds like overhead of
+     having to launch a subprocess for every episode run? Can't we engineer a way
+     around that, so that it's always running or ultrathink 5 clever ways to
+     simplify that overhead. Maybe it runs as a continously running service or we
+     combine its code into ours? Maybe I'm not making sense, but give me some
+     suggestions.
+
+     What is masking? MaskingPPO?
+
+     What is CleanRL? is that a framework? or is that just what you're wanting to
+     call our custom PPO framework implementation, either way I'm on board with
+     this, sounds much simpler than what you're describing having to get sb3
+     working. A curiousity about mechanics: why do we want to wrap Gymnasium? What
+     does that do for us? And we're wrapping MLFlow? I was under the impression that
+     MLFlow is like a runner/orchestrator, where it executes batches of runs with
+     different parameter tunings. I've not used MLFlow so I don't know. You may have
+     to educate me, but I am competent enough to get all these things set up with
+     your guidance. My biggest concern is that we won't have enough "real" (episodes
+     in which we've played topbots) data to train on.
+
+     #4 oponent response modeling - yes absolutely. Let's do this right away. Let's
+     make this our next bot. Is this some logic that we add to comet_reaper?
+
+     #7 OpenSkill variance management - I have no idea what this means, but is this
+     some logic that we add to comet_reaper? On that note, is comet_reaper a good
+     "base" to build on, or should we explore other options - you mentioned not
+     putting all our eggs into the RL basket. What about the GRU bot? What about
+     other ML algorithms? Recurrent / Sequential
+
+     GRU (Gated Recurrent Unit)
+     LSTM (Long Short-Term Memory)
+     RNN (Vanilla Recurrent Neural Network)
+     Bidirectional LSTM
+     Temporal Convolutional Network (TCN)
+
+     Transformers / Attention
+
+     Transformer (Attention is All You Need)
+     BERT (Bidirectional Encoder Representations)
+     GPT (Generative Pre-trained Transformer)
+     Vision Transformer (ViT)
+     Swin Transformer
+
+     Convolutional
+
+     CNN (Convolutional Neural Network)
+     ResNet (Residual Network)
+     VGG
+     EfficientNet
+     U-Net (segmentation)
+     YOLO (object detection)
+
+     Classical Supervised
+
+     Linear / Logistic Regression
+     Support Vector Machine (SVM)
+     k-Nearest Neighbors (kNN)
+     Naive Bayes
+     Decision Tree
+
+     Ensemble
+
+     Random Forest
+     Gradient Boosting (GBM)
+     XGBoost
+     LightGBM
+     CatBoost
+     AdaBoost
+     Stacking / Bagging
+
+     Unsupervised / Clustering
+
+     k-Means
+     DBSCAN
+     Hierarchical Clustering
+     Gaussian Mixture Model (GMM)
+     Isolation Forest (anomaly detection)
+     One-Class SVM
+
+     Dimensionality Reduction
+
+     PCA (Principal Component Analysis)
+     t-SNE
+     UMAP
+     Autoencoder
+     LDA (Linear Discriminant Analysis)
+
+     Generative
+
+     GAN (Generative Adversarial Network)
+     VAE (Variational Autoencoder)
+     Diffusion Models (DDPM, Stable Diffusion)
+     Normalizing Flows
+
+     Reinforcement Learning
+
+     Q-Learning
+     Deep Q-Network (DQN)
+     PPO (Proximal Policy Optimization)
+     A3C / A2C
+     SAC (Soft Actor-Critic)
+     DDPG
+
+     Graph-Based
+
+     GNN (Graph Neural Network)
+     GCN (Graph Convolutional Network)
+     GraphSAGE
+     GAT (Graph Attention Network)
+
+     Probabilistic / Bayesian
+
+     Bayesian Network
+     Hidden Markov Model (HMM)
+     Gaussian Process
+     Kalman Filter
+     Monte Carlo methods
+
+     What even is OpenSkill variance management?
+
+     Highest EV - portfolio? What do you mean by this? A diverse portfolio of our
+     own bots to try? I did try this approach with the first 23 I built using all
+     sorts of different concepts from nature, economics, etc. The one from economics
+     actually did the best, but only got us in the 500s with score. The tensor
+     based physics library from the Producer was the big jump... ultrathink, are
+     there any other alternatives to try? maybe everything has been tried, and the
+     top bots have been hypertuning their parameters for much longer. On that note.
+     Does a bot need to have a certain architecture in order for its parameters to
+     be tuned? For Example, could we have "tuned" the markowitz bot or was it too
+     simplistic? I haven't yet read all the architecture docs, but it seems like the
+     GRU one was built in some certain way that it could take a weights file that
+     the author had tuned, but didn't included the tuned parameters so we took a
+     guess on it or something?
+
+
+======
+
+
+The reframe: behavior is visible even when code isn't
+
+  You said "if we can't see what they're doing, how can we BC them?" — but we can see what they're doing. We just can't see how. Every prize-zone team's (obs, action) at
+  every step is sitting in Kaggle's daily episode dumps, which your own pull_topbot_episodes.py already harvests. BC, IRL, and offline RL all consume behavior, not source
+  code. And two things never actually happened yet:
+
+  - BC has never been run on the prize-zone data. bc_train.py's own caveat says it's only been validated on local low-rating play. So "BC didn't work" is premature — it
+  hasn't been tried on good data.
+  - The "reverse-engineering that failed" wasn't a policy learner. replay_analysis.py is a behavioral profiler — reaction times, phase volumes, comet-targeting rate. It
+  was never trying to recover a policy; it produces descriptive stats. Useful, but for a different job (opponent-conditioning, below).
+
+  You're right that naive BC caps at the teacher. Here's how to exceed it from their logs.
+
+  1. Recover their objective, not their actions (my top pick). Their move in each state is a revealed preference — it beat every alternative they passed up. We already own
+  the candidate generator (build_target_shortlist + the scoring pipeline), so for any replay state we can regenerate the same waves they'd weigh, and fit a scoring
+  function whose top-ranked wave matches their actual move (a simple pairwise "chosen > not-chosen" ranking loss — tractable, data-efficient, not fragile IRL). Then we
+  plug those recovered weights into orbit_lite's scorer and let our deeper planner (clairvoyant/helmsman) pursue their goal better than they do. Same objective, better
+  optimizer = you beat the teacher. This is literally "what are the top teams optimizing for" — the thing reverse-engineering wanted but couldn't read off code.
+  2. The teacher we own. The "BC can't beat the teacher" ceiling only bites if the teacher is external and fixed. The entire public top family is orbit_lite presets — we
+  have that code. So tune the config (CMA-ES/Optuna) in the gym until it beats the public presets, and that tuned engine is a teacher ≥ the public bots. BC it, then
+  self-play past it (the AlphaGo recipe: imitation is the floor, self-play is the climb). Our teacher is internal and rising.
+  3. Mistake-mining — beat them where they're weak. orbit_lite has the exact combat-flow projector. Run the top bots' replay states through it and flag the moves that were
+  dominated (declined a +EV capture, walked into the do-nothing blind spot). The delta is a labeled "their mistake → the correction" dataset. Train on it and you're
+  strictly better than them in exactly their failure modes.
+  4. Offline RL (IQL/CQL) is the textbook tool for "exceed the logging policy from fixed logs" — but it's data-hungry and finicky, so I'd stage it after 1–3 prove the data
+  is good.
+
+  The honest meta-point: the private leaders are almost certainly also forward-planning engines with better tuning and a couple of bolt-ons — not some secret algorithm. We
+  can't copy their config, but we can (a) infer their objective from behavior, (b) out-tune them in our own gym, and (c) exploit the structural blind spots they almost
+  certainly still share. None of that needs their code.
+
+  The four bots
+
+  clairvoyant (predicts the enemy's next move → folds it into the projection), kingmaker (4P: hit the leader, let rivals bleed), helmsman (searches its own future turns
+  instead of greedy), maestro (the v2-gru controller slot, finally with a real controller). Each is a one-change fork of comet_reaper, A/B'd against it.

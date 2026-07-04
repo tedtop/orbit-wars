@@ -1,0 +1,130 @@
+Grounded now. Quick note: your cloud-Claude's analysis is largely right and aligns with what I found — I'll confirm where, correct two things, and answer your direct
+  questions. And I pulled real numbers that settle several of them.
+
+  Quick definitions
+
+  EV = Expected Value — the average payoff weighted by probability of success. "High-EV" = worth doing because (chance it works) × (size of the win) is large. When I say
+  "config tuning is low-EV, deeper search is high-EV," I mean: tuning might work but the gain is small; search is a bigger swing.
+
+  <important>Low-noise gauntlet — a gauntlet is a fixed panel of opponent bots we benchmark against. "Low-noise" means we play enough seat-rotated games (n≈150–200) that the measured
+  win-rate has a tight confidence interval (±~5%) instead of a wide one (±18% at n=28). Why it's the linchpin: an autoresearch ratchet keeps a change if the metric
+  improves — but if the metric is noisy, random noise looks like improvement and you ratchet on garbage. That's literally what bit us in the forks experiment (a "61% win"
+  that was noise and evaporated). The gauntlet manufactures a trustworthy metric out of stochastic games. Your caveat paragraph is exactly correct — Karpathy's
+  autoresearch had a deterministic metric (val_bpb), ours is stochastic, so the evaluator is the whole ballgame.</important>
+
+  Karpathy's autoresearch — what I make of it
+
+  I read the actual repo. It's an elegant pattern, not a reusable tool: a three-file contract (prepare.py = fixed evaluator, train.py = agent-editable code, program.md =
+  human directions) + a 5-minute "ratchet" that keeps only changes improving val_bpb. The repo itself says it's "purpose-built for tiny LLM training… not a general
+  framework." So we don't use it — we reimplement its pattern with our gauntlet as prepare.py, the bot as train.py, and "raise win% / don't bust the time budget" as
+  program.md, with Claude Code as the agent. The shape is perfect; the only hard part is the low-noise evaluator (above), which is why I built it first.
+
+  The data that settles your open questions
+
+  <important>- Is comet_reaper 1-ply or does it search? 1-ply greedy. It builds an 18-turn forward projection (assuming everyone does nothing) and greedily fires the best-scoring
+  wave — but it does no search over its own or opponents' future decisions. So the 30× headroom is genuinely unspent. ✅ confirms deeper search is the lever.
+  - comet_reaper's no-op rate: launches on only 22% of turns (78% "no-op"), but dispatches ~5,700 ships/game. So it's selective, not pathologically passive — it holds
+  unless there's a +ROI wave, then commits hard. That's different from the RL no-op trap (which never attacks). It beats the whole field with 22%.
+  - The Optuna study, early read (14 trials): best config so far wins only 20% vs comet_reaper — and the best-so-far is aggressive (roi_threshold 1.03, min_ships 3.24,
+  reinforce_beta 1.70) yet still loses. Two takeaways: (1) it's still in the random-startup phase, so don't over-read it, but (2) the early signal confirms the config is a
+  tight optimum and, crucially, naive aggression overextends and loses. This is the most important nuance: the answer isn't "more aggression," it's calibrated aggression
+  — which is exactly what search buys you (lookahead tells you which aggressive moves don't blow up). It matches your cloud-Claude's ladder: 1793 = deeper search +
+  calibrated aggression.</important>
+
+  Your min_ships_to_launch hunch — backwards (gently)
+
+  min_ships_to_launch is the minimum garrison a planet needs before it's allowed to launch. Turning it up makes planets hoard more before acting → fewer, more conservative
+  launches. To increase aggression you turn it down (and lower roi_threshold, lower reinforce_size_beta). The Optuna search agrees — its best-so-far has min_ships=3.24
+  (down from 4.0). So your instinct toward aggression is right; the specific knob direction is inverted.
+
+  Your human strategy (the static-planet land-grab) — genuinely good, partly already in there
+
+  Your "dispatch ~half each turn, send ~1.5× for guaranteed close captures, reinforce frontier from home, cascade outward" — comet_reaper already does versions of this:
+  safe_drain sends the safe surplus; capture_floor sizes the wave to guarantee capture (+ a reinforcement margin); and the pressure-gradient regroup marshals ships from
+  safe rear planets toward stressed frontier planets. The novel, untested piece is "prioritize the closest static (non-rotating) planets first" — the engine ranks targets
+  by proximity + competitive value, not by static-vs-rotating. Static planets stay in safe space and are the reliable production base, so weighting them could be a real
+  edge. That's a clean, testable hypothesis (a target-scoring feature + knob) — exactly the kind of thing the autoresearch loop should sweep.
+
+  Potential fields + CFR (you asked me to ultrathink)
+
+  - Potential field w/ future planet positions: mid-EV and a natural fit. comet_reaper already lead-aims (accounts for where a planet will be at arrival), but it doesn't
+  prioritize targets by future geometry. A potential-field overlay — value a planet higher if it's rotating toward your territory (cheap to defend/exploit) and lower if
+  drifting into a rival's zone — is a concrete scoring feature to test on the gauntlet. Pairs with your static-planet idea (static = a "fixed well" in the field).
+  - CFR — honest take: theoretically elegant, wrong-fit here, low ROI. CFR solves imperfect-information games (poker — hidden cards) by minimizing regret toward an
+  unexploitable mixed equilibrium. Orbit Wars is perfect-information (you see the whole board), simultaneous-move, and 4-player. CFR's unexploitability guarantee is strong
+  only in 2-player zero-sum; in 4-player general-sum, "Nash equilibrium" isn't unique and equilibrium play isn't even the best response to the actual opponents you face.
+  So full CFR is a big research project that buys little here. The one useful nugget: if we discover specific opponents are exploiting us, a touch of mixed-strategy
+  randomization helps — but best-responding via search (predict the opponent, counter it) is far higher-EV for this game than equilibrium-solving. I'd shelve CFR.
+
+  The thing your cloud-Claude got most right: the MCTS/Numba path
+
+  That's the real unlock and I want to pursue it. The bottleneck for any real search (MCTS or beam) is a fast forward model — kaggle-environments at ~0.9 ms/turn is too
+  slow for thousands of rollouts. A flat-NumPy + Numba simplified simulator (drop orbital geometry/sun/comets — just ship economics: production, fleet arrivals, combat)
+  could plausibly hit μs-scale, enabling thousands of rollouts/turn inside the 1 s budget. That's the enabler for comet_reaper_search.
+
+  My recommended immediate next step: before committing to full MCTS, build + benchmark the Numba forward model (exactly the experiment your cloud-Claude proposed). If
+  it's μs-scale on this machine, MCTS is viable and we build it out; if not, we fall back to beam search over the engine's own projection. It's a ~1-hour, low-risk
+  feasibility test that de-risks the whole high-EV build.
+
+  Want me to run that Numba forward-model benchmark now (install numba, write the flat-array simulator, time it, fidelity-check vs the real engine)? That's the cleanest
+  next concrete move — and I'll log the CFR / potential-field / static-planet ideas into INTEL.md as ranked hypotheses for the autoresearch loop.
+
+✻ Churned for 3m 57s
+
+※ recap: Goal: get our Orbit Wars bot (comet_reaper, ~#144) into the prize zone via deeper search. We confirmed it already beats the public field, so the next action is
+  benchmarking a fast Numba forward model to see if MCTS-style search is viable. (disable recaps in /config)
+
+
+  <important>⏺ schmeekler runs clean — and notably it's far more active (62% of turns vs comet_reaper's 22%), so the static bonus is genuinely changing behavior (a sweep will tell us </important>
+
+
+    📊 Monitoring (you can watch everything now)
+
+  - Optuna dashboard (visual): open http://127.0.0.1:8080 in your browser — live trial history, best value, param-importance plots. (Running in the background now.)
+  - What's running: pgrep -fl python
+  - Study status (CLI): cd ~/src/orbit_wars && .venv/bin/python -c "import optuna; s=optuna.load_study(study_name='crt_config_v1',
+  storage='sqlite:///experiments/v5_engine_tuning/tuning/study.db'); print(len([t for t in s.trials if t.value is not None]),'trials, best',round(s.best_value,3))"
+  - Live logs: tail -f experiments/v5_engine_tuning/logs/optuna.log
+  - Results so far: cat experiments/v5_engine_tuning/RESULTS.md
+
+
+  Decisive — and it's a green light. The Numba forward model:
+
+  ┌───────────────┬─────────────┬───────────────────────────┐
+  │ rollout depth │    speed    │ rollouts in an 800ms turn │
+  ├───────────────┼─────────────┼───────────────────────────┤
+  │ 20 turns      │ 1.4 µs each │ ~567,000                  │
+  ├───────────────┼─────────────┼───────────────────────────┤
+  │ 60 turns      │ 2.4 µs each │ ~328,000                  │
+  └───────────────┴─────────────┴───────────────────────────┘
+
+  (Compile is a one-time 2.7s on turn 0, pre-triggered at import.) Your cloud-Claude estimated ~100K rollouts; we actually get half a million. So serious MCTS is viable —
+  even with a 10× heavier rollout policy we'd have ~50K rollouts/turn. This de-risks the whole deeper-search build. (Caveat: this is the simplified economics model — we'll
+  fidelity-check that its rankings track the real engine, but for rollout evaluation that's the right tradeoff.)
+
+
+   - schmeekler (your bot) is built and live — noticeably more aggressive (62% action rate vs comet_reaper's 22%), so the static-target bonus is really biasing play. Its
+  sweep (bonus 0/1.5/3/6 vs comet_reaper) is finishing now — watch logs/schmeekler_sweep.txt or the dashboard.
+  - Numba forward model: GREEN LIGHT — ~567K rollouts/turn. MCTS is firmly viable. This de-risks the whole deeper-search build.
+  - Optuna: best 0.33 after 27 trials — config tuning keeps confirming it won't beat comet_reaper (tight optimum). Cheap side-bet, low ceiling. Watchable at
+  http://127.0.0.1:8080.
+  - All recorded in experiments/v5_engine_tuning/ (RESULTS.md, notes/deeper_search.md, INTEL.md).
+
+  The clear next move: build comet_reaper_search (MCTS)
+
+  This is now the de-risked, highest-EV lever to climb from 1243 toward the prize zone. Concretely:
+  1. State encoder — flatten the obs into the NumPy arrays the Numba sim needs (planets, fleets).
+  2. Numba forward model — promote the benchmark sim to a real rollout engine (add a lightweight aggressive rollout policy — which, per the no-op insight, naturally avoids
+  the passivity trap).
+  3. MCTS over this turn's candidate wave-sets (reuse the engine's candidate generator as the action set), thousands of rollouts, time-budgeted (~800ms) with anytime
+  fallback to comet_reaper's 1-ply greedy.
+  4. Fidelity check — confirm the simplified sim's rankings track real-engine outcomes.
+  5. Validate on the seat-rotated gauntlet (n≥200) + per-turn wall-clock; submit only if it beats comet_reaper.
+
+  It's a real multi-step build (and search bugs are subtle), so it's best done with you around rather than fired off overnight.
+
+  How do you want to play it? Two good options:
+  - Start the MCTS scaffold now (I'll build steps 1–2, the encoder + Numba rollout engine, and we iterate), or
+  - Pause for tonight — let schmeekler's sweep + Optuna finish overnight (both watchable on the dashboard), and start the MCTS build fresh when you're back.
+
+  Either way, comet_reaper stays our submission until the search bot beats it. What's your call?

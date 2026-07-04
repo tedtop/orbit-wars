@@ -1,0 +1,46 @@
+1. Comet factorial → yes, sending it to Track A
+
+  Confirmed — paste this. (Note it re-activates Track A, which just declared "complete.") I've kept the honest framing so they run it as a definitive kill-test, not a
+  hopeful build:
+
+  Re-activating Track A for one experiment. Build agents/schmeekler_comet/ : a schmeekler
+  fork carrying BOTH knobs — STATIC_BONUS (default 1.5) and a new COMET_BONUS (scoring
+  bonus for targeting comet planets, obs["comet_planet_ids"]; optionally scale by comet
+  path-remaining). Run the 2x2 factorial on the seat-swapped gauntlet, re-baselining each
+  cell: (0,0)=comet_reaper, (1.5,0)=schmeekler, (0,C)=comet-only, (1.5,C)=combined. Sweep
+  COMET_BONUS. Report all four cells in TRACK_A_NOTES (main effects + interaction).
+  FRAMING: confirmatory kill-test. Replay lifecycle shows 92% of comets are never captured
+  by ANYONE (prod 1.0, radius 1.0, transient ~53 steps, gone before the terminal 5x bonus)
+  — so expect comet ≈ 0 or negative. Value = closing the comet question with data. If no
+  clear lift at any COMET_BONUS, mark DISCARD and stop.
+
+  2. Did the MCTS search see any success? — No, and the why matters
+
+  Track B's results, both at n=50: v1 (flat 2-ply) = 75% vs schmeekler 74%; v2 (true depth-2 + state-advancement) = 75% vs 74%. Statistically indistinguishable from the
+  base bot. The mechanistic reason is the key takeaway: the engine's capture_floor/clears_floor filters leave only 0–4 candidates per turn (0–1 most turns) — so there's
+  nothing to re-rank, and the search ends up making the same move as schmeekler by construction.
+
+  Important distinction: what Track B built was shallow lookahead re-ranking the engine's own candidate set with the engine's own scorer. That is not the value-function
+  moonshot. So "MCTS didn't work" really means "re-ranking the existing safe candidates doesn't work" — which is expected once you know there's nothing to re-rank. It does
+  not mean deeper search is hopeless; it means the lever has to be expanding the candidate set (to the aggressive moves the engine refuses) and judging them by a learned
+  eval — the untested path.
+
+  3. "We didn't live-test mcts — what if the gym is still wrong?" — fair, but it doesn't rescue this mcts
+
+  Your gym-trust instinct is right in general, and it's exactly why we're going to live-test fmt. But mcts is a different case than fmt:
+
+  - fmt: the gym is biased against it (over-credits static; fmt reduces static) → its gym verdict is genuinely untrustworthy → worth a live test. ✅
+  - mcts: its parity with schmeekler is structural, not a measurement artifact — with 0–1 candidates per turn it literally makes the same moves as schmeekler. A live test
+  would just reproduce schmeekler's ~1075, because it's playing schmeekler's game. So a "bad gym" doesn't hide a better mcts here; the bot is provably ≈ schmeekler
+  regardless of how we score it.
+
+  So: the gym-trust worry applies to fmt (live-testing it), not to this mcts. But it absolutely applies to the next thing —
+
+  4. The value function — and how it answers your gym worry
+
+  This is the real swing, and its design directly addresses "what if the gym is still bad": the value function's quality is checked on real episode outcomes (the fidelity
+  probe), not on the gym. So we can know whether V is good independent of the gym we don't fully trust. It also breaks the candidate-scarcity ceiling by evaluating the
+  aggressive moves the engine rejects — the one mechanism left that isn't ≈ schmeekler-by-construction.
+
+  You said it's "the next thing" — want me to draft the build spec now? (data-gen from real episodes → encoding → A100 train → fidelity probe on real data → integrate as
+  the leaf eval on Track B's search shell). I'd write it as the orchestrator spec + a Track-B handoff. That's the decisive next move once the comet kill-test is running.

@@ -1,0 +1,172 @@
+This is a really important piece of intel that connects directly to several things we've been discussing.
+
+## Why RL Learns Passive Play
+
+The root cause is the reward signal. In a game where ships on your planets count as final score, an RL agent quickly learns that **not sending ships out is safe** — you can't lose ships you don't dispatch. A fleet sent out can be destroyed, intercepted, or arrive too late. A fleet kept home definitely counts at turn 500.
+
+So the agent converges on a strategy of "hoard ships, only attack when obviously free" — which looks like lots of no-ops and conservative dispatching. It's reward hacking the scoring function.
+
+## Why This Matters for Your Current Work
+
+**The Optuna config tuning** — this is directly actionable right now. The orbit_lite engine has explicit aggression knobs:
+
+```python
+roi_threshold: float = 1.5    # lower = more attacks
+min_ships_to_launch: float = 4.0
+max_waves_per_turn: int = 6
+reinforce_size_beta: float = 2.2  # higher = more conservative
+```
+
+Lowering `roi_threshold` and `reinforce_size_beta` directly increases aggression. The forum confirmation that top bots skew aggressive suggests these knobs should be tuned toward aggression in your Optuna search — don't let it settle on conservative values even if they look safe locally.
+
+**The BC dead end makes more sense now.** If the top bots were specifically tuned or trained to be aggressive, behavioral cloning should have captured that aggression. But your Phase 4 results showed BC hit a ceiling and lost 0-16 to comet_reaper. This suggests the top bots' aggression isn't just in *what* moves they make — it's in the *planning depth* behind those moves. An aggressive move that's backed by 3-ply lookahead looks very different from a greedy aggressive move. Cloning the surface behavior without the underlying search depth gives you aggression without the judgment, which is actually worse than conservative play.
+
+**For MCTS/Numba rollouts** — the no-op problem actually helps you here. If you build MCTS on top of comet_reaper's engine and your rollout policy is aggressive by default, your bot will naturally explore more of the attack action space than a passive bot would. MCTS discovers that aggressive early expansion leads to production compounding, which leads to dominance by turn 200. A passive rollout policy would converge on the same no-op trap the RL bots fell into.
+
+## The Practical Fix for RL If You Go That Route
+
+Two things prevent the passivity trap:
+
+**Action bonus — reward dispatching:**
+```python
+def compute_reward(obs, action, final_placement, final_ships, total_ships):
+    placement_reward = {1: 1.0, 2: 0.2, 3: -0.2, 4: -0.6}[final_placement]
+    ship_fraction = final_ships / max(total_ships, 1)
+    
+    # penalize no-ops explicitly
+    action_bonus = 0.01 * len(action)  # small reward per fleet dispatched
+    noop_penalty = -0.05 if len(action) == 0 else 0
+    
+    return 0.6 * placement_reward + 0.3 * ship_fraction + 0.1 * action_bonus + noop_penalty
+```
+
+**Entropy regularization** — standard PPO trick that prevents the policy from collapsing to always choosing the same (safe, passive) action. Forces exploration of aggressive moves throughout training.
+
+## The Strategic Picture This Paints
+
+The leaderboard gap now makes more sense:
+
+```
+~1240  comet_reaper / Producer    ← good 1-ply engine, moderate aggression
+~1500  improved heuristics        ← better scoring + more aggressive
+~1793  Isaiah @ Tufa Labs         ← deeper search + calibrated aggression
+```
+
+The path from 1240 to 1500 is probably aggressive config tuning — your Optuna experiment pointed in the right direction. The path from 1500 to 1793 is search depth with an aggressive rollout policy. The forum is essentially confirming the shape of that ladder.
+
+What does comet_reaper's current no-op rate look like in your episode logs? That would tell you whether your engine already has the aggression problem or whether orbit_lite's design avoids it.
+
+
+
+Found it — and it's a deeper finding than a bug. The horizon sweep shows the move makes zero difference even at H=6 (near = no-op = far, exactly):
+
+  H= 6: near-noop=+0.0   near-far=+0.0
+  H=40: near-noop=-3.0   near-far=-3.0
+
+  The root cause isn't washout — it's that the aggressive rollout policy reproduces the candidate move anyway. Our candidates are "greedily attack the best target"; the
+  rollout policy is also "greedily attack" — so whether we apply the move explicitly or let the policy do it, the rollout converges to the same outcome. The explicit move
+  adds no information the policy didn't already encode → no discrimination.
+
+  This is an honest, important result: the simple forward-sim re-rank is fundamentally redundant with the engine's 1-ply scorer. Combined with precog's earlier parity
+  (2-ply opponent-response also didn't beat the engine), the pattern is clear:
+
+  ▎ Simple search (rollout / 2-ply) hasn't beaten the engine. The wins have come from structural scoring features — and schmeekler is the proof.
+
+  So the higher-EV direction may not be "more search" but more structural ideas like schmeekler (which just won and is being submitted). Real deeper search to chase the
+  1793 tier would need a proper MCTS tree with a learned/heuristic value function (not a self-reproducing rollout) — a much bigger build with uncertain payoff.
+
+  I've recorded schmeekler in TIMELINE.md and marked it done. Your call on direction:
+  - (a) Pivot to more structural features (combine with schmeekler — e.g., the potential-field/future-position idea, interdiction, phase-aware sizing) — higher-confidence,
+  schmeekler-style wins, or
+  - (b) Invest in proper MCTS (tree + value function) to chase the top tier — bigger build, uncertain, but it's the path to 1793 if it works.
+
+  I lean (a) for now (ride the momentum — schmeekler-style structural wins are working), then (b) as the moonshot. I'll keep the 20-min loop alive. What landed from the
+  submit, and which direction do you want?
+
+ Yes — schmeekler@1.5 is a great convention. Encode the parameter so future-you knows exactly what this submission was. I'd type something like:
+
+  schmeekler@1.5 — static-planet capture bonus=1.5; beats comet_reaper ~72% local
+
+  That way the submission list shows both what (schmeekler) and the key knob value (1.5), plus a hint of why. Perfect.
+
+  The search finding, explained simply
+
+  Forget the jargon — here's the plain version with an analogy.
+
+  The plan was: "For each move I'm considering this turn, fast-forward the whole game and see which move ends best." To fast-forward, I made every player follow a simple
+  rule: "always attack your nearest enemy planet."
+
+  The problem: that simulation rule is basically the same thing as the moves I'm testing. So when I test "attack planet X" versus "do nothing first," the simulation — in
+  the "do nothing" case — just attacks X on its own anyway (it's the nearest). Both end up in the same place. So every move I test fast-forwards to nearly the same result
+  → the simulation can't tell me which move is better → it adds no useful information. That's why turning the search up (λ) changed nothing.
+
+  The analogy: it's like asking your GPS "highway or back road?" but the GPS always reroutes you onto the highway no matter which way you turn first. Both choices end on
+  the highway, so the GPS says "they're equal" — useless for the decision.
+
+  The takeaway: the engine's existing 1-turn scoring already picks good moves well; my simple simulation was redundant with it. To make search actually help, it'd need a
+  smarter evaluator (a real MCTS tree with a proper "how good is this board?" function) — a much bigger build. Meanwhile, the thing that did work — schmeekler's structural
+  idea — is the kind of win we should chase more of.
+
+  Go ahead and submit with that message — then paste me the output and I'll confirm it landed. 🚀
+
+
+   <important>Honest status on the autoresearch loop: we haven't built it as a framework yet — we've been running the ratchet manually (me proposing ideas → the gauntlet judging →
+  keeping winners). And it worked: schmeekler is the ratchet's first "keep." The "contexts" we've updated are the plan, INTEL.md, TIMELINE.md, and RESULTS.md.
+
+  You're right that we should formalize it so you can version-track the recursive iterations. Let me build the actual lightweight framework now — the key file is a
+  program.md (the self-improving research "prompt" I update each iteration), plus the fixed evaluator and a ledger:</important>
+
+
+  This is the clearest and most rigorous response Claude Code has produced. Points 3 and 4 are particularly sharp — worth understanding precisely.
+
+## The MCTS Distinction That Matters
+
+The key sentence:
+
+> *"mcts parity with schmeekler is structural, not a measurement artifact — with 0–1 candidates per turn it literally makes the same moves as schmeekler."*
+
+This is a provable claim, not a gym-trust issue. When there's only one valid candidate, MCTS picks it. schmeekler picks it. They make identical moves. A live test would just reproduce schmeekler's 1075 because it's playing schmeekler's game. The gym-trust worry doesn't apply here — the bot is provably ≈ schmeekler regardless of how you score it.
+
+This cleanly closes the "what if the gym is wrong about MCTS" question. It's not a gym question. It's a math question.
+
+## The Value Function Gym Worry Is Addressed By Design
+
+> *"The value function's quality is checked on real episode outcomes, not on the gym."*
+
+This directly answers your concern. The fidelity probe bypasses the gym entirely. You're asking "does V rank real winning positions above real losing positions from downloaded episodes" — that's ground truth from the actual competition, not your local approximation. If V passes that test, you know it works independent of whether your gym is trustworthy.
+
+This is the architecturally elegant part of the value function bet — it was designed specifically to sidestep the gym-trust problem.
+
+## The State of Play Is Now Very Clean
+
+```
+CLOSED (evidence):
+  ✗ Structural bonuses (potential, interdict, phase, fmt⁻)  
+  ✗ 2-ply search (structural parity, not gym artifact)
+  ✗ Behavioral cloning (0-16 vs engine, forum-confirmed)
+  ✗ Config tuning (37 trials, tight optimum)
+
+LIVE NOW:
+  ✓ comet_reaper @ 1245 (best confirmed)
+  ↗ schmeekler @ 1075 (climbing, below CR)
+
+RUNNING:
+  🔄 Comet factorial (Track A, kill-test)
+  🔄 schmeekler_fmt live test (pending slot confirmation)
+
+THE ONE REMAINING BET:
+  🎯 Value function on Jetstream2
+     - Expands candidate set to aggressive moves engine rejects
+     - Fidelity measured on real episode outcomes
+     - The only mechanism that isn't schmeekler-by-construction
+```
+
+## Your Only Decision Right Now
+
+**Confirm the Jetstream2 plan and give Claude Code the word to start.**
+
+The comet factorial is running. fmt is pending submission confirmation. Both tracks are executing. The orchestrator's job is now to spec the value function build so it's ready to start the moment the comet factorial closes.
+
+Tell Claude Code: **"Yes, draft the full value function build spec. Start with what data we have in the pipeline from prize-zone episodes and spec the Jetstream2 data generation to supplement it. Include the candidate expansion mechanism — soft filter instead of hard filter — as the core architectural difference from the failed MCTS. Target fidelity gate at 0.65 on real episode outcomes before any integration."**
+
+How many prize-zone episodes (>1500 Elo games) does the pipeline currently have? That's the number that determines whether you need Jetstream2 for data generation or just for training.

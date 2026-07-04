@@ -1,0 +1,92 @@
+Orbit Wars — climb from #183: tune the 4P config on a LOW-NOISE evaluator
+
+ Context (why this, why now)
+
+ comet_reaper is live at #183 / 1235.9, well below the ~1500 prize zone. The overnight bolt-on bots
+ (precog/kingmaker/maestro/helmsman/oracle) all came out ≈parity — the orbit_lite engine is a tight
+ optimum and naive heuristics don't beat it. Two diagnostics reframe what to do next:
+
+ 1. Replay analysis of our own ladder games (only comet_reaper's, per the user — its 06-15 games):
+ no catastrophic failure. We lose to a wide variety of opponents (each beats us ~once), winning
+ ~51% (vs the prior bot's 42%, so comet_reaper is an improvement). We are correctly rated mid-ladder
+ — matchmaking pairs us with ~1235 peers and we go ~even. Climbing needs genuinely stronger play.
+ 2. Config diff across the public family: every public bot's 2P config is identical to ours, but
+ CONFIG_4P differs — and the stronger i-m-stronger tunes 4P knobs comet_reaper dropped:
+ roi_threshold=1.55, min_ships_to_launch=5.0, max_offensive_targets=7, and re-adds
+ ffa_leader_attack_bonus=0.035 + ffa_target_prod_bonus=0.08 (attack-the-leader 4P bonuses).
+ comet_reaper discarded these as "noise" — but never validated that with a proper 4P evaluator.
+
+ Root cause of "no progress": the evaluator was noise-dominated (n=28, seat-biased) — we ratcheted on
+ noise and the "wins" evaporated. The prize is 4P-weighted, and 4P is the only differentiated config
+ surface. So: build a trustworthy evaluator, then optimize CONFIG_4P on it.
+
+ The core fix: a trustworthy fitness function (the missing piece)
+
+ - Gauntlet (fixed panel): comet_reaper + strong public bots (the-producer-v2, i-m-stronger,
+ floor-matched, 1266-elo) + self, by explicit path. Run seat-rotated 4P (focal through all 4 seats)
+ plus 2P.
+ - Metric: 4P-weighted avg placement / win-rate, over n ≥ 150–200 games/candidate so the 95% CI is
+ ~±5% (vs ±18% at n=28). Reuse arena.py run_4p_tournament (seat-rotation already there) + the
+ seat-fair pipeline/_eval_worker.py. Embarrassingly parallel across cores.
+
+ Plan (staged; each GATE must pass before the next — this is the compute-gating the user wants)
+
+ 1. Diagnose 4P (cheap, ~done): confirm 4P placement is where we bleed (no nemesis; mid-ladder).
+ 2. Cheapest win — adopt + test i-m-stronger's 4P config: fork comet_reaper → agents/cr_tuned/,
+ expose CONFIG_4P knobs (incl. the ffa bonuses) via env; A/B vs comet_reaper on the gauntlet
+ (seat-rotated 4P, n≥200). If re-adding the dropped ffa bonuses + i-m-stronger's values beats
+ comet_reaper → a better submission today. GATE: ≥55% / better avg placement outside the CI.
+ 3. Multi-knob optimization (CMA-ES / Optuna): optimize ~10–12 CONFIG_4P knobs against the gauntlet.
+ CMA-ES = a gradient-free black-box optimizer (propose config vectors → score → walk toward the optimum;
+ ideal for ~10–20 noisy continuous knobs). Optuna = a framework wrapping such samplers + pruning/dashboards.
+ New: pipeline/tune_config.py. GATE: optimized config beats comet_reaper on the gauntlet, validated.
+ 4. Scale to Jetstream2 (150 cores) — ONLY after a local win. The cloud buys low-noise evals at
+ scale (population × configs × games): e.g. CMA-ES pop 24 × 200 games = ~5k games/generation in minutes
+ on 150 cores. This is exactly "at what point does 150 cores help": it makes the metric low-noise
+ enough that optimization finds real signal. No local gain ⇒ don't burn cloud compute.
+ 5. Autoresearch-style ratchet (orchestration layer): wrap propose→evaluate→keep-if-better with the
+ gauntlet as the fixed yardstick (= autoresearch's prepare.py), CONFIG_4P/planner as the modifiable
+ code (= train.py), and "raise 4P score, don't regress 2P, stay in Kaggle time budget" as program.md.
+ Claude Code is the agent. CMA-ES becomes a tool the loop calls for numeric polish; the LLM
+ proposes broader structural changes (scoring tweaks, new 4P heuristics). This is where "improve your
+ orchestration/prompting" lives — but it's only as good as the low-noise evaluator underneath it.
+
+ The user's questions, answered
+
+ - What do we tune? CONFIG_4P: horizon, roi_threshold, min_ships_to_launch, max_offensive/defensive_targets,
+ max_sources_per_lane, regroup params, and ffa_leader_attack_bonus / ffa_target_prod_bonus (the
+ leader-attack 4P bonuses i-m-stronger uses and comet_reaper dropped). 2P config is already shared/un-tunable.
+ - Can sweeping all params improve comet_reaper? Plausibly yes for 4P (un-tuned, ffa dropped); 2P is
+ saturated. Validate before believing it.
+ - CMA-ES / Optuna? Black-box optimizers for ~10–20 numeric knobs without gradients; propose→score→converge.
+ - Why no progress overnight? Noisy evaluator (n=28, seat-biased) → optimized noise. Fix the evaluator first.
+ - When does Jetstream2 help? When more cores → more games/eval → low-noise metric → reliable optimization.
+ Gate behind a local win.
+ - orbit_full? The engine keeps batch (B×P) machinery, but we only have the single-game planner +
+ kaggle_environments as the sim; a true GPU-batched game simulator is a large build (stretch). For now
+ parallelize games across CPU cores.
+ - Autoresearch? Yes, fits as the ratchet/orchestration on the fixed gym scorer; complements CMA-ES.
+
+ Honest EV
+
+ 4P-config tuning is the highest-probability lever and we know the exact knobs the stronger bots use —
+ but it's not guaranteed to reach 1500 (the engine is shared; top teams may have edges beyond config).
+ Realistic outcome: a measurable bump we validate before submitting; if it doesn't beat comet_reaper on
+ the gauntlet, we don't submit and we've spent only local compute.
+
+ Verification
+
+ - Evaluator: arena.py --mode 4p seat-rotated + 2P, candidate vs the public gauntlet, n≥200; report avg
+ placement + 95% CI. Submittable only if it beats comet_reaper outside the CI on both 2P win% and 4P placement.
+
+ Critical files
+
+ - Reuse: arena.py (seat-rotated run_4p_tournament), pipeline/_eval_worker.py (seat-fair),
+ agents/comet_reaper/main.py (CONFIG_4P), agents/opponents/*/main.py (gauntlet by explicit path).
+ - New: agents/cr_tuned/ (comet_reaper fork exposing CONFIG_4P via env), pipeline/tune_config.py
+ (CMA-ES/Optuna over CONFIG_4P), optional ratchet harness for the autoresearch loop.
+
+ First action on approval
+
+ Build the gauntlet evaluator + cr_tuned, and run step 2 (adopt/test i-m-stronger's 4P config + ffa
+ bonuses, seat-rotated 4P, n≥200) — the fastest path to a validated better-than-comet_reaper submission.

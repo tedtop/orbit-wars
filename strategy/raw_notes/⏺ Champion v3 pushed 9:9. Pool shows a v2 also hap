@@ -1,0 +1,17 @@
+⏺ Champion v3 pushed 9/9. Pool shows a v2 also happened at 15:34 (same challenger, double-eval quirk in the script — minor bookkeeping). Let me update state files and wake Ted:
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ I can see the full picture now. Two syncs ran concurrently and promoted twice — both are the same model (identical WRs ~75%). The double-eval is a bookkeeping quirk, current champion v3 is
+  correct. Let me append milestones and wake Ted:
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ PushNotification(🏆 RL fleet: Champion v3 promoted (U=400, WR=75.2% in 1000-game eval). vs comet still 0%. Phase 3 gate at U=500 fires ~16:30 MT.)
+  ⎿  Terminal and mobile notification sent.
+
+
+
+Look at the third and fourth entries: "Orbit Wars Agent (with No Lag) 1300+ (highest rating)" — and there are two of them, one copied from Jeki Wan Taufik, one from Debatreya Biswas. The "(with No Lag)" in the title is the tell. Remember Jonathan Roy's forum discovery and Bovard's staff confirmation: the tournament CPU runs at a third to a fifth of local speed, and agents that exceed the 1-second per-turn budget get terminated mid-game. "No Lag" means someone took the orbit_lite/Producer heuristic and optimized it to stay under the timeout on the slow tournament hardware, and the claim is that doing so pushes it to 1300+ — above comet_reaper's 1235.
+That matters because it's the one lead tonight that's both credible and inside your reach. It's the same engine family you already run (so no new approach to learn, no correctness risk), and the improvement is purely about execution speed under the per-turn budget — which connects to something you never actually verified. All session, there's been an open question about whether your bots are quietly eating overage or timing out late in long 4P games on the slow runner; the gym never penalizes that, but live it can silently cost you games and Elo. If comet_reaper is occasionally lagging past the budget on the tournament CPU, then a latency-optimized version of the same logic could be genuinely higher live Elo with zero change to the strategy. That's the most plausible real gain on your actual submission that's surfaced all day.
+So I'd reprioritize slightly. Before the critic A/B moonshot, and alongside the #1047 read, the highest-EV cheap check is: is comet_reaper staying under the 1s budget on the tournament hardware, or is it lagging? You can get at this two ways — instrument per-turn wall-time in a submitted comet_reaper and read the game logs (the thing the forum people did), or look at whether your live comet_reaper games show timeout/forfeit patterns late in 4P. If it's lagging, latency optimization (Numba on the hot path, capping the planner's horizon/candidate counts in the expensive branches) is a real, low-risk Elo lever on the bot you're actually shipping. If it's already comfortably under budget, you close the box and the "No Lag" advantage doesn't apply to you.
