@@ -1,15 +1,22 @@
+# environments & caches
 .venv/
 __pycache__/
 *.pyc
 *.pyo
 .DS_Store
+node_modules/
+.next/
+out/
+.omc/
+
+# runtime data — huge and re-pullable from Kaggle (episodes ≈ 11 GB)
 leaderboards
 replays
-strategy
-agents/opponents
 episodes
 training
-agents/comet_reaper
+
+# website_opus raw asset caches (the curated versions ship in website_fable/)
+# (its public/data/replays cache is also caught by the global `replays` rule)
 
 # v5 experiment runtime artifacts (resumable / re-pullable, not source)
 experiments/v5_engine_tuning/tuning/study.db
@@ -19,3 +26,18 @@ agents/rl_ppo_cpu/runs/
 agents/rl_ppo_cpu/checkpoints/
 agents/rl_ppo_jax/runs/
 best_model.pt
+
+# strategy — machine-generated run logs (the docs + all screenshots ARE tracked)
+strategy/archive/*.log
+strategy/archive/gym_*.json
+strategy/archive/gym_*.log
+strategy/archive/pull_*.log
+strategy/archive/bc_train*.log
+strategy/archive/selfplay*.log
+strategy/archive/train_clones.log
+strategy/archive/extract_prizezone.log
+strategy/archive/v4_revalidate.log
+strategy/archive/v4_tune.log
+
+# a friend's dashboard design kept for reference — not ours to publish
+strategy/screenshots_highlights/tylers_dashbaord.png

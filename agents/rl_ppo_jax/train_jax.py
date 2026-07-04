@@ -27,6 +27,7 @@ from functools import partial
 from typing import NamedTuple
 
 import numpy as np
+from tensorboardX import SummaryWriter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.normpath(os.path.join(HERE, "../.."))
@@ -65,7 +66,8 @@ CFG = dict(
     checkpoint_every= 300,
     reward_scale    = 0.01,
     terminal_bonus  = 1.0,
-    pool_size       = 512,
+    pool_size           = 64,
+    cr_games_per_update = 16,   # Python games vs comet_reaper mixed into each PPO update
     embed_dim       = 64,
     n_heads         = 4,
     n_layers        = 2,
@@ -549,9 +551,144 @@ def make_rl_agent(params, model):
     return rl_agent
 
 
+# ── Stochastic RL step + CR game collection ───────────────────────────────────
+
+def _rl_step_recording(params, model, obs, player, env_i, step_i, rng):
+    """
+    One turn of the RL agent with stochastic sampling.
+    Returns (launch_list, buffer_entries).
+    buffer_entries have all fields needed by compute_gae/ppo_update except boot_val.
+    """
+    if isinstance(obs, dict):
+        player_id = int(obs.get('player', player))
+        planets   = list(obs.get('planets', []))
+    else:
+        player_id = int(getattr(obs, 'player', player) or player)
+        planets   = list(getattr(obs, 'planets', None) or [])
+
+    obs_vec = encode_obs_python(obs, player_id)
+    owned = [(i, pl) for i, pl in enumerate(planets[:oj.MAX_OBS_PLANETS])
+             if int(pl[1]) == player_id and float(pl[5]) >= MIN_SHIPS]
+    if not owned:
+        return [], []
+
+    launches = []
+    entries  = []
+    for src_idx, src in owned:
+        x, y, ships = float(src[2]), float(src[3]), float(src[5])
+        dx, dy = x - 50., y - 50.
+        pf = np.array([
+            x/100., y/100., float(src[4])/10., ships/200., float(src[6])/20.,
+            1., 0., 0.,
+            math.sqrt(dx*dx+dy*dy)/70., math.atan2(dy, dx)/math.pi,
+        ], dtype=np.float32)
+        n_alive   = len([pl for pl in planets[:oj.MAX_OBS_PLANETS]])
+        tgt_mask  = np.zeros(oj.MAX_OBS_PLANETS, dtype=bool)
+        tgt_mask[:n_alive] = True
+        tgt_mask[src_idx]  = False
+
+        fire_l, tgt_l, frac_l, val_l = model.apply(
+            params, jnp.array(obs_vec[None]), jnp.array(pf[None]), jnp.array(tgt_mask[None])
+        )
+
+        # Stochastic fire
+        fire_prob = float(jax.nn.sigmoid(fire_l[0]))
+        fire      = int(rng.random() < fire_prob)
+        fire_lp   = math.log(fire_prob + 1e-8) if fire else math.log(1 - fire_prob + 1e-8)
+
+        # Stochastic target
+        tgt_logits = np.array(tgt_l[0], dtype=np.float64)
+        tgt_logits[~tgt_mask] = -1e9
+        tgt_logits -= tgt_logits.max()
+        tgt_probs  = np.exp(tgt_logits)
+        tgt_probs[~tgt_mask] = 0.
+        tgt_sum = tgt_probs.sum()
+        tgt_probs = tgt_probs / tgt_sum if tgt_sum > 0 else (tgt_mask / tgt_mask.sum()).astype(np.float64)
+        tgt_idx   = int(rng.choice(len(tgt_probs), p=tgt_probs))
+        tgt_lp    = math.log(float(tgt_probs[tgt_idx]) + 1e-8)
+
+        # Stochastic fraction
+        frac_logits = np.array(frac_l[0], dtype=np.float64)
+        frac_logits -= frac_logits.max()
+        frac_probs  = np.exp(frac_logits)
+        frac_probs /= frac_probs.sum()
+        frac_idx  = int(rng.choice(len(frac_probs), p=frac_probs))
+        frac_lp   = math.log(float(frac_probs[frac_idx]) + 1e-8)
+
+        lp  = fire_lp + (tgt_lp + frac_lp if fire else 0.)
+        val = float(val_l[0])
+
+        entries.append({
+            "obs": obs_vec, "pf": pf, "mask": tgt_mask,
+            "fire": fire, "tgt": tgt_idx, "frac": frac_idx,
+            "lp": lp, "val": val,
+            "rew": 0.0, "done": 0.0,
+            "env_i": env_i, "step_i": step_i,
+        })
+
+        if not fire or tgt_idx >= len(planets) or tgt_idx == src_idx:
+            continue
+        tgt    = planets[tgt_idx]
+        angle  = math.atan2(float(tgt[3]) - y, float(tgt[2]) - x)
+        n_ship = max(1, int(ships * FRAC_BINS_NP[frac_idx]))
+        launches.append([int(src[0]), angle, n_ship])
+
+    return launches, entries
+
+
+def collect_cr_games(params, model, n_games, cfg, rng=None):
+    """
+    Run n_games of RL agent (P0) vs comet_reaper (P1) in Python.
+    Returns buffer entries compatible with compute_gae/ppo_update.
+    Uses large negative env_i values to avoid colliding with JAX env indices.
+    """
+    from kaggle_environments import make
+    try:
+        cr_agent = _load_comet_reaper()
+    except Exception as e:
+        print(f"  [CR training] comet_reaper unavailable: {e}")
+        return []
+
+    if rng is None:
+        rng = np.random.default_rng()
+
+    all_entries = []
+    base_env_i  = -100000
+
+    for game_i in range(n_games):
+        env_i      = base_env_i - game_i
+        game_entries = []
+        seed = int(rng.integers(0, 100000))
+        env  = make("orbit_wars", debug=False,
+                    configuration={"seed": seed, "episodeSteps": oj.EPISODE_STEPS})
+        env.reset()
+
+        step_i = 0
+        while env.state[0].status == "ACTIVE":
+            obs_p0   = env.state[0].observation
+            obs_p1   = env.state[1].observation
+            launches, entries = _rl_step_recording(
+                params, model, obs_p0, player=0, env_i=env_i, step_i=step_i, rng=rng
+            )
+            game_entries.extend(entries)
+            cr_action = cr_agent(obs_p1)
+            env.step([launches, cr_action])
+            step_i += 1
+
+        if game_entries:
+            r0 = env.state[0].reward or 0
+            r1 = env.state[1].reward or 0
+            term_rew = cfg["terminal_bonus"] * (1.0 if r0 > r1 else -1.0)
+            game_entries[-1]["rew"]  = term_rew
+            game_entries[-1]["done"] = 1.0
+            all_entries.extend(game_entries)
+
+    return all_entries
+
+
 # ── Evaluation vs greedy ──────────────────────────────────────────────────────
 
-def evaluate_vs_greedy(params, model, n_games=30):
+def evaluate_vs_greedy(params, model, n_games=30, seed_offset=None):
     """Seat-balanced eval vs nearest-planet greedy. Returns win rate dict."""
     from kaggle_environments import make
 
@@ -573,10 +710,12 @@ def evaluate_vs_greedy(params, model, n_games=30):
     rl_agent = make_rl_agent(params, model)
     wins_p0 = wins_p1 = 0
     half = n_games // 2
+    # Use random seed offset each call so deterministic policies don't lock
+    base = seed_offset if seed_offset is not None else np.random.randint(0, 10000)
 
     for seed in range(half):
         env = make("orbit_wars", debug=False,
-                   configuration={"seed": seed, "episodeSteps": oj.EPISODE_STEPS})
+                   configuration={"seed": base + seed, "episodeSteps": oj.EPISODE_STEPS})
         env.run([rl_agent, greedy_agent])
         r0 = env.steps[-1][0].reward or 0
         r1 = env.steps[-1][1].reward or 0
@@ -585,7 +724,7 @@ def evaluate_vs_greedy(params, model, n_games=30):
 
     for seed in range(half, n_games):
         env = make("orbit_wars", debug=False,
-                   configuration={"seed": seed, "episodeSteps": oj.EPISODE_STEPS})
+                   configuration={"seed": base + seed, "episodeSteps": oj.EPISODE_STEPS})
         env.run([greedy_agent, rl_agent])
         r0 = env.steps[-1][0].reward or 0
         r1 = env.steps[-1][1].reward or 0
@@ -643,11 +782,35 @@ def evaluate_vs_comet_reaper(params, model, n_games=20):
     return {"wr": wr, "wr_p0": wins_p0 / half, "wr_p1": wins_p1 / half}
 
 
+# ── Snapshot pool ─────────────────────────────────────────────────────────────
+
+class SnapshotPool:
+    """Rolling buffer of historical policy params for diverse P1 opponents.
+    Breaks pure self-play Nash convergence by making P1 a lagged version
+    of the current policy rather than always the current policy."""
+    def __init__(self, max_size=10):
+        self._snaps = []
+        self._max   = max_size
+
+    def add(self, params):
+        self._snaps.append(jax.device_get(params))  # copy to CPU
+        if len(self._snaps) > self._max:
+            self._snaps.pop(0)
+
+    def sample_params(self, current_params):
+        """50% current params, 50% random historical snapshot."""
+        if self._snaps and np.random.random() < 0.5:
+            return jax.device_put(self._snaps[np.random.randint(len(self._snaps))])
+        return current_params
+
+
 # ── Training loop ─────────────────────────────────────────────────────────────
 
-def train(cfg, run_dir):
+def train(cfg, run_dir, seed=0):
     os.makedirs(run_dir, exist_ok=True)
-    key = jax.random.PRNGKey(0)
+    writer = SummaryWriter(run_dir)
+    key = jax.random.PRNGKey(seed)
+    _cr_rng = np.random.default_rng(seed)  # separate RNG for Python CR games
 
     # Init model
     model  = ActorCriticET(cfg["embed_dim"], cfg["n_heads"], cfg["n_layers"])
@@ -665,6 +828,23 @@ def train(cfg, run_dir):
     )
     train_state = TrainState.create(apply_fn=model.apply, params=params, tx=tx)
 
+    # Resume from checkpoint if one exists
+    update = 0; total_steps = 0; best_wr = 0.
+    import pickle
+    ckpt_path = os.path.join(run_dir, "latest.pkl")
+    if os.path.exists(ckpt_path):
+        with open(ckpt_path, "rb") as f:
+            ckpt = pickle.load(f)
+        train_state = train_state.replace(params=jax.device_put(ckpt["params"]))
+        update      = ckpt.get("update", 0)
+        total_steps = ckpt.get("steps",  0)
+        best_wr     = ckpt.get("best_wr", 0.)
+        print(f"Resumed from checkpoint: U={update}, steps={total_steps:,}")
+
+    # Opponent snapshot pool — seed with initial weights so P1 diverges from U=0
+    snap_pool = SnapshotPool(max_size=10)
+    snap_pool.add(train_state.params)
+
     # Reset state pool
     pool = build_reset_pool(cfg["pool_size"])
 
@@ -673,7 +853,6 @@ def train(cfg, run_dir):
     # batch_state is the canonical env state; we never maintain a Python list of N states.
     batch_state = _stack_states([pool[i % len(pool)] for i in range(N)])
 
-    update = 0; total_steps = 0; best_wr = 0.
     ep_count = 0; last_dones_np = np.zeros(N, bool)
 
     print(f"{'='*64}")
@@ -708,9 +887,10 @@ def train(cfg, run_dir):
                 k0, player=0,
             )
 
-            # P1 actions — self-play: same policy, P1's perspective obs
+            # P1 actions — 50% current policy, 50% historical snapshot
+            p1_params = snap_pool.sample_params(train_state.params)
             actions_p1, _, _, _ = _sample_actions(
-                train_state.params, model,
+                p1_params, model,
                 jnp.array(obs_p1), jnp.array(p_owner_np), jnp.array(p_alive_np),
                 jnp.array(p_x_np), jnp.array(p_y_np), jnp.array(p_ships_np),
                 k1, player=1,
@@ -783,6 +963,13 @@ def train(cfg, run_dir):
                 e["boot_val"] = float(boot_vals[ei])
                 seen.add(ei)
 
+        # Mix in Python games vs comet_reaper — gives real opponent signal
+        if cfg.get("cr_games_per_update", 0) > 0:
+            cr_entries = collect_cr_games(
+                train_state.params, model, cfg["cr_games_per_update"], cfg, rng=_cr_rng
+            )
+            buffer.extend(cr_entries)
+
         compute_gae(buffer, cfg)
         train_state, loss, ev, ent = ppo_update(train_state, buffer, cfg)
         update += 1
@@ -796,6 +983,10 @@ def train(cfg, run_dir):
             "ts": int(time.time()),
         }
         log_metrics(row, run_dir)
+        writer.add_scalar("train/loss", loss, update)
+        writer.add_scalar("train/explained_variance", ev, update)
+        writer.add_scalar("train/entropy", ent, update)
+        writer.add_scalar("train/sps", sps, update)
 
         if update % 10 == 0:
             print(f"U{update:5d} | S:{total_steps:>10,d} | L:{loss:.4f} "
@@ -820,16 +1011,29 @@ def train(cfg, run_dir):
                 "ts": int(time.time()),
             }
             log_metrics(eval_row, run_dir)
+            writer.add_scalar("eval/greedy_WR", gr["wr"], update)
+            if cr_wr is not None:
+                writer.add_scalar("eval/comet_reaper_WR", cr_wr, update)
             if cr_wr is not None and cr_wr > best_wr:
                 best_wr = cr_wr
 
+        # ── Snapshot pool update ──────────────────────────────────────────────
+        if update % 50 == 0:
+            snap_pool.add(train_state.params)
+
         # ── Checkpoint ────────────────────────────────────────────────────────
         if update % cfg["save_every"] == 0:
-            import pickle
+            ckpt_data = {"params": train_state.params, "update": update,
+                         "steps": total_steps, "best_wr": best_wr}
             with open(os.path.join(run_dir, "latest.pkl"), "wb") as f:
-                pickle.dump({"params": train_state.params, "update": update,
-                             "steps": total_steps, "best_wr": best_wr}, f)
+                pickle.dump(ckpt_data, f)
+            # Keep a named snapshot every checkpoint_every updates for rollback
+            if update % cfg["checkpoint_every"] == 0:
+                named = os.path.join(run_dir, f"ckpt_U{update:05d}.pkl")
+                with open(named, "wb") as f:
+                    pickle.dump(ckpt_data, f)
 
+    writer.close()
     print(f"\nDone. Total steps: {total_steps:,d}")
 
 
@@ -841,13 +1045,16 @@ if __name__ == "__main__":
     p.add_argument("--total_updates", type=int,   default=None)
     p.add_argument("--lr",            type=float, default=None)
     p.add_argument("--run_name",      type=str,   default="default")
-    p.add_argument("--pool_size",     type=int,   default=None)
+    p.add_argument("--pool_size",          type=int, default=None)
+    p.add_argument("--cr_games_per_update",type=int, default=None)
+    p.add_argument("--seed",               type=int, default=0)
     args = p.parse_args()
 
     if args.num_envs      is not None: CFG["num_envs"]      = args.num_envs
     if args.total_updates is not None: CFG["total_updates"]  = args.total_updates
     if args.lr            is not None: CFG["lr"]             = args.lr
-    if args.pool_size     is not None: CFG["pool_size"]      = args.pool_size
+    if args.pool_size          is not None: CFG["pool_size"]           = args.pool_size
+    if args.cr_games_per_update is not None: CFG["cr_games_per_update"] = args.cr_games_per_update
 
     run_dir = os.path.join(HERE, "runs", args.run_name)
-    train(CFG, run_dir)
+    train(CFG, run_dir, seed=args.seed)
