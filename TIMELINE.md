@@ -37,16 +37,14 @@ Built the harness to tell the 23 bots apart objectively.
 - Git: `8cb91e5` "add OpenSkill arena, pipeline, dashboard, and archive 21 bots",
   `1ea297c`, `c672ce3`.
 
-## Phase 2 — First submissions (Jun 14) ⚠️ verify IDs/placement
+## Phase 2 — First submissions (Jun 14)
 
 Submitted the **best two** bots:
 
-- `markowitz_portfolio_optimization`
-- `coordinated_strike_interceptor` v1 — ⚠️ ~36 episodes (confirm exact count)
+- `markowitz_portfolio_optimization` v1 — 36 episodes, Official score: 578.2
+- `coordinated_strike_interceptor` v1 — 35 episodes, Official score: 531.7
 
-**Result: placed in the ~500s** on the public leaderboard. ⚠️ exact submission IDs and
-scores to be filled in (memory has live submissions in the ~535–546 range). Screenshots
-kept separately by Ted.
+**Result:** Placed in the ~500s on the public leaderboard. The scores confirm the live submissions reached 531.7 and 578.2. Screenshots preserved in `strategy/screenshots/`.
 
 > *"Then we slept."* — a deliberate pause before the next direction.
 
@@ -124,7 +122,7 @@ comet_reaper ~71–72% 2P, seat-swapped), ≥2.0 over-commits and tanks. Validat
 
 Also this phase: `comet_reaper_tuned` (knob-exposed for Optuna; config sweep found nothing, best 0.34 —
 base config is a tight optimum) and `comet_reaper_search` (Numba forward-sim lookahead, ~80k rollouts/turn;
-the single-move signal washes out over the rollout — being fixed). ⚠️ search in progress.
+the single-move signal washes out over the rollout — being fixed). (Search later concluded in Track B: DISCARD).
 
 ---
 
@@ -517,3 +515,102 @@ not *why*. orbit_lite exploits the gap immediately.
 **launch_gpu.sh** — validates engine (N=20) then runs training on A100.
 
 **Next:** deploy to Jetstream2 A100, measure SPS target (≥1000 SPS / 10k parallel envs).
+
+---
+
+## 2026-06-24 — v10-jax A100 runs: CLOSED FAIL
+
+**Status:** SHUT DOWN (all Jetstream2 instances shelved by prof; CPU fleet also unreachable).
+
+**What ran:** 2× g3.xl A100 instances (GPU1 seed=1, GPU2 seed=2), each ~20 hours, ~107M steps (U≈1640).
+
+**Results:** `eval_vs_greedy` locked at **0.2333 (7/30)** from U=100 through U=1600 on both seeds — never moved. `comet_reaper_WR=null` entire run.
+
+**Root causes diagnosed:**
+1. **Broken eval signal** — `make_rl_agent` uses argmax (deterministic), eval uses fixed seeds 0–29. Once the policy stabilises on those 30 games (U=100), the result never changes. Fix implemented: random seed offset per eval call.
+2. **comet_reaper eval null** — `comet_reaper/main.py` imports `torch`; jax_env had no torch. Fix implemented: CPU-only torch installed.
+3. **No opponent quality** — snapshot pool seeded from random weights. CPU `train.py` used comet_reaper as P1 cold-start → 40% vs greedy at U=100. JAX had no cold-start → policy learned to beat random play only.
+
+**Fixes committed but not yet proven:**
+- `evaluate_vs_greedy` now uses random `seed_offset` per call
+- `torch` (CPU-only) installed in jax_env on both GPU instances
+- `SnapshotPool` class with 50% current / 50% historical P1 mixing
+- `--seed` arg for JAX PRNGKey diversity
+
+**Next when GPU instances are reactivated:**
+- Implement comet_reaper bootstrap phase (~60 lines): run Python games vs comet_reaper for first 50 updates to warm-start snapshot pool with a competent policy before switching to JAX self-play.
+- The JAX engine + Tensorboard + sync_runs.sh infrastructure is all in place.
+
+**Final submission:** comet_reaper (sub 53707586, ~1235 Elo). Competition ended 2026-06-23.
+
+---
+
+## 2026-06-25 — v9 CPU fleet: CLOSED FAIL + metrics archived
+
+**Final result:** `comet_reaper_WR = 0.0` across all 24 seeds (6 of 9 instances reachable), all 700+ updates, ~69 hours of training each. Gate was cr_WR > 0% at U=500 — never triggered.
+
+**Final training state (ppo-1 sample):**
+- U=710–723, elapsed ~69h, entropy ~0.08 (collapsed), explained_variance ~0.82–0.90
+- eval_vs_greedy stuck at 0.2333 (7/30) — same 23.3% plateau as JAX runs
+- terminal_win_pct = 0.0 — training games never terminated with a winner
+
+**Metrics archived** to `agents/rl_ppo_cpu/runs_archive/` (24 × metrics.jsonl, no checkpoints — best_model.pt files were all saved at cr_WR=0%, not worth keeping).
+
+**All Jetstream2 instances shelved/deleted.** No RL experiment ever beat comet_reaper.
+
+**Lesson confirmed:** Both CPU (v9 ET-PPO, 24 seeds, 69h) and JAX (v10, 2 seeds, 20h) converged to the same 23% greedy ceiling and 0% vs comet_reaper. Root cause: self-play without a strong opponent bootstrap → policy learns to beat random play only, not transferable to orbit_lite opponents.
+
+## 2026-06-28 to 2026-06-30 — v10 JAX GPU w/ comet_reaper training signal: CLOSED FAIL
+
+**Config:** 2× A100 (seeds 1 & 2), pool_size=64, cr_games_per_update=4, 1024 JAX envs
+**Results:**
+- GPU1 (seed 1): ran to U=567, comet_reaper_WR=0.0 at every eval (U=100–500)
+- GPU2 (seed 2): ran to U=1100+, comet_reaper_WR=0.0 at every eval (U=100–1100)
+- eval_vs_greedy: flat 3–17%, trending toward 0 by U=700+
+
+**Root cause:** 4 Python CR games = ~256 transitions vs 65,536 JAX self-play transitions per update. CR signal is 0.4% of the batch — completely drowned out by self-play.
+
+**Bugs fixed this run:** fire_l[0,0] indexing, pool_size 512→64 (was 5hr startup), checkpoint resume logic added.
+
+**Status:** GPU instances shelved. RL self-play approach closed.
+
+---
+
+## 2026-07-04 — RL campaign closed: final post-mortem
+
+**All RL experiments across every track (v6, v9 CPU, v10 JAX): `comet_reaper_WR = 0%`. Campaign closed.**
+
+**Why the top-LB players' PPO worked and ours didn't — the real answer:**
+
+The top of the leaderboard runs the orbit_lite engine. Their PPO policies almost certainly operate over *orbit_lite macro-action parameters* (aggression level, target priority, fleet-split ratio — a handful of floats), not raw ship commands. Orbit_lite executes the actual micro. This collapses the decision horizon from 498 raw steps to ~20–40 macro-decisions, turning γ^498 ≈ 0.007 into γ^30 ≈ 0.74. Credit assignment becomes tractable. Dense reward flows naturally from orbit_lite's internal state (planet delta, ship production lead per step). Action space is tiny.
+
+We were doing PPO over raw actions in a 498-step sparse-reward environment. They were selecting strategy knobs and letting a deterministic engine handle the rest.
+
+**Why behavioral cloning also failed (earlier experiment):** BC on top-player replays clones the move sequence, but the move only makes sense in the context of the macro strategy orbit_lite was already pursuing. You get the cursor without the hand — syntactically correct moves with no strategic coherence.
+
+**What would have had to change to make RL work:**
+1. Wrap a strong handcrafted engine (orbit_lite or comet_reaper) as the macro-action executor
+2. Train PPO over strategy parameters only (small discrete/continuous space)
+3. Dense reward from engine internals every step, not terminal-only
+4. Fixed diverse opponent pool for training, not pure self-play
+
+**Final submission:** comet_reaper (sub 53707586, ~1235 Elo). This remains the best bot produced in the project.
+
+---
+
+## 2026-07-04 — Project presentation website v2 (`website_fable/`)
+
+Built a fresh single-page presentation site from the whole repo's mission data
+(new build, independent of the earlier `website/` draft): Next.js 16 + Tailwind v4,
+fully static, Vercel-ready, zero chart/animation libraries.
+
+- **Data:** `scripts/build_data.py` regenerates everything from raw sources —
+  712 leaderboard CSVs → Elo race series + final standings (4,752 teams, us #415);
+  6 curated episode replays compacted ~15 MB → ~500 KB each; curated RL metrics.
+- **Sections:** cinematic orbital hero → game briefing → 23-bot arena → engine
+  lineage → leaderboard climb chart → 19-experiment KEEP/DISCARD ledger +
+  zero-choice exhibit → RL moonshot (0% hero number, plateau + entropy-collapse
+  charts, macro-action post-mortem) → canvas replay theater of real ranked games →
+  seven lessons → final standings + 24-phase mission log.
+- **QA:** `next build` + eslint clean; headless-Chrome screenshot pass at desktop
+  and mobile widths; zero console errors.

@@ -1,0 +1,92 @@
+[
+ {
+  "id": "79984357",
+  "label": "2P \u00b7 win vs shishaohua",
+  "teams": [
+   "Montana Schmeekler",
+   "shishaohua"
+  ],
+  "our_seat": 0,
+  "result": "win",
+  "placement": 1,
+  "date": "2026-06-15",
+  "n_steps": 500,
+  "players": 2
+ },
+ {
+  "id": "80518143",
+  "label": "2P \u00b7 win vs Antonoof",
+  "teams": [
+   "Montana Schmeekler",
+   "Antonoof"
+  ],
+  "our_seat": 0,
+  "result": "win",
+  "placement": 1,
+  "date": "2026-06-18",
+  "n_steps": 500,
+  "players": 2
+ },
+ {
+  "id": "80852381",
+  "label": "2P \u00b7 loss vs galaxy2025",
+  "teams": [
+   "galaxy2025",
+   "Montana Schmeekler"
+  ],
+  "our_seat": 1,
+  "result": "loss",
+  "placement": 2,
+  "date": "2026-06-20",
+  "n_steps": 500,
+  "players": 2
+ },
+ {
+  "id": "80032464",
+  "label": "4P \u00b7 1st of 4",
+  "teams": [
+   "Georgy Mamarin",
+   "Clawdy Huang (Andy's AI)",
+   "Montana Schmeekler",
+   "saeNeko"
+  ],
+  "our_seat": 2,
+  "result": "win",
+  "placement": 1,
+  "date": "2026-06-15",
+  "n_steps": 500,
+  "players": 4
+ },
+ {
+  "id": "81027412",
+  "label": "4P \u00b7 2nd \u2014 pod with Mendrika (top-50 BC bot)",
+  "teams": [
+   "Montana Schmeekler",
+   "gugugaga",
+   "Mendrika",
+   "cununn"
+  ],
+  "our_seat": 0,
+  "result": "loss",
+  "placement": 2,
+  "date": "2026-06-21",
+  "n_steps": 500,
+  "players": 4
+ },
+ {
+  "id": "81035800",
+  "label": "4P \u00b7 4th \u2014 a crushing",
+  "teams": [
+   "[cmbc] jythow",
+   "Ezra",
+   "Dreame1",
+   "Montana Schmeekler"
+  ],
+  "our_seat": 3,
+  "result": "loss",
+  "placement": 4,
+  "date": "2026-06-21",
+  "n_steps": 500,
+  "players": 4
+ }
+]

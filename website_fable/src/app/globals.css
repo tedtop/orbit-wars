@@ -1,0 +1,181 @@
+@import "tailwindcss";
+
+/* ─── Design tokens ─────────────────────────────────────────────────── */
+:root {
+  /* surfaces */
+  --void: #05060d; /* page background — deep space */
+  --surface-1: #0d1120; /* chart / card surface */
+  --surface-2: #131a2e; /* raised surface */
+
+  /* ink */
+  --ink: #f2f4fb;
+  --ink-2: #b7bfd6;
+  --ink-3: #78819c;
+  --grid: #222a42;
+  --baseline: #38415e;
+  --ring: rgba(242, 244, 251, 0.09);
+
+  /* categorical series — validated on --surface-1 (dark) */
+  --s-blue: #3987e5; /* us / primary */
+  --s-red: #e66767; /* opponent / losses */
+  --s-amber: #c98500; /* comets / heuristics */
+  --s-violet: #9085e9; /* leaders / prize zone */
+  --s-green: #199e70; /* keeps / wins */
+
+  /* warm sun accents (decorative only, not series colors) */
+  --sun-core: #ffd9a0;
+  --sun-glow: #ff9d3c;
+
+  /* status */
+  --good: #0ca30c;
+  --warning: #fab219;
+  --critical: #d03b3b;
+
+  --font-display: var(--font-space-grotesk), system-ui, sans-serif;
+  --font-body: var(--font-inter), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+}
+
+@theme inline {
+  --color-void: var(--void);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-grid: var(--grid);
+  --color-baseline: var(--baseline);
+  --color-s-blue: var(--s-blue);
+  --color-s-red: var(--s-red);
+  --color-s-amber: var(--s-amber);
+  --color-s-violet: var(--s-violet);
+  --color-s-green: var(--s-green);
+  --color-good: var(--good);
+  --color-warning: var(--warning);
+  --color-critical: var(--critical);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--void);
+  color: var(--ink);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgba(57, 135, 229, 0.4);
+}
+
+/* ─── Glass card ────────────────────────────────────────────────────── */
+.card {
+  background: linear-gradient(
+    160deg,
+    rgba(19, 26, 46, 0.72),
+    rgba(13, 17, 32, 0.88)
+  );
+  border: 1px solid var(--ring);
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+}
+
+.card-hover {
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+.card-hover:hover {
+  transform: translateY(-3px);
+  border-color: rgba(57, 135, 229, 0.35);
+  box-shadow: 0 12px 40px -18px rgba(57, 135, 229, 0.35);
+}
+
+/* ─── Scroll reveal (driven by Reveal component) ────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition:
+    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ─── Kicker — letterspaced mono section label ──────────────────────── */
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--s-blue);
+}
+
+/* ─── Chart chrome ──────────────────────────────────────────────────── */
+.tick-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  fill: var(--ink-3);
+}
+.chart-tooltip {
+  pointer-events: none;
+  position: absolute;
+  z-index: 30;
+  background: var(--surface-2);
+  border: 1px solid var(--ring);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+}
+
+/* ─── Orbit animations (game diagram) ───────────────────────────────── */
+@keyframes orbit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.orbit-slow {
+  animation: orbit-spin 46s linear infinite;
+}
+.orbit-med {
+  animation: orbit-spin 30s linear infinite;
+}
+.orbit-fast {
+  animation: orbit-spin 20s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .orbit-slow,
+  .orbit-med,
+  .orbit-fast {
+    animation: none;
+  }
+}
+
+/* ─── Scrollbar (subtle, dark) ──────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--baseline) transparent;
+}

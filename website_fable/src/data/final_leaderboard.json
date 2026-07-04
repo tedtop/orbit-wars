@@ -1,0 +1,116 @@
+{
+ "snapshot": "leaderboard_2026-06-22_20-08.csv",
+ "n_teams": 4752,
+ "top": [
+  {
+   "rank": 1,
+   "name": "Jake Will",
+   "score": 1694.0,
+   "subs": 2
+  },
+  {
+   "rank": 2,
+   "name": "Isaiah @ Tufa Labs",
+   "score": 1688.7,
+   "subs": 2
+  },
+  {
+   "rank": 3,
+   "name": "Hober Malloc",
+   "score": 1648.6,
+   "subs": 2
+  },
+  {
+   "rank": 4,
+   "name": "flg",
+   "score": 1626.3,
+   "subs": 2
+  },
+  {
+   "rank": 5,
+   "name": "TonyK",
+   "score": 1585.4,
+   "subs": 2
+  },
+  {
+   "rank": 6,
+   "name": "Boey",
+   "score": 1523.1,
+   "subs": 2
+  },
+  {
+   "rank": 7,
+   "name": "Felix M Neumann",
+   "score": 1519.7,
+   "subs": 2
+  },
+  {
+   "rank": 8,
+   "name": "moriiiiiiiiim",
+   "score": 1518.3,
+   "subs": 2
+  },
+  {
+   "rank": 9,
+   "name": "Vadasz & Ascalon",
+   "score": 1509.3,
+   "subs": 2
+  },
+  {
+   "rank": 10,
+   "name": "Ender",
+   "score": 1500.9,
+   "subs": 2
+  }
+ ],
+ "us": {
+  "rank": 415,
+  "name": "Montana Schmeekler",
+  "score": 1126.0,
+  "subs": 2
+ },
+ "around_us": [
+  {
+   "rank": 412,
+   "name": "sunyunchen",
+   "score": 1126.4,
+   "subs": 2
+  },
+  {
+   "rank": 413,
+   "name": "Aswin Vinod",
+   "score": 1126.3,
+   "subs": 2
+  },
+  {
+   "rank": 414,
+   "name": "Anas Riaz",
+   "score": 1126.0,
+   "subs": 2
+  },
+  {
+   "rank": 415,
+   "name": "Montana Schmeekler",
+   "score": 1126.0,
+   "subs": 2
+  },
+  {
+   "rank": 416,
+   "name": "sam",
+   "score": 1125.8,
+   "subs": 2
+  },
+  {
+   "rank": 417,
+   "name": "Kyotaro Izumi",
+   "score": 1125.8,
+   "subs": 2
+  },
+  {
+   "rank": 418,
+   "name": "ysd1110",
+   "score": 1125.4,
+   "subs": 2
+  }
+ ]
+}
