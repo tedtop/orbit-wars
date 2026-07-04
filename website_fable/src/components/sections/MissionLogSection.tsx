@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Section from "../ui/Section";
 import Reveal from "../ui/Reveal";
 
@@ -16,7 +17,7 @@ const TYPE_META: Record<EntryType, { label: string; color: string }> = {
   insight: { label: "insight", color: "var(--s-amber)" },
 };
 
-const LOG: { date: string; type: EntryType; title: string; body: string }[] = [
+const LOG: { date: string; type: EntryType; title: string; body: ReactNode }[] = [
   {
     date: "jun 13",
     type: "build",
@@ -116,8 +117,32 @@ const LOG: { date: string; type: EntryType; title: string; body: string }[] = [
   {
     date: "jul 4",
     type: "insight",
-    title: "What we actually won",
-    body: "A day-three bot survived nineteen experiments and five RL campaigns — and we know that's the truth, not a hunch, because every idea faced a fixed gauntlet, a pre-committed verdict, and a dated entry that can never be quietly re-run. The winners out-framed us, not out-coded us: they handed PPO a strong engine's steering wheel while we handed it 498 raw levers. Next season we bring their framing and keep our lab discipline.",
+    title: "The post-mortem",
+    body: (
+      <>
+        We didn&apos;t place top 10 — a day-three engine clone at #415 of 4,752 was
+        our ceiling this season. What we took away instead: a crash course in PPO
+        self-play, behavior cloning, value functions, MCTS, and Boltzmann search; a
+        pure-JAX game engine and a nine-machine CPU + A100{" "}
+        <a
+          href="https://jetstream-cloud.org/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-s-blue underline decoration-s-blue/40 underline-offset-4 hover:decoration-s-blue"
+        >
+          Jetstream2
+        </a>{" "}
+        training fleet; Optuna sweeps, OpenSkill gauntlets, and a live ops dashboard
+        — plus seven hard-earned lessons about search, imitation, evaluation, and
+        problem framing.
+      </>
+    ),
+  },
+  {
+    date: "next szn",
+    type: "pivot",
+    title: "The playbook for a top-10 run",
+    body: "Everything above points one direction: keep a strong engine in the loop. Train PPO over the engine's strategy knobs — aggression, target priority, fleet sizing — instead of raw ship commands. Feed it dense reward from the engine's own board evaluation every turn, and train against a fixed, diverse pool of strong opponents instead of pure self-play. Spend the 30× compute headroom on deeper multi-ply search — the lever that separates 1500 from 1793. And start all of it on day one, not day six.",
   },
 ];
 

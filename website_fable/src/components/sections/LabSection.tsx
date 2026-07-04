@@ -53,6 +53,46 @@ function WinBar({ pct }: { pct: number | null }) {
   );
 }
 
+/* Plain-words explainers for the most interesting weapons in the ledger. */
+const FIELD_NOTES = [
+  {
+    rows: "ledger #13–14",
+    title: "MCTS — Monte Carlo Tree Search",
+    body: (
+      <>
+        The algorithm family behind AlphaGo and modern chess engines. Instead of
+        scoring only your immediate options, you play out imagined futures —
+        &ldquo;if I do X, they answer A or B; if A, I could do Y or Z…&rdquo; —
+        building a tree of possibilities, running quick simulated games down the
+        promising branches, and picking the move whose branch wins most often. We
+        built two variants on top of comet_reaper. Both landed at 75% on the panel
+        — one point over baseline — and were discarded. The reason is the exhibit
+        below: the engine&apos;s filters left 0–4 candidate moves per turn, and you
+        can&apos;t grow a search tree when most turns have one branch.
+      </>
+    ),
+  },
+  {
+    rows: "ledger #17",
+    title: "Boltzmann search — playing the odds on your opponent",
+    body: (
+      <>
+        Standard search assumes the opponent plays their single best move.
+        Boltzmann search assumes they play <em>probabilistically</em>: each
+        plausible reply gets a probability weighted by how good it is — P ∝
+        exp(score/τ), the softmax distribution borrowed from statistical physics,
+        where the temperature τ says how sharp the opponent is (low τ = near-perfect,
+        high τ = sloppy). Your move is chosen by expected value over that whole
+        distribution instead of betting on one predicted response. It scored 61%
+        overall against schmeekler&apos;s 78% → DISCARD. One fascinating quirk: it
+        was our <em>best</em> bot against the weakest opponent (80% vs 1266-elo) —
+        modeling sloppy opponents probabilistically is exactly right; it just gave
+        too much away against strong ones.
+      </>
+    ),
+  },
+] as const;
+
 /* The decision-funnel exhibit: most turns there is nothing to decide. */
 function ZeroChoiceExhibit() {
   const segs = [
@@ -157,6 +197,22 @@ export default function LabSection() {
           </table>
         </div>
       </Reveal>
+
+      <div className="mt-10 grid gap-4 lg:grid-cols-2">
+        {FIELD_NOTES.map((n, i) => (
+          <Reveal key={n.title} delay={i * 80}>
+            <div className="card card-hover h-full px-6 py-5">
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <h3 className="font-display text-lg font-bold text-ink">{n.title}</h3>
+                <span className="rounded-full bg-white/[0.05] px-2.5 py-0.5 font-mono text-[10px] tracking-widest text-ink-3">
+                  {n.rows}
+                </span>
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-ink-2">{n.body}</p>
+            </div>
+          </Reveal>
+        ))}
+      </div>
 
       <Reveal className="mt-10">
         <ZeroChoiceExhibit />
