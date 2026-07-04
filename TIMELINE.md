@@ -622,3 +622,6 @@ fully static, Vercel-ready, zero chart/animation libraries.
 taken by another account). Final content: mission-log timeline with education
 post-mortem + next-season playbook, lab field notes (MCTS, Boltzmann search),
 replay theater, GitHub repo link.
+
+**Update:** production domain finalized — **https://kaggle-orbit-wars.vercel.app**
+(added as a project domain, auto-assigned to every future production deploy).
