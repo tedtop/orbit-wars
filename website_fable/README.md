@@ -41,9 +41,9 @@ All numbers on the site come from the repo's raw mission data. To regenerate:
 python3 scripts/build_data.py
 ```
 
-This reads `../leaderboards/*.csv` (712 pipeline snapshots) and
-`../website/public/data/` (experiments, timeline, scientists, RL metrics, raw
-replays) and writes:
+This reads `../leaderboards/*.csv` (712 pipeline snapshots — preserved as
+`../leaderboards_snapshots.tar.xz`) and `../website_opus/public/data/`
+(experiments, timeline, scientists, RL metrics, raw replays) and writes:
 
 - `src/data/*.json` — small datasets imported at build time
   (race, experiments, timeline, scientists, submissions, final leaderboard, replay manifest)

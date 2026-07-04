@@ -17,7 +17,7 @@ import re
 HERE = os.path.dirname(os.path.abspath(__file__))
 SITE = os.path.dirname(HERE)
 REPO = os.path.dirname(SITE)
-OLD_DATA = os.path.join(REPO, "website", "public", "data")
+OLD_DATA = os.path.join(REPO, "website_opus", "public", "data")
 LB_DIR = os.path.join(REPO, "leaderboards")
 SRC_DATA = os.path.join(SITE, "src", "data")
 PUB_DATA = os.path.join(SITE, "public", "data")
