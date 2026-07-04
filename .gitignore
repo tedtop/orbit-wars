@@ -22,6 +22,8 @@ training
 experiments/v5_engine_tuning/tuning/study.db
 experiments/v5_engine_tuning/logs/
 experiments/v5_engine_tuning/intel_kernels/
+
+# Runtime artifacts — model weights, logs, remote run caches
 agents/rl_ppo_cpu/runs/
 agents/rl_ppo_cpu/checkpoints/
 agents/rl_ppo_jax/runs/
