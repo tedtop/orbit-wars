@@ -90,14 +90,16 @@ export default function EngineSection() {
             <div className="card border-l-2 border-l-s-green px-5 py-4">
               <p className="text-sm leading-relaxed text-ink-2">
                 <span className="font-display font-bold text-s-green">
-                  The one fork that ever beat it:
+                  The one fork that ever beat it —{" "}
+                  <code className="font-mono">schmeekler</code>.
                 </span>{" "}
-                <code className="font-mono">schmeekler</code> — Ted&apos;s own idea. A
-                bonus for grabbing <em>static</em> (non-orbiting) planets first: the
-                safe periphery land-grab, planets that can never drift into enemy
-                reach. It beat comet_reaper 72% seat-swapped and swept the whole
-                public panel in the gym. The live ladder had other opinions — that
-                story comes later.
+                Our one genuinely novel strategy, not borrowed from anyone&apos;s
+                leaderboard bot: capture the <em>static</em> planets first.
+                They don&apos;t rotate, so they hold the safe periphery forever and
+                can never drift into enemy reach — a land-grab the engine
+                systematically undervalued. It beat comet_reaper 72% seat-swapped
+                and swept the whole public panel in the gym. The live ladder had
+                other opinions — that story comes later.
               </p>
             </div>
           </Reveal>

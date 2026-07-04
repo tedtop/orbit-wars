@@ -10,6 +10,25 @@ const CLUSTER_META: Record<string, { label: string; color: string }> = {
   other: { label: "military & opportunism", color: "var(--s-red)" },
 };
 
+/** Break long snake_case names at underscore boundaries, never mid-word. */
+function BotName({ name }: { name: string }) {
+  const parts = name.split("_");
+  return (
+    <>
+      {parts.map((p, i) => (
+        <span key={i}>
+          {p}
+          {i < parts.length - 1 && (
+            <>
+              _<wbr />
+            </>
+          )}
+        </span>
+      ))}
+    </>
+  );
+}
+
 export default function ScientistsSection() {
   return (
     <Section
@@ -40,10 +59,16 @@ export default function ScientistsSection() {
             return (
               <Reveal as="li" key={s.name} delay={(i % 4) * 55}>
                 <div
-                  className={`card card-hover h-full px-4 py-4 ${
+                  className={`card card-hover relative h-full px-4 py-4 ${
                     champion ? "outline outline-1 outline-s-amber/60" : ""
                   }`}
                 >
+                  {champion && (
+                    <span className="absolute -top-3 right-4 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[#f2c14e]/50 bg-gradient-to-r from-[#3a2a08] to-[#59400f] px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#f2c14e] shadow-[0_0_18px_-4px_rgba(242,193,78,0.55)]">
+                      <span aria-hidden>🏆</span>
+                      arena champion
+                    </span>
+                  )}
                   <div className="flex items-center gap-2">
                     <span
                       aria-hidden
@@ -53,16 +78,15 @@ export default function ScientistsSection() {
                     <span className="font-mono text-[10px] uppercase tracking-widest text-ink-3">
                       {s.field}
                     </span>
-                    {champion && (
-                      <span className="ml-auto rounded-full bg-s-amber/15 px-2 py-0.5 font-mono text-[10px] text-s-amber">
-                        arena champion
-                      </span>
-                    )}
                   </div>
-                  <h3 className="mt-2 break-words font-mono text-[13px] font-semibold text-ink">
-                    {s.name}
+                  <h3 className="mt-2 font-mono text-[13px] font-semibold text-ink">
+                    <BotName name={s.name} />
                   </h3>
-                  <p className="mt-1.5 text-xs leading-relaxed text-ink-2">{s.description}</p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-ink-2">
+                    {champion
+                      ? s.description.replace(/\s*🏆 Won the arena\.?/, "")
+                      : s.description}
+                  </p>
                 </div>
               </Reveal>
             );

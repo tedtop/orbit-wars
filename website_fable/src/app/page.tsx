@@ -9,6 +9,7 @@ import LabSection from "@/components/sections/LabSection";
 import RLSection from "@/components/sections/RLSection";
 import TheaterSection from "@/components/sections/TheaterSection";
 import LessonsSection from "@/components/sections/LessonsSection";
+import MissionLogSection from "@/components/sections/MissionLogSection";
 import FinaleSection from "@/components/sections/FinaleSection";
 
 export default function Home() {
@@ -25,6 +26,7 @@ export default function Home() {
       <RLSection />
       <TheaterSection />
       <LessonsSection />
+      <MissionLogSection />
       <FinaleSection />
     </main>
   );

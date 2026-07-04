@@ -11,6 +11,7 @@ const LINKS = [
   ["rl", "the moonshot"],
   ["theater", "replays"],
   ["lessons", "lessons"],
+  ["log", "mission log"],
   ["finale", "finale"],
 ] as const;
 

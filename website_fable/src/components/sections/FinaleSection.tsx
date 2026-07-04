@@ -1,10 +1,8 @@
 import Section from "../ui/Section";
 import Reveal from "../ui/Reveal";
 import finalLb from "@/data/final_leaderboard.json";
-import timeline from "@/data/timeline.json";
 
 type LbTeam = { rank: number; name: string; score: number; subs: number };
-type Phase = { phase: string; date: string; title: string; body_md: string };
 
 function LbRow({ t, highlight = false }: { t: LbTeam; highlight?: boolean }) {
   return (
@@ -27,7 +25,6 @@ function LbRow({ t, highlight = false }: { t: LbTeam; highlight?: boolean }) {
 
 export default function FinaleSection() {
   const lb = finalLb as { n_teams: number; top: LbTeam[]; us: LbTeam };
-  const phases = timeline as Phase[];
 
   return (
     <Section
@@ -44,62 +41,36 @@ export default function FinaleSection() {
         </>
       }
     >
-      <div className="grid gap-8 lg:grid-cols-2">
-        <Reveal>
-          <div className="card overflow-hidden">
-            <div className="border-b border-white/[0.06] px-5 py-3">
-              <span className="font-mono text-[10px] uppercase tracking-widest text-ink-3">
-                final snapshot · {lb.n_teams.toLocaleString()} teams ·{" "}
-                <a
-                  href="https://www.kaggle.com/competitions/orbit-wars/leaderboard"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-s-blue hover:underline"
-                >
-                  live leaderboard ↗
-                </a>
-              </span>
-            </div>
-            <table className="w-full text-left">
-              <tbody>
-                {lb.top.map((t) => (
-                  <LbRow key={t.rank} t={t} />
-                ))}
-                <tr aria-hidden>
-                  <td colSpan={3} className="px-5 py-1.5 text-center font-mono text-xs text-ink-3">
-                    ⋯ 404 teams ⋯
-                  </td>
-                </tr>
-                <LbRow t={lb.us} highlight />
-              </tbody>
-            </table>
-          </div>
-        </Reveal>
-
-        <Reveal delay={80}>
-          <div className="card max-h-[480px] overflow-y-auto px-5 py-4">
+      <Reveal>
+        <div className="card mx-auto max-w-2xl overflow-hidden">
+          <div className="border-b border-white/[0.06] px-5 py-3">
             <span className="font-mono text-[10px] uppercase tracking-widest text-ink-3">
-              the full mission log · {phases.length} phases
+              final snapshot · {lb.n_teams.toLocaleString()} teams ·{" "}
+              <a
+                href="https://www.kaggle.com/competitions/orbit-wars/leaderboard"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-s-blue hover:underline"
+              >
+                live leaderboard ↗
+              </a>
             </span>
-            <div className="mt-3 flex flex-col">
-              {phases.map((p, i) => (
-                <details key={i} className="group border-b border-white/[0.05] py-2.5 last:border-0">
-                  <summary className="cursor-pointer list-none font-mono text-xs text-ink-2 transition-colors hover:text-ink [&::-webkit-details-marker]:hidden">
-                    <span aria-hidden className="mr-2 inline-block text-s-blue transition-transform group-open:rotate-90">
-                      ▸
-                    </span>
-                    {p.title}
-                  </summary>
-                  <p className="mt-2 whitespace-pre-line pl-5 text-xs leading-relaxed text-ink-3">
-                    {p.body_md.replace(/[*`#>]/g, "").slice(0, 700)}
-                    {p.body_md.length > 700 ? "…" : ""}
-                  </p>
-                </details>
-              ))}
-            </div>
           </div>
-        </Reveal>
-      </div>
+          <table className="w-full text-left">
+            <tbody>
+              {lb.top.map((t) => (
+                <LbRow key={t.rank} t={t} />
+              ))}
+              <tr aria-hidden>
+                <td colSpan={3} className="px-5 py-1.5 text-center font-mono text-xs text-ink-3">
+                  ⋯ 404 teams ⋯
+                </td>
+              </tr>
+              <LbRow t={lb.us} highlight />
+            </tbody>
+          </table>
+        </div>
+      </Reveal>
 
       <Reveal className="mt-16">
         <div className="flex flex-col items-center gap-4 text-center">
@@ -108,14 +79,24 @@ export default function FinaleSection() {
           </p>
           <p className="max-w-lg text-sm leading-relaxed text-ink-3">
             Every experiment, dead end, and 3 a.m. GPU restart in this report is
-            real and dated in the repository&apos;s provenance timeline.
+            real and dated in the repository&apos;s provenance timeline — all of
+            it public: the bots, the engine clone, the gauntlets, the RL
+            training code, and TIMELINE.md itself.
           </p>
           <div className="mt-2 flex flex-wrap justify-center gap-3 font-mono text-xs">
+            <a
+              href="https://github.com/tedtop/orbit-wars"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full bg-s-blue/15 px-4 py-2 text-s-blue transition-colors hover:bg-s-blue/25"
+            >
+              {"</>"} check out the code — github.com/tedtop/orbit-wars ↗
+            </a>
             <a
               href="https://www.kaggle.com/competitions/orbit-wars/overview"
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-full bg-s-blue/15 px-4 py-2 text-s-blue transition-colors hover:bg-s-blue/25"
+              className="rounded-full bg-white/[0.05] px-4 py-2 text-ink-2 transition-colors hover:bg-white/[0.09]"
             >
               the competition ↗
             </a>
